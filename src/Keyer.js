@@ -105,6 +105,21 @@ export class Keyer {
 
   setDefaults() { this.setParams(Keyer.defaults); }
 
+  // keyboard handlers
+  /* eslint class-methods-use-this: ["error", { "exceptMethods": ["keydown","keyup","keypress"] }] */ 
+  keydown(e) {
+    console.log(`keydown ${e.key}`);
+  }
+
+  keyup(e) {
+    console.log(`keyup ${e.key}`);
+  }
+
+  keypress(e) {
+    console.log(`keypress ${e.key}`);
+    this.outputSend(e.key);
+  }
+
   // useful actions
   outputSend(text) { this.output.send(text); }
 

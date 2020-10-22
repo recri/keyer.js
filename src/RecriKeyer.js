@@ -33,11 +33,17 @@ export class RecriKeyer extends LitElement {
 
     itemsPerSession: 5,
     repsPerItem: 5,
+
+    text: [],
   }
   
   constructor() {
     super();
     this.keyer = new Keyer(RecriKeyer.defaults);
+    this.text = [["pending", "Your message here!"]];
+    this.addEventListener('keydown', (e) => this.keydown(e))
+    this.addEventListener('keyup', (e) => this.keyup(e))
+    this.addEventListener('keypress', (e) => this.keypress(e))
   }
 
   static get properties() {
@@ -118,16 +124,28 @@ export class RecriKeyer extends LitElement {
     `;
   }
 
+  static isshift(key) { return key === 'Control' || key === 'Alt' || key === 'Shift'; }
+    
+  keydown(e) { if (RecriKeyer.isshift(e.key)) this.keyer.keydown(e); }
+
+  keyup(e) { if (RecriKeyer.isshift(e.key)) this.keyer.keyup(e); }
+
+  keypress(e) { this.keyer.keypress(e) }
+
   render() {
     return html`
       <main>
         <div class="logo">${keyerLogo}</div>
         <h1>keyer.js</h1>
-
-        <p>Edit <code>src/RecriKeyer.js</code> and save to reload.</p>
-	<button data-playing="false" role="switch" aria-checked="false" @click={this.playPause}>
+	<p>
+	<button role="switch" aria-checked="false" @click={this.playPause}>
 	  <span>Play/Pause</span>
 	</button>
+	</p><p>
+	<div>
+	  ${this.text.map(t => html`<span class="${t[0]}">${t[1]}</span>`)}
+	</div>
+	</p>
       </main>
 
       <p class="app-footer">
