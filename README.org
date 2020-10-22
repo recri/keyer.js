@@ -7,7 +7,8 @@ Scroll down to find the controls for words/minute timing, pitch, envelope shapin
 Best used with an iambic paddle interfaced through a MIDI interface, the page listens for MIDI NoteOn and NoteOff to trigger the iambic keyer.
 The page treats even notes as one paddle and odd notes as the other paddle, and NoteOn with velocity 0 as a NoteOff.
 But in a pinch you can use Alt and Ctrl keys, or bring up paddles on a touch screen.
-
+** Use of source
+   This directory was built with open-wc.org.  You'll need node, npm, and yarn to rebuild dependencies and then ```npm run start```
 ** Class Hierarchy
 *** KeyerEvent
 **** KeyerDetone extends KeyerEvent

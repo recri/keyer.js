@@ -1,0 +1,18 @@
+* Keyer.js to do list
+[ ] keyboard source to morse and text
+[ ] color text according to sent status
+[ ] cancel button
+[ ] play/pause button
+[ ] keyboard source to straight key
+[ ] keyboard source to iambic key
+[ ] bug keyer
+[ ] ultimatic keyer
+[ ] factor KeyerSink from KeyerOutput
+[ ] factor KeyerSource from KeyerInput
+[ ] fix KeyerDetone
+[ ] fix KeyerDetime
+[ ] decode microphone tone source
+[ ] decode microphone sung source
+[ ] webrtc tone sink
+[ ] webrtc tone source
+[ ] full window menu for envelope
