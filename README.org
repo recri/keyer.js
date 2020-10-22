@@ -1,0 +1,33 @@
+* Keyer.js
+[![Built with open-wc recommendations](https://img.shields.io/badge/built%20with-open--wc-blue.svg)](https://github.com/open-wc)
+[![Online at ...](...)](...)
+Morse code in a web page.  
+Click the start button and type letters at the page to hear them in Morse.
+Scroll down to find the controls for words/minute timing, pitch, envelope shaping, key input alternatives, and keyer options.
+Best used with an iambic paddle interfaced through a MIDI interface, the page listens for MIDI NoteOn and NoteOff to trigger the iambic keyer.
+The page treats even notes as one paddle and odd notes as the other paddle, and NoteOn with velocity 0 as a NoteOff.
+But in a pinch you can use Alt and Ctrl keys, or bring up paddles on a touch screen.
+
+** Class Hierarchy
+*** KeyerEvent
+**** KeyerDetone extends KeyerEvent
+***** KeyerDetime extends KeyerDetone
+****** KeyerDecode extends KeyerDetime
+**** KeyerPlayer extends KeyerEvent
+***** KeyerIambicKeyer extends KeyerPlayer
+****** KeyerIambicInput extends KeyerIambicKeyer
+***** KeyerOutput extends KeyerPlayer
+***** KeyerStraightInput extends KeyerPlayer
+**** KeyerMicrophone extends KeyerEvent
+**** KeyerMidiInput extends KeyerEvent
+*** KeyerInput
+    composite of
+**** KeyerIambicInput
+**** KeyerStraightInput
+**** KeyerMidiInput
+**** KeyerKeyboardInput
+**** KeyerTouchScreenInput
+*** KeyerTable
+*** Keyer
+
+
