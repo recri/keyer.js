@@ -12,7 +12,7 @@ export class KeyerIambicInput extends KeyerIambicKeyer {
   keyup(key) { this.keyset(key, false); }
 
   // handler for MIDI
-  /* eslint no-bitwise: ["error", { "allow": ["&"] }] */
+  /* eslint no-bitwise: ["error", { "allow": ["&", "^"] }] */
   onmidievent(event) {
     if (event.data.length === 3) {
       // console.log("onmidievent "+event.data[0]+" "+event.data[1]+" "+event.data[2].toString(16));
