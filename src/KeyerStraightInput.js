@@ -33,14 +33,14 @@ export class KeyerStraightInput extends KeyerPlayer {
     if (event.data.length === 3) {
       // console.log("onmidievent "+event.data[0]+" "+event.data[1]+" "+event.data[2].toString(16));
       switch (event.data[0] & 0xf0) {
-        case 0x90:
-          this.keyset(0, true);
-          break;
-        case 0x80:
-          this.keyset(0, false);
-          break;
-        default:
-          break;
+      case 0x90:
+        this.keyset(0, event.data[2] !== 0);
+        break;
+      case 0x80:
+        this.keyset(0, false);
+        break;
+      default:
+        break;
       }
     }
   }

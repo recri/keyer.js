@@ -116,7 +116,8 @@ export class Keyer {
   }
 
   keypress(e) {
-    console.log(`keypress ${e.key}`);
+    console.log(`keypress ${e.key} '${this.output.table.encode(e.key)}'`);
+    // this.output.table.encode(e.key)
     this.outputSend(e.key);
   }
 
