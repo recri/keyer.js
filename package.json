@@ -47,9 +47,6 @@
   },
   "lint-staged": {
     "*.js": [
-      "eslint --fix",
-      "prettier --write",
-      "git add"
     ]
   },
   "name": "recri-keyer",

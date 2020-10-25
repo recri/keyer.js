@@ -130,15 +130,17 @@ export class Keyer {
   // keyboard handlers
   /* eslint class-methods-use-this: ["error", { "exceptMethods": ["keydown","keyup","keypress"] }] */
   keydown(e) {
-    console.log(`keydown ${e.key}`);
+    // console.log(`keydown ${e.key}`);
+    this.input.keydown(e);
   }
 
   keyup(e) {
-    console.log(`keyup ${e.key}`);
+    // console.log(`keyup ${e.key}`);
+    this.input.keyup(e);
   }
 
   keypress(e) {
-    console.log(`keypress ${e.key} '${this.output.table.encode(e.key)}'`);
+    // console.log(`keypress ${e.key} '${this.output.table.encode(e.key)}'`);
     // this.output.table.encode(e.key)
     this.outputSend(e.key);
   }

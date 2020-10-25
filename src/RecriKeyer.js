@@ -43,69 +43,37 @@ export class RecriKeyer extends LitElement {
   }
 
   // set and get properties, delegate to keyer
-  set pitch(v) {
-    this.keyer.pitch = v;
-  }
+  set pitch(v) { this.keyer.pitch = v; }
 
-  get pitch() {
-    return this.keyer.pitch;
-  }
+  get pitch() { return this.keyer.pitch; }
 
-  set gain(v) {
-    this.keyer.gain = v;
-  }
+  set gain(v) { this.keyer.gain = v; }
 
-  get gain() {
-    return Math.round(this.keyer.gain);
-  }
+  get gain() { return Math.round(this.keyer.gain); }
 
-  set speed(v) {
-    this.keyer.speed = v;
-  }
+  set speed(v) { this.keyer.speed = v; }
 
-  get speed() {
-    return this.keyer.speed;
-  }
+  get speed() { return this.keyer.speed; }
 
-  set rise(v) {
-    this.keyer.rise = v;
-  }
+  set rise(v) { this.keyer.rise = v; }
 
-  get rise() {
-    return this.keyer.rise;
-  }
+  get rise() { return this.keyer.rise; }
 
-  set fall(v) {
-    this.keyer.fall = v;
-  }
+  set fall(v) { this.keyer.fall = v; }
 
-  get fall() {
-    return this.keyer.fall;
-  }
+  get fall() { return this.keyer.fall; }
 
-  set swapped(v) {
-    this.keyer.swapped = v;
-  }
+  set swapped(v) { this.keyer.swapped = v; }
 
-  get swapped() {
-    return this.keyer.swapped;
-  }
+  get swapped() { return this.keyer.swapped; }
 
-  set type(v) {
-    this.keyer.type = v;
-  }
+  set type(v) { this.keyer.type = v; }
 
-  get type() {
-    return this.keyer.type;
-  }
+  get type() { return this.keyer.type; }
 
-  set midi(v) {
-    this.keyer.midi = v;
-  }
+  set midi(v) { this.keyer.midi = v; }
 
-  get midi() {
-    return this.keyer.midi;
-  }
+  get midi() { return this.keyer.midi; }
 
   // styles
   static get styles() {
@@ -201,11 +169,9 @@ export class RecriKeyer extends LitElement {
     }
   }
 
-  clear() {
-    this.text = [['sent', '']];
-  }
+  clear() { this.text = [['sent', '']]; }
 
-  cancel() {
+  cancel() { 
     this.keyer.outputCancel();
     // clear pending queue
   }
@@ -238,7 +204,7 @@ export class RecriKeyer extends LitElement {
         this.type = event.target.value;
         break;
       default:
-        console.log(`update '${handle}' '${control}' ${event.target.value}`);
+        // console.log(`update '${handle}' '${control}' ${event.target.value}`);
         break;
     }
   }

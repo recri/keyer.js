@@ -41,7 +41,7 @@ export class KeyerMidiInput extends KeyerEvent {
     if (name && name !== 'none' && this.midi) {
       for (const x of this.midi.inputs.values()) {
         if (x.name === name) {
-          console.log(`installing handler for ${name}`);
+          // console.log(`installing handler for ${name}`);
           x.onmidimessage = handler;
         }
       }
@@ -52,7 +52,7 @@ export class KeyerMidiInput extends KeyerEvent {
     if (name && name !== 'none' && this.midi) {
       for (const x of this.midi.inputs.values()) {
         if (x.name === name) {
-          console.log(`uninstalling handler for ${name}`);
+          // console.log(`uninstalling handler for ${name}`);
           x.onmidimessage = null;
         }
       }
@@ -65,7 +65,7 @@ export class KeyerMidiInput extends KeyerEvent {
         .requestMIDIAccess()
         .then((...args) => this.onMIDISuccess(...args), (...args) => this.onMIDIFailure(...args));
     } else {
-      console.log("no navigator.requestMIDIAccess found");
+      // console.log("no navigator.requestMIDIAccess found");
     }
   }
 }
