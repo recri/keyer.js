@@ -1,5 +1,4 @@
 import { LitElement, html, css } from 'lit-element';
-import { keyerLogo } from './keyer-logo.js';
 import { Keyer } from './Keyer.js';
 
 export class RecriKeyer extends LitElement {
@@ -174,6 +173,7 @@ export class RecriKeyer extends LitElement {
   keydown(e) {
     // console.log(`keydown e.target.tagName ${e.target.tagName}`);
     if (RecriKeyer.isshift(e.key)) this.keyer.keydown(e);
+    // disable space scrolling of page, but keep space in text entry
     if (e.keyCode === 32) {
       this.keypress(e);
       e.preventDefault();
@@ -202,13 +202,12 @@ export class RecriKeyer extends LitElement {
   }
 
   clear() {
-    // console.log("clear clicked");
     this.text = [['sent', '']];
   }
 
   cancel() {
-    // console.log("cancel clicked");
     this.keyer.outputCancel();
+    // clear pending queue
   }
 
   inputChange(handle, control, event) {
@@ -247,7 +246,7 @@ export class RecriKeyer extends LitElement {
   render() {
     return html`
       <main>
-        <div class="logo">${keyerLogo}</div>
+        <div class="logo"><image src="src/icon_192.png"/></div>
 	<div>
 	<h1>keyer.js</h1>
         <button role="switch" aria-checked=${this.running} @click=${
