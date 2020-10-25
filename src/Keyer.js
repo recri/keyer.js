@@ -21,33 +21,63 @@ export class Keyer {
     // decode from elements, except for decoding straight key
     // output decoder wiring
     if (USE_DETONER) {
-      this.output.on('change:pitch', pitch => this.outputDecoder.onchangepitch(pitch) );
+      this.output.on('change:pitch', pitch =>
+        this.outputDecoder.onchangepitch(pitch)
+      );
       this.outputDecoder.onchangepitch(this.output.pitch);
       this.output.connect(this.outputDecoder.target);
       this.outputDecoder.connect(this.context.destination);
     } else if (USE_DETIMER) {
       this.output.connect(this.context.destination);
-      this.output.on( 'transition', this.outputDecoder.ontransition, this.outputDecoder );
+      this.output.on(
+        'transition',
+        this.outputDecoder.ontransition,
+        this.outputDecoder
+      );
     } else {
       this.output.connect(this.context.destination);
-      this.output.on( 'element', this.outputDecoder.onelement, this.outputDecoder );
+      this.output.on(
+        'element',
+        this.outputDecoder.onelement,
+        this.outputDecoder
+      );
     }
 
     // input decoder wiring
     if (USE_DETONER) {
-      this.input.straight.on('change:pitch', pitch => this.inputDecoder.onchangepitch(pitch) );
-      this.input.iambic.on('change:pitch', pitch => this.inputDecoder.onchangepitch(pitch) );
+      this.input.straight.on('change:pitch', pitch =>
+        this.inputDecoder.onchangepitch(pitch)
+      );
+      this.input.iambic.on('change:pitch', pitch =>
+        this.inputDecoder.onchangepitch(pitch)
+      );
       this.inputDecoder.onchangepitch(this.input.pitch);
       this.input.connect(this.inputDecoder.target);
       this.inputDecoder.connect(this.context.destination);
     } else if (USE_DETIMER) {
       this.input.connect(this.context.destination);
-      this.input.straight.on( 'transition', this.inputDecoder.ontransition, this.inputDecoder );
-      this.input.iambic.on( 'transition', this.inputDecoder.ontransition, this.inputDecoder );
+      this.input.straight.on(
+        'transition',
+        this.inputDecoder.ontransition,
+        this.inputDecoder
+      );
+      this.input.iambic.on(
+        'transition',
+        this.inputDecoder.ontransition,
+        this.inputDecoder
+      );
     } else {
       this.input.connect(this.context.destination);
-      this.input.straight.on( 'transition', this.inputDecoder.ontransition, this.inputDecoder );
-      this.input.iambic.on( 'element', this.inputDecoder.onelement, this.inputDecoder );
+      this.input.straight.on(
+        'transition',
+        this.inputDecoder.ontransition,
+        this.inputDecoder
+      );
+      this.input.iambic.on(
+        'element',
+        this.inputDecoder.onelement,
+        this.inputDecoder
+      );
     }
 
     this.table = this.output.table;
@@ -59,31 +89,21 @@ export class Keyer {
     else this.setDefaults();
   }
 
-    // parameters
+  // parameters
   static defaults = {
-    inputPitch: 622.25 /* Eb5 */,
-    outputPitch: 523.25 /* C5 */,
+    pitch: 622.25 /* Eb5 */,
 
-    inputGain: -26,
-    inputWpm: 15,
-    inputRise: 4,
-    inputFall: 4,
-    inputDah: 3,
-    inputIes: 1,
-    inputIls: 3,
-    inputIws: 7,
-    inputMidi: 'none',
-    inputSwapped: false,
-    inputType: 'iambic',
-
-    outputGain: -26,
-    outputWpm: 15,
-    outputRise: 4,
-    outputFall: 4,
-    outputDah: 3,
-    outputIes: 1,
-    outputIls: 3,
-    outputIws: 7,
+    gain: -26,
+    wpm: 15,
+    rise: 4,
+    fall: 4,
+    dah: 3,
+    ies: 1,
+    ils: 3,
+    iws: 7,
+    midi: 'none',
+    swapped: false,
+    type: 'iambic',
 
     itemsPerSession: 5,
     repsPerItem: 5,
@@ -103,10 +123,12 @@ export class Keyer {
     }
   }
 
-  setDefaults() { this.setParams(Keyer.defaults); }
+  setDefaults() {
+    this.setParams(Keyer.defaults);
+  }
 
   // keyboard handlers
-  /* eslint class-methods-use-this: ["error", { "exceptMethods": ["keydown","keyup","keypress"] }] */ 
+  /* eslint class-methods-use-this: ["error", { "exceptMethods": ["keydown","keyup","keypress"] }] */
   keydown(e) {
     console.log(`keydown ${e.key}`);
   }
@@ -122,206 +144,180 @@ export class Keyer {
   }
 
   // useful actions
-  outputSend(text) { this.output.send(text); }
+  outputSend(text) {
+    this.output.send(text);
+  }
 
-  outputCancel() { this.output.keyOff(); }
+  outputCancel() {
+    this.output.keyOff();
+  }
 
-  outputDecoderOnLetter(callback, context) { this.outputDecoder.on('letter', callback, context); }
+  outputDecoderOnLetter(callback, context) {
+    this.outputDecoder.on('letter', callback, context);
+  }
 
-  outputDecoderOffLetter(callback, context) { this.outputDecoder.off('letter', callback, context); }
+  outputDecoderOffLetter(callback, context) {
+    this.outputDecoder.off('letter', callback, context);
+  }
 
-  inputMidiOnRefresh(callback, context) { this.input.midiOnRefresh(callback, context); }
+  inputMidiOnRefresh(callback, context) {
+    this.input.midiOnRefresh(callback, context);
+  }
 
-  inputMidiRefresh() { this.input.midiRefresh(); }
+  inputMidiRefresh() {
+    this.input.midiRefresh();
+  }
 
-  inputMidiNames() { return this.input.midiNames(); }
+  inputMidiNames() {
+    return this.input.midiNames();
+  }
 
-  inputDecoderOnLetter(callback, context) { this.inputDecoder.on('letter', callback, context); }
+  inputDecoderOnLetter(callback, context) {
+    this.inputDecoder.on('letter', callback, context);
+  }
 
-  inputDecoderOffLetter(callback, context) { this.inputDecoder.off('letter', callback, context); }
+  inputDecoderOffLetter(callback, context) {
+    this.inputDecoder.off('letter', callback, context);
+  }
 
-  inputKeydown(isleft) { this.input.keydown(isleft); }
+  inputKeydown(isleft) {
+    this.input.keydown(isleft);
+  }
 
-  inputKeyup(isleft) { this.input.keyup(isleft); }
+  inputKeyup(isleft) {
+    this.input.keyup(isleft);
+  }
 
-  inputFocus() { this.input.onfocus(); }
+  inputFocus() {
+    this.input.onfocus();
+  }
 
-  inputBlur() { this.input.onblur(); }
+  inputBlur() {
+    this.input.onblur();
+  }
 
-  currentTime() { return this.context.currentTime; }
+  currentTime() {
+    return this.context.currentTime;
+  }
 
   // direct getters and setters on properties
-  get inputPitch() { return this.input.pitch; }
-
-  set inputPitch(v) { this.input.pitch = v; }
-
-  get gain() { return this.inputGain; }
-
-  set gain(v) { this.inputGain = v; this.outputGain = v; }
-
-  get rise() { return this.inputRise; }
-
-  set rise(v) { this.inputRise = v; this.outputRise = v; }
-
-  get fall() { return this.inputFall; }
-
-  set fall(v) { this.inputFall = v; this.outputFall = v; }
-
-  get wpm() { return this.inputWpm; }
-
-  set wpm(v) { this.inputWpm = v; this.outputWpm = v; }
-
-  get dah() { return this.inputDah; }
-
-  set dah(v) { this.inputDah = v; this.outputDah = v; }
-
-  get ies() { return this.inputIes; }
-
-  set ies(v) { this.inputIes = v; this.outputIes = v; }
-
-  get ils() { return this.inputIls; }
-
-  set ils(v) { this.inputIls = v; this.outputIls = v; }
-
-  get iws() { return this.inputIws; }
-
-  set iws(v) { this.inputIws = v; this.outputIws = v; }
-
-  get gainDB() { return this.inputGain; }
-
-  set gainDB(v) { this.inputGain = v; this.outputGain = v; }
-
-  get riseMs() { return this.inputRise; }
-
-  set riseMs(v) { this.inputRise = v; this.outputRise = v; }
-
-  get fallMs() { return this.inputFall; }
-
-  set fallMs(v) { this.inputFall = v; this.outputFall = v; }
-
-  get inputGain() { return this.input.gain; }
-
-  set inputGain(v) { this.input.gain = v; }
-
-  get inputRise() { return this.input.rise; }
-
-  set inputRise(v) { this.input.rise = v; }
-
-  get inputFall() { return this.input.fall; }
-
-  set inputFall(v) { this.input.fall = v; }
-
-  get inputWpm() { return this.input.wpm; }
-
-  set inputWpm(v) { this.input.wpm = v; }
-
-  get inputDah() { return this.input.dah; }
-
-  set inputDah(v) { this.input.dah = v; }
-
-  get inputIes() { return this.input.ies; }
-
-  set inputIes(v) { this.input.ies = v; }
-
-  get inputIls() { return this.input.ils; }
-
-  set inputIls(v) { this.input.ils = v; }
-
-  get inputIws() { return this.input.iws; }
-
-  set inputIws(v) { this.input.iws = v; }
-
-  get inputMidi() { return this.input.midi; }
-
-  set inputMidi(v) { this.input.midi = v; }
-
-  get inputSwapped() { return this.input.swapped; }
-
-  set inputSwapped(v) { this.input.swapped = v; }
-
-  get inputType() { return this.input.type; }
-
-  set inputType(v) { this.input.type = v; }
-
-  get outputPitch() { return this.output.pitch; }
-
-  set outputPitch(v) { this.output.pitch = v; }
-
-  get outputGain() { return this.output.gain; }
-
-  set outputGain(v) { this.output.gain = v; }
-
-  get outputWpm() { return this.output.wpm; }
-
-  set outputWpm(v) { this.output.wpm = v; }
-
-  get outputRise() { return this.output.rise; }
-
-  set outputRise(v) { this.output.rise = v; }
-
-  get outputFall() { return this.output.fall; }
-
-  set outputFall(v) { this.output.fall = v; }
-
-  get outputDah() { return this.output.dah; }
-
-  set outputDah(v) { this.output.dah = v; }
-
-  get outputIes() { return this.output.ies; }
-
-  set outputIes(v) { this.output.ies = v; }
-
-  get outputIls() { return this.output.ils; }
-
-  set outputIls(v) { this.output.ils = v; }
-
-  get outputIws() { return this.output.iws; }
-
-  set outputIws(v) { this.output.iws = v; }
-
-  get inputGainDB() { return this.inputGain; }
-
-  set inputGainDB(v) { this.inputGain = v; }
-
-  get inputRiseMs() { return this.inputRise; }
-
-  set inputRiseMs(v) { this.inputRise = v; }
-
-  get inputFallMs() { return this.inputFall; }
-
-  set inputFallMs(v) { this.inputFall = v; }
-
-  get outputGainDB() { return this.outputGain; }
-
-  set outputGainDB(v) { this.outputGain = v; }
-
-  get outputRiseMs() { return this.outputRise; }
-
-  set outputRiseMs(v) { this.outputRise = v; }
-
-  get outputFallMs() { return this.outputFall; }
-
-  set outputFallMs(v) { this.outputFall = v; }
-
-  get itemsPerSession() { return this.progress.itemsPerSession; }
-
-  set itemsPerSession(v) { this.progress.itemsPerSession = v; }
-
-  get repsPerItem() { return this.progress.repsPerItem; }
-
-  set repsPerItem(v) { this.progress.repsPerItem = v; }
+  // setting input and output the same
+  get pitch() {
+    return this.output.pitch;
+  }
+
+  set pitch(v) {
+    this.input.pitch = v;
+    this.output.pitch = v;
+  }
+
+  get gain() {
+    return this.output.gain;
+  }
+
+  set gain(v) {
+    this.input.gain = v;
+    this.output.gain = v;
+  }
+
+  get rise() {
+    return this.output.rise;
+  }
+
+  set rise(v) {
+    this.input.rise = v;
+    this.output.rise = v;
+  }
+
+  get fall() {
+    return this.output.fall;
+  }
+
+  set fall(v) {
+    this.input.fall = v;
+    this.output.fall = v;
+  }
+
+  get wpm() {
+    return this.output.wpm;
+  }
+
+  set wpm(v) {
+    this.input.wpm = v;
+    this.output.wpm = v;
+  }
+
+  get dah() {
+    return this.output.dah;
+  }
+
+  set dah(v) {
+    this.input.dah = v;
+    this.output.dah = v;
+  }
+
+  get ies() {
+    return this.output.ies;
+  }
+
+  set ies(v) {
+    this.input.ies = v;
+    this.output.ies = v;
+  }
+
+  get ils() {
+    return this.output.ils;
+  }
+
+  set ils(v) {
+    this.input.ils = v;
+    this.output.ils = v;
+  }
+
+  get iws() {
+    return this.output.iws;
+  }
+
+  set iws(v) {
+    this.input.iws = v;
+    this.output.iws = v;
+  }
+
+  get midi() {
+    return this.input.midi;
+  }
+
+  set midi(v) {
+    this.input.midi = v;
+  }
+
+  get swapped() {
+    return this.input.swapped;
+  }
+
+  set swapped(v) {
+    this.input.swapped = v;
+  }
+
+  get type() {
+    return this.input.type;
+  }
+
+  set type(v) {
+    this.input.type = v;
+  }
 
   static async createAudioProcessor(context, source, name) {
     try {
       await context.resume();
       await context.audioWorklet.addModule(source);
-    } catch(e) {
+    } catch (e) {
       return null;
     }
     return new AudioWorkletNode(context, name);
   }
 }
-// Local Variables: 
+// Local Variables:
 // mode: JavaScript
 // js-indent-level: 2
 // End:
