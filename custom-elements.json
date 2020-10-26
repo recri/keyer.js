@@ -16,7 +16,29 @@
           "type": "String",
           "description": "Which page to show",
           "default": "main"
-        }
+        },
+	{
+	  "name": "pitch",
+	  "type": "Number",
+	  "description": "The frequency of the tone",
+	  "default": "700"
+	},
+	{
+	  "name": "gain",
+	  "type": "Number"
+	},
+	{
+	  "name": "speed",
+	  "type": "Number"
+	},
+	{
+	  "name": "rise",
+	  "type": "Number"
+	},
+	{
+	  "name": "fall",
+	  "type": "Number"
+	}
       ],
       "events": [],
       "slots": [],
@@ -24,3 +46,7 @@
     }
   ]
 }
+// Local Variables:
+// mode: JavaScript
+// js-indent-level: 2
+// End:

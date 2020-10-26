@@ -1,0 +1,17 @@
+* Image construction
+** Basic svg icon was originally 'sketched' in keyer-logo.tcl
+   allowed me to draw what I wanted and fiddle with proportions
+** Then discovered that I could edit keyer-logo.svg in emacs
+   Take the existing <svg ...></svg>, adjust the limits and
+   viewbox, and rewrite the graphics commands as desired.
+*** Use M-x image-mode to display svg image
+*** Use M-x text-mode to display svg source
+*** Easy to swap back and forth to check changes
+*** and consult https://developer.mozilla.org/en-US/docs/Web/SVG
+    as necessary for documentation.
+** All of this is done writing to keyer-logo.svg
+** Then copy the finished svg into ../src/keyer-logo.js for use as a web element
+** Then use gimp or inkscape to convert the svg into variously sized png's for icons
+   Need an icon-512x512.png for an initial loading splash to meet the lighthouse
+   best practices, then need a variety of others for various PWA contexts.
+** Then use gimp to layer a selection of pngs into a favicon.ico

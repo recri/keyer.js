@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'lit-element';
+import { keyerLogo } from './keyer-logo.js';
 import { Keyer } from './Keyer.js';
 
 export class RecriKeyer extends LitElement {
@@ -96,17 +97,7 @@ export class RecriKeyer extends LitElement {
       }
 
       .logo > svg {
-        margin-top: 36px;
-        animation: app-logo-spin infinite 20s linear;
-      }
-
-      @keyframes app-logo-spin {
-        from {
-          transform: rotate(0deg);
-        }
-        to {
-          transform: rotate(360deg);
-        }
+        margin-top: 16px;
       }
 
       div.keyboard {
@@ -129,7 +120,8 @@ export class RecriKeyer extends LitElement {
 
   constructor() {
     super();
-    this.keyer = new Keyer(RecriKeyer.defaults);
+    this.keyer = new Keyer();
+    Object.keys(RecriKeyer.defaults).forEach(key => this[key] = RecriKeyer.defaults[key]);
     this.text = [['sent', '']];
     this.running = this.keyer.context.state !== 'suspended';
   }
@@ -179,30 +171,14 @@ export class RecriKeyer extends LitElement {
   inputChange(handle, control, event) {
     // console.log(`update '${handle}' '${control}' ${event.target.value}`);
     switch (control) {
-      case 'pitch':
-        this.pitch = event.target.value;
-        break;
-      case 'gain':
-        this.gain = event.target.value;
-        break;
-      case 'rise':
-        this.rise = event.target.value;
-        break;
-      case 'fall':
-        this.fall = event.target.value;
-        break;
-      case 'speed':
-        this.speed = event.target.value;
-        break;
-      case 'swapped':
-        this.swapped = event.target.value;
-        break;
-      case 'midi':
-        this.midi = event.target.value;
-        break;
-      case 'type':
-        this.type = event.target.value;
-        break;
+      case 'pitch': this.pitch = event.target.value; break;
+      case 'gain': this.gain = event.target.value; break;
+      case 'rise': this.rise = event.target.value; break;
+      case 'fall': this.fall = event.target.value; break;
+      case 'speed': this.speed = event.target.value; break;
+      case 'swapped': this.swapped = event.target.value; break;
+      case 'midi': this.midi = event.target.value; break;
+      case 'type': this.type = event.target.value; break;
       default:
         // console.log(`update '${handle}' '${control}' ${event.target.value}`);
         break;
@@ -212,12 +188,10 @@ export class RecriKeyer extends LitElement {
   render() {
     return html`
       <main>
-        <div class="logo"><image src="src/icon_192.png"/></div>
+        <div class="logo">${keyerLogo}</div>
 	<div>
 	<h1>keyer.js</h1>
-        <button role="switch" aria-checked=${this.running} @click=${
-      this.playPause
-    }>
+        <button role="switch" aria-checked=${this.running} @click=${this.playPause}>
 	  <span>${this.running ? 'Pause' : 'Play'}</span>
         </button>
         <button @click=${this.clear}>
@@ -227,75 +201,38 @@ export class RecriKeyer extends LitElement {
 	  <span>Cancel</span>
         </button>
 	<div>
-	<div class="keyboard" tabindex="0" @keypress=${this.keypress} @keydown=${
-      this.keydown
-    }  @keyup=${this.keyup}>
+	<div class="keyboard" tabindex="0" @keypress=${this.keypress} @keydown=${this.keydown}  @keyup=${this.keyup}>
 	  ${this.text.map(t => html`<span class="${t[0]}">${t[1]}</span>`)}
 	</div>
 	<h2>Settings</h2>
 	<div>
-	  <input type="range" id="speed" name="speed" min="12.5" max="50" .value=${
-      RecriKeyer.defaults.wpm
-    } step="2.5"
-		@change=${function (e) {
-      this.inputChange('change', 'speed', e);
-    }}
-		@input=${function (e) {
-      this.inputChange('input', 'speed', e);
-    }}
-	  >
+	  <input type="range" id="speed" name="speed" min="12.5" max="50"
+		.value=${this.speed} step="2.5"
+		@change=${e => this.speed = e.target.value}>
 	  <label for="speed">Speed ${this.speed} (WPM)</label>
 	</div>
 	<div>
-	  <input type="range" id="gain" name="gain" min="-50" max="10" .value=${
-      RecriKeyer.defaults.gain
-    } step="1"
-		@change=${function (e) {
-      this.inputChange('change', 'gain', e);
-    }}
-		@input=${function (e) {
-      this.inputChange('input', 'gain', e);
-    }}
-	  >
+	  <input type="range" id="gain" name="gain" min="-50" max="10" 
+		.value=${RecriKeyer.defaults.gain} step="1"
+		@change=${e => this.gain = e.target.value}>
 	  <label for="gain">Gain ${this.gain} (dB)</label>
 	</div>
 	<div>
-	  <input type="range" id="pitch" name="pitch" min="250" max="2000" .value=${
-      RecriKeyer.defaults.pitch
-    } step="1"
-		@change=${function (e) {
-      this.inputChange('change', 'pitch', e);
-    }}
-		@input=${function (e) {
-      this.inputChange('input', 'pitch', e);
-    }}
-	  >
+	  <input type="range" id="pitch" name="pitch" min="250" max="2000"
+		.value=${RecriKeyer.defaults.pitch} step="1"
+		@change=${e => this.pitch = e.target.value}>
 	  <label for="pitch">Pitch ${this.pitch} (Hz)</label>
 	</div>
 	<div>
-	  <input type="range" id="rise" name="rise" min="1" max="10" .value=${
-      RecriKeyer.defaults.rise
-    } step="0.1"
-		@change=${function (e) {
-      this.inputChange('change', 'rise', e);
-    }}
-		@input=${function (e) {
-      this.inputChange('input', 'rise', e);
-    }}
-	  >
+	  <input type="range" id="rise" name="rise" min="1" max="10" 
+		.value=${RecriKeyer.defaults.rise} step="0.1"
+		@change=${e => this.rise = e.target.value}>
 	  <label for="rise">Rise ${this.rise} (ms)</label>
 	</div>
 	<div>
-	  <input type="range" id="fall" name="fall" min="1" max="10" .value=${
-      RecriKeyer.defaults.fall
-    } step="0.1"
-		@change=${function (e) {
-      this.inputChange('change', 'fall', e);
-    }}
-		@input=${function (e) {
-      this.inputChange('input', 'fall', e);
-    }}
-	  >
+	  <input type="range" id="fall" name="fall" min="1" max="10"
+		.value=${RecriKeyer.defaults.fall} step="0.1"
+		@change=${e => this.fall = e.target.value}>
 	  <label for="fall">Fall ${this.fall} (ms)</label>
 	</div>
 	<h2>Status</h2>
@@ -306,12 +243,8 @@ export class RecriKeyer extends LitElement {
 
       <p class="app-footer">
         🚽 Made with love by
-        <a
-          target="_blank"
-          rel="noopener noreferrer"
-          href="https://github.com/open-wc"
-          >open-wc</a
-        >.
+        <a target="_blank" rel="noopener noreferrer"
+          href="https://github.com/open-wc" >open-wc</a>.
       </p>
     `;
   }

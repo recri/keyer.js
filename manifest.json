@@ -1,0 +1,21 @@
+{
+  "name": "Keyer",
+  "short_name": "Keyer",
+  "description": "Morse Code App",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#1d62a7",
+  "background_color": "#1d62a7",
+  "icons": [
+    {
+      "src": "/img/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png"
+    },
+    {
+      "src": "/img/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}

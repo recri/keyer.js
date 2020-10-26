@@ -6,6 +6,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="Description" content="Morse code web application.">
   <base href="/">
+  <link rel="icon" href="favicon.ico">
+  <!-- See https://goo.gl/OOhYW5 -->
+  <link rel="manifest" href="manifest.json">
+  <!-- See https://goo.gl/qRE0vM -->
+  <meta name="theme-color" content="#1d62a7">
+  <!-- Add to homescreen for Chrome on Android. Fallback for manifest.json -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="Keyer">
+  <!-- Add to homescreen for Safari on iOS -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Keyer">
+  <!-- Homescreen icons -->
+  <link rel="apple-touch-icon" href="img/icon-48x48.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="img/icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="96x96" href="img/icon-96x96.png">
+  <link rel="apple-touch-icon" sizes="144x144" href="img/icon-144x144.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="img/icon-192x192.png">
+  <!-- Tile icon for Windows 8 (144x144 + tile color) -->
+  <meta name="msapplication-TileImage" content="img/icon-144x144.png">
+  <meta name="msapplication-TileColor" content="#afafaf">
+  <meta name="msapplication-tap-highlight" content="no">
+  <!-- Default twitter cards -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:site" content="@username">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="keyer">
+  <meta property="og:image" content="img/icon-144x144.png" />
 
   <style>
     html,
@@ -21,7 +49,9 @@
 
 <body>
   <recri-keyer></recri-keyer>
-
+  <noscript>
+    Please enable JavaScript to view this website.
+  </noscript>
   <script type="module" src="./src/recri-keyer.js"></script>
 </body>
 

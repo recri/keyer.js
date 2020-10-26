@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="512"
+   height="512"
+   viewBox="0 0 135.46666 135.46666"
+   version="1.1"
+   id="svg3737"
+   inkscape:version="0.92.5 (2060ec1f9f, 2020-04-08)">
+  <defs
+     id="defs3731" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.2851562"
+     inkscape:cx="115.55015"
+     inkscape:cy="256"
+     inkscape:document-units="mm"
+     inkscape:current-layer="Page-1"
+     showgrid="false"
+     units="px"
+     inkscape:pagecheckerboard="true"
+     inkscape:window-width="1600"
+     inkscape:window-height="836"
+     inkscape:window-x="0"
+     inkscape:window-y="27"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata3734">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-161.53336)">
+    <g
+       transform="matrix(0.41899062,0,0,0.41899062,-14.829533,190.49598)"
+       style="fill:none;fill-rule:evenodd;stroke:#1d62a7;stroke-width:9.47216892"
+       id="Page-1">
+      <line
+         x1="297.54318"
+         y1="69.740883"
+         x2="347.54318"
+         y2="69.740883"
+         id="knob"
+         style="stroke-width:9.47216892" />
+      <line
+         x1="47.543186"
+         y1="104.74088"
+         x2="247.54318"
+         y2="104.74088"
+         id="base-6"
+         style="stroke-width:9.47216892" />
+      <polyline
+         points="50,55 250,55 290,80 330,80"
+         id="key"
+         style="stroke-width:9.47216892"
+         transform="translate(-2.4568139,14.740883)" />
+      <circle
+         style="fill:#1d62a7;stroke:#ffffff;stroke-width:0.63147795"
+         r="20"
+         cx="113.54319"
+         cy="69.740883"
+         id="hinge" />
+    </g>
+  </g>
+</svg>
