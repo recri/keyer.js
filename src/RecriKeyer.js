@@ -2,12 +2,21 @@ import { LitElement, html, css } from 'lit-element';
 import { keyerLogo } from './keyer-logo.js';
 import { Keyer } from './Keyer.js';
 
+// wpm speed limits
 const qrqStep = 10;
 const qrsStep = 1;
 const qrqMax = 150;
 const qrsMax = 50;
-const qrqMin = 50;
+const qrqMin = 10;
 const qrsMin = 10;
+
+// application color scheme, from material design color tool
+const color_primary = css`#1d62a7`;
+const color_p_light = css`#5b8fd9`;
+const color_p_dark  = css`#003977`;
+const color_secondary = css`#9e9e9e`;
+const color_s_light = css`#cfcfcf`;
+const color_s_dark =  css`#707070`;
 
 export class RecriKeyer extends LitElement {
 
@@ -109,7 +118,7 @@ export class RecriKeyer extends LitElement {
         align-items: center;
         justify-content: flex-start;
         font-size: calc(10px + 2vmin);
-        color: #1a2b42;
+        color: black;
         max-width: 960px;
         margin: 0 auto;
         text-align: center;
@@ -125,11 +134,20 @@ export class RecriKeyer extends LitElement {
         margin-top: 16px;
       }
 
+      button > span {
+	font-size: calc(10px + 2vmin);
+      }
+
       div.keyboard {
         display: block;
-        width: 100%;
+	margin-top: 16px;
+	margin-left: 10%
+        width: 90%;
         height: 300px;
         overflow-y: auto;
+	border: inset;
+	border-color: ${color_secondary};
+	border-width: 5px;
       }
 
       .app-footer {
