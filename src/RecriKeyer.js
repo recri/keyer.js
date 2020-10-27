@@ -120,6 +120,8 @@ export class RecriKeyer extends LitElement {
       }
 
       .logo > svg {
+	margin-left: 5%;
+	max-width: 90%;
         margin-top: 16px;
       }
 

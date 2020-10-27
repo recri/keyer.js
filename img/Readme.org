@@ -1,4 +1,23 @@
 * Image construction
+  If you look in ../index.html and ../manifest.json you'll find a list
+  of icons which we want to provide.  Some of these are probably obsolete,
+  the list accumulates over time and never gets shorter.  We build the
+  icons here and then copy the ones we use into dist/img/* using the
+  copy plugin configuration in ../rollup.config.js.
+** Sizes referenced in one way or another
+   512, 256, 192, 144, 128, 114, 110, 96, 72, 64, 48, 32, 24, 16
+** At one end of the scale there is the full size svg logo which   
+   gets incorporated into ../src/keyer-logo.js with masking
+   to a shorter height.
+** Svg icons scale, but there are limits.
+   In particular, drawing the 512x512 logo with lines thick
+   enough to not disappear when scaled to 16x16 makes the big
+   logo heavy and chunky.
+** Also, there's the maskable requirement
+   Android icons get masked to a circle or a rounded square, so they need
+   to confine their significant content to 80% of their size, a circle of
+   radius 40%.  All my icons except the 16x16 meet this criteria, but Android
+   only cares about 512 and 196.
 ** Basic svg icon was originally 'sketched' in keyer-logo.tcl
    allowed me to draw what I wanted and fiddle with proportions
 ** Then discovered that I could edit keyer-logo.svg in emacs
@@ -15,3 +34,7 @@
    Need an icon-512x512.png for an initial loading splash to meet the lighthouse
    best practices, then need a variety of others for various PWA contexts.
 ** Then use gimp to layer a selection of pngs into a favicon.ico
+   The literature is a riot, now I know that various Apple products want 180, 167,
+   and 152 pixel images.
+** Now it turns out that apple recommends 152, 167, and 180.  And someone says
+   they don't allow tranparency, must be solid background.

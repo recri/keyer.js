@@ -1,31 +1,39 @@
-[x] keyboard source to morse and text
-[ ] color text according to sent status
-[ ] enable backspace for limited editing of input text
-[ ] enable newline to insert <br> of input text
-[ ] explore the contenteditable solution to input text
-[ ] cancel button
-[x] play/pause button
-[ ] keyboard source to straight key
-[ ] keyboard source to iambic key
-[ ] see if left/right is in the event
-[ ] bug keyer
-[ ] ultimatic keyer
-[ ] fix KeyerDetone
-[ ] fix KeyerDetime
-[ ] decode microphone tone source
-[ ] decode microphone sung source
-[ ] webrtc tone sink
-[ ] webrtc tone source
-[ ] full window menu for envelope
-[x] a nice straight key animated logo
-[ ] animated straight key logo
-[x] a nice favicon
-[ ] factor KeyerSink from KeyerOutput
-[ ] factor KeyerSource from KeyerInput
-[ ] refactor Input -> Input/Source
-[ ] refactor Output -> Output/Sink
-[ ] does KeyerPlayer.connect() ever get called?
-[x] incorporarate PWA functionality
-[x] push to netlify
-[x] controls don't render update on change
-[x] speed control is a no-op
+* To do list for keyer.js
+** [x] keyboard source to morse and text
+** [ ] color text according to sent status
+** [ ] enable backspace for limited editing of input text
+** [ ] enable newline to insert <br> of input text
+** [ ] explore the contenteditable solution to input text
+** [ ] cancel button
+** [x] play/pause button
+** [ ] keyboard source to straight key
+** [ ] keyboard source to iambic key
+** [ ] see if left/right is in the event
+** [ ] bug keyer
+** [ ] ultimatic keyer
+** [ ] fix KeyerDetone
+** [ ] fix KeyerDetime
+** [ ] decode microphone tone source
+** [ ] decode microphone sung source
+** [ ] webrtc tone sink
+** [ ] webrtc tone source
+** [ ] full window menu for envelope
+** [x] a nice straight key animated logo
+** [ ] animated straight key logo
+** [x] a nice favicon
+** [ ] factor KeyerSink from KeyerOutput
+** [ ] factor KeyerSource from KeyerInput
+** [ ] refactor Input -> Input/Source
+** [ ] refactor Output -> Output/Sink
+** [ ] does KeyerPlayer.connect() ever get called?
+** [x] incorporarate PWA functionality
+** [x] push to netlify
+** [x] controls don't render update on change
+** [x] speed control is a no-op
+** [ ] one size fits all logo is too chunky
+** [ ] edit color of text classes
+** [x] solve window not fitting viewport
+   used css to resize logo to fit
+** [ ] icons need to be maskable
+   ie, content can be masked to radius 40% circle without
+   losing out.

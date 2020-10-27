@@ -35,19 +35,11 @@ export default merge(baseConfig, {
 		{ src: './manifest.json', dest: 'dist' },
 		{ src: './favicon.ico', dest: 'dist' },
 		{ src: './img/icon-512x512.png', dest: 'dist/img' },
-		{ src: './img/icon-256x256.png', dest: 'dist/img' },
 		{ src: './img/icon-192x192.png', dest: 'dist/img' },
-		{ src: './img/icon-144x144.png', dest: 'dist/img' },
-		{ src: './img/icon-128x128.png', dest: 'dist/img' },
-		{ src: './img/icon-114x114.png', dest: 'dist/img' },
-		{ src: './img/icon-110x110.png', dest: 'dist/img' },
-		{ src: './img/icon-96x96.png', dest: 'dist/img' },
-		{ src: './img/icon-72x72.png', dest: 'dist/img' },
-		{ src: './img/icon-64x64.png', dest: 'dist/img' },
-		{ src: './img/icon-48x48.png', dest: 'dist/img' },
-		{ src: './img/icon-32x32.png', dest: 'dist/img' },
-		{ src: './img/icon-24x24.png', dest: 'dist/img' },
-		{ src: './img/icon-16x16.png', dest: 'dist/img' }
+		{ src: './img/icon-180x180.png', dest: 'dist/img' },
+		{ src: './img/icon-167x167.png', dest: 'dist/img' },
+		{ src: './img/icon-152x152.png', dest: 'dist/img' },
+		{ src: './img/icon-144x144.png', dest: 'dist/img' }
 	    ]
 	})]
 });
