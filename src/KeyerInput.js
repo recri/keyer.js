@@ -33,12 +33,12 @@ export class KeyerInput {
     if (this._type && this[this._type]) this[this._type].onmidievent(...args);
   }
 
-  keydown(...args) {
-    if (this._type && this[this._type]) this[this._type].keydown(...args);
+  keydown(e) {
+    if (this._type && this[this._type]) this[this._type].keydown(e);
   }
 
-  keyup(...args) {
-    if (this._type && this[this._type]) this[this._type].keyup(...args);
+  keyup(e) {
+    if (this._type && this[this._type]) this[this._type].keyup(e);
   }
 
   // type handling

@@ -5,6 +5,8 @@ export class KeyerStraightInput extends KeyerPlayer {
     super(context);
     this.raw_key_on = false;
     this.is_on = false;
+    this.keycodes = [ 'AltRight', 'ControlRight', 'ShiftRight', 'AltLeft', 'ControlLeft', 'ShiftLeft' ];
+    this.keycode = 'ShiftRight';
   }
 
   keyset(key, on) {
@@ -16,12 +18,10 @@ export class KeyerStraightInput extends KeyerPlayer {
     }
   }
 
-  //
-  keydown(key) { this.keyset(key, true); }
+  keydown(key) { this.keyset(e.code === this.keycode, true); }
 
-  keyup(key) { this.keyset(key, false); }
+  keyup(key) { this.keyset(e.code === this.keycode, false); }
 
-  //
   /* eslint class-methods-use-this: ["error", { "exceptMethods": ["onfocus"] }] */
   onfocus() {}
 

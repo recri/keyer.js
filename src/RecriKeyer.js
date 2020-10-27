@@ -3,7 +3,7 @@ import { keyerLogo } from './keyer-logo.js';
 import { Keyer } from './Keyer.js';
 
 // wpm speed limits
-const qrqStep = 10;
+const qrqStep = 1;
 const qrsStep = 1;
 const qrqMax = 150;
 const qrsMax = 50;
@@ -178,7 +178,7 @@ export class RecriKeyer extends LitElement {
     this.itemsPerSession = 5;
     this.repsPerItem = 5;
     this.running = this.keyer.context.state !== 'suspended';
-    this.text = [['sent', '']];
+    this.text = [['sent', 'This is done'], ['pending', '']];
   }
 
   static isshift(key) {
@@ -186,13 +186,18 @@ export class RecriKeyer extends LitElement {
   }
 
   keydown(e) {
-    // console.log(`keydown e.target.tagName ${e.target.tagName}`);
-    if (RecriKeyer.isshift(e.key)) this.keyer.keydown(e);
-    // disable space scrolling of page, but keep space in text entry
-    if (e.keyCode === 32) {
-      this.keypress(e);
-      e.preventDefault();
+    if (RecriKeyer.isshift(e.key)) {
+      // e.key -> Control | Alt | Shift
+      // e.location -> 1 for Left, 2 for Right
+      // e.code -> (Control | Alt | Shift) (Left | Right)
+      // console.log(`keydown e.key ${e.key} e.location ${e.location} e.code ${e.code}`);
+      this.keyer.keydown(e);
     }
+    // disable space scrolling of page, but keep space in text entry
+    // if (e.keyCode === 32) {
+      // this.keypress(e);
+      // e.preventDefault();
+    // }
   }
 
   keyup(e) {
@@ -203,6 +208,21 @@ export class RecriKeyer extends LitElement {
     // console.log(`keypress e.target.tagName ${e.target.tagName}`);
     this.text = this.text.concat([['pending', e.key]]);
     this.keyer.keypress(e);
+  }
+
+  divInput(e) {
+    switch (e.inputType) {
+    case 'insertText': this.keyer.outputSend(e.data); break;
+    case 'deleteTextBackward': break; // e.data deleted
+    case 'deleteByCut': break; // e.data is null
+    case 'insertFromPaste': break; // e.data is null
+    case 'insertFromDrop': break; // e.data is null
+    default: console.log(`divInput: ${e}`); break;
+    }
+  }
+
+  divChange(e) {
+    console.log(`divChange: ${e}`);
   }
 
   playPause() {
@@ -216,7 +236,7 @@ export class RecriKeyer extends LitElement {
     }
   }
 
-  clear() { this.text = [['sent', '']]; }
+  clear() { this.text = [['sent',''],['pending','']]; }
 
   cancel() { 
     this.keyer.outputCancel();
@@ -248,8 +268,8 @@ export class RecriKeyer extends LitElement {
 	  <span>Cancel</span>
         </button>
 	<div>
-	<div class="keyboard" tabindex="0" @keypress=${this.keypress} @keydown=${this.keydown}  @keyup=${this.keyup}>
-	  ${this.text.map(t => html`<span class="${t[0]}">${t[1]}</span>`)}
+	<div class="keyboard" contenteditable="true" @input=${this.divInput} @change=${this.divChange} @keydown=${this.keydown} @keyup=${this.keyup}>
+	  ${this.text.map(t => t[0] !== 'pending' ? html`<span class="${t[0]}" contenteditable="false">${t[1]}</span>` : html`${t[1]}`)}
 	</div>
 	<h2>Settings</h2>
 	<div>
