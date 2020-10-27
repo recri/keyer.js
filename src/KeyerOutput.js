@@ -14,13 +14,9 @@ export class KeyerOutput extends KeyerPlayer {
     this.wpm = 20; // words per minute
   }
 
-  set wpm(wpm) {
-    this.dit = 60.0 / (Math.max(5, Math.min(100, wpm)) * 50);
-  }
+  set wpm(wpm) { this.dit = 60.0 / (wpm * 50); }
 
-  get wpm() {
-    return 60 / (this.dit * 50);
-  }
+  get wpm() { return Math.round(60 / (this.dit * 50)); }
 
   /* eslint no-continue: "warn" */
   send(string) {

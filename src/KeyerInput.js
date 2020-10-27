@@ -42,9 +42,7 @@ export class KeyerInput {
   }
 
   // type handling
-  get type() {
-    return this._type;
-  }
+  get type() { return this._type; }
 
   set type(type) {
     this.onblur();
@@ -56,98 +54,50 @@ export class KeyerInput {
     this.midiInput.rebind(event => this.onmidievent(event));
   }
 
-  midiRefresh() {
-    this.midiInput.refresh();
-  }
+  midiRefresh() { this.midiInput.refresh(); }
 
-  midiNames() {
-    return this.midiInput.names();
-  }
+  midiNames() { return this.midiInput.names(); }
 
   // properties of keyer
-  get pitch() {
-    return this.iambic.pitch;
-  }
+  get pitch() { return this.iambic.pitch; }
 
-  set pitch(hertz) {
-    this.straight.pitch = hertz;
-    this.iambic.pitch = hertz;
-  }
+  set pitch(hertz) { this.straight.pitch = hertz; this.iambic.pitch = hertz; }
 
-  get gain() {
-    return this.iambic.gain;
-  }
+  get gain() { return this.iambic.gain; }
 
-  set gain(gain) {
-    this.iambic.gain = gain;
-    this.straight.gain = gain;
-  }
+  set gain(gain) { this.iambic.gain = gain; this.straight.gain = gain; }
 
-  get rise() {
-    return this.iambic.rise;
-  }
+  get rise() { return this.iambic.rise; }
 
-  set rise(ms) {
-    this.iambic.rise = ms;
-    this.straight.rise = ms;
-  }
+  set rise(ms) { this.iambic.rise = ms; this.straight.rise = ms; }
 
-  get fall() {
-    return this.iambic.fall;
-  }
+  get fall() { return this.iambic.fall; }
 
-  set fall(ms) {
-    this.iambic.fall = ms;
-    this.straight.fall = ms;
-  }
+  set fall(ms) { this.iambic.fall = ms; this.straight.fall = ms; }
 
-  get wpm() {
-    return this.iambic.wpm;
-  }
+  get wpm() { return this.iambic.wpm; }
 
-  set wpm(wpm) {
-    this.iambic.wpm = wpm;
-  }
+  set wpm(wpm) { this.iambic.wpm = wpm; }
 
-  get dah() {
-    return this.iambic.dah;
-  }
+  get dah() { return this.iambic.dah; }
 
-  set dah(dah) {
-    this.iambic.dah = dah;
-  }
+  set dah(dah) { this.iambic.dah = dah; }
 
-  get ies() {
-    return this.iambic.ies;
-  }
+  get ies() { return this.iambic.ies; }
 
-  set ies(ies) {
-    this.iambic.ies = ies;
-  }
+  set ies(ies) { this.iambic.ies = ies; }
 
-  get ils() {
-    return this.iambic.ils;
-  }
+  get ils() { return this.iambic.ils; }
 
-  set ils(ils) {
-    this.iambic.ils = ils;
-  }
+  set ils(ils) { this.iambic.ils = ils; }
 
-  get iws() {
-    return this.iambic.iws;
-  }
+  get iws() { return this.iambic.iws; }
 
-  set iws(iws) {
-    this.iambic.iws = iws;
-  }
+  set iws(iws) { this.iambic.iws = iws; }
 
-  get swapped() {
-    return this.iambic.swapped;
-  }
+  get swapped() { return this.iambic.swapped; }
 
-  set swapped(swapped) {
-    this.iambic.swapped = swapped;
-  }
+  set swapped(swapped) { this.iambic.swapped = swapped; }
 }
 // Local Variables:
 // mode: JavaScript

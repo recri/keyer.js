@@ -1,4 +1,4 @@
-[ ] keyboard source to morse and text
+[x] keyboard source to morse and text
 [ ] color text according to sent status
 [ ] enable backspace for limited editing of input text
 [ ] enable newline to insert <br> of input text
@@ -7,6 +7,7 @@
 [x] play/pause button
 [ ] keyboard source to straight key
 [ ] keyboard source to iambic key
+[ ] see if left/right is in the event
 [ ] bug keyer
 [ ] ultimatic keyer
 [ ] fix KeyerDetone
@@ -16,12 +17,15 @@
 [ ] webrtc tone sink
 [ ] webrtc tone source
 [ ] full window menu for envelope
-[ ] a nice straight key animated logo
-[ ] a nice favicon
+[x] a nice straight key animated logo
+[ ] animated straight key logo
+[x] a nice favicon
 [ ] factor KeyerSink from KeyerOutput
 [ ] factor KeyerSource from KeyerInput
 [ ] refactor Input -> Input/Source
 [ ] refactor Output -> Output/Sink
 [ ] does KeyerPlayer.connect() ever get called?
-[ ] incorporarate PWA functionality
-[ ] push to netlify
+[x] incorporarate PWA functionality
+[x] push to netlify
+[x] controls don't render update on change
+[x] speed control is a no-op

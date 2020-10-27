@@ -8,6 +8,7 @@ const USE_DETIMER = false; // decode from transitions
 
 // combine inputs and outputs
 export class Keyer {
+
   constructor(params) {
     this.enabled = false;
     this.context = new AudioContext();
@@ -94,7 +95,7 @@ export class Keyer {
     pitch: 622.25 /* Eb5 */,
 
     gain: -26,
-    wpm: 15,
+    speed: 15,
     rise: 4,
     fall: 4,
     dah: 3,
@@ -123,191 +124,94 @@ export class Keyer {
     }
   }
 
-  setDefaults() {
-    this.setParams(Keyer.defaults);
-  }
+  setDefaults() { this.setParams(Keyer.defaults); }
 
   // keyboard handlers
   /* eslint class-methods-use-this: ["error", { "exceptMethods": ["keydown","keyup","keypress"] }] */
-  keydown(e) {
-    // console.log(`keydown ${e.key}`);
-    this.input.keydown(e);
-  }
+  keydown(e) { this.input.keydown(e); }
 
-  keyup(e) {
-    // console.log(`keyup ${e.key}`);
-    this.input.keyup(e);
-  }
+  keyup(e) { this.input.keyup(e); }
 
-  keypress(e) {
-    // console.log(`keypress ${e.key} '${this.output.table.encode(e.key)}'`);
-    // this.output.table.encode(e.key)
-    this.outputSend(e.key);
-  }
+  keypress(e) { this.outputSend(e.key); }
 
   // useful actions
-  outputSend(text) {
-    this.output.send(text);
-  }
+  outputSend(text) { this.output.send(text); }
 
-  outputCancel() {
-    this.output.keyOff();
-  }
+  outputCancel() { this.output.keyOff(); }
 
-  outputDecoderOnLetter(callback, context) {
-    this.outputDecoder.on('letter', callback, context);
-  }
+  outputDecoderOnLetter(callback, context) { this.outputDecoder.on('letter', callback, context); }
 
-  outputDecoderOffLetter(callback, context) {
-    this.outputDecoder.off('letter', callback, context);
-  }
+  outputDecoderOffLetter(callback, context) { this.outputDecoder.off('letter', callback, context); }
 
-  inputMidiOnRefresh(callback, context) {
-    this.input.midiOnRefresh(callback, context);
-  }
+  inputMidiOnRefresh(callback, context) { this.input.midiOnRefresh(callback, context); }
 
-  inputMidiRefresh() {
-    this.input.midiRefresh();
-  }
+  inputMidiRefresh() { this.input.midiRefresh(); }
 
-  inputMidiNames() {
-    return this.input.midiNames();
-  }
+  inputMidiNames() { return this.input.midiNames(); }
 
-  inputDecoderOnLetter(callback, context) {
-    this.inputDecoder.on('letter', callback, context);
-  }
+  inputDecoderOnLetter(callback, context) { this.inputDecoder.on('letter', callback, context); }
 
-  inputDecoderOffLetter(callback, context) {
-    this.inputDecoder.off('letter', callback, context);
-  }
+  inputDecoderOffLetter(callback, context) { this.inputDecoder.off('letter', callback, context); }
 
-  inputKeydown(isleft) {
-    this.input.keydown(isleft);
-  }
+  inputKeydown(isleft) { this.input.keydown(isleft); }
 
-  inputKeyup(isleft) {
-    this.input.keyup(isleft);
-  }
+  inputKeyup(isleft) { this.input.keyup(isleft); }
 
-  inputFocus() {
-    this.input.onfocus();
-  }
+  inputFocus() { this.input.onfocus(); }
 
-  inputBlur() {
-    this.input.onblur();
-  }
+  inputBlur() { this.input.onblur(); }
 
-  currentTime() {
-    return this.context.currentTime;
-  }
+  currentTime() { return this.context.currentTime; }
 
   // direct getters and setters on properties
   // setting input and output the same
-  get pitch() {
-    return this.output.pitch;
-  }
+  get pitch() { return this.output.pitch; }
 
-  set pitch(v) {
-    this.input.pitch = v;
-    this.output.pitch = v;
-  }
+  set pitch(v) { this.input.pitch = v; this.output.pitch = v; }
 
-  get gain() {
-    return this.output.gain;
-  }
+  get gain() { return this.output.gain; }
 
-  set gain(v) {
-    this.input.gain = v;
-    this.output.gain = v;
-  }
+  set gain(v) { this.input.gain = v; this.output.gain = v; }
 
-  get rise() {
-    return this.output.rise;
-  }
+  get rise() { return this.output.rise; }
 
-  set rise(v) {
-    this.input.rise = v;
-    this.output.rise = v;
-  }
+  set rise(v) { this.input.rise = v; this.output.rise = v; }
 
-  get fall() {
-    return this.output.fall;
-  }
+  get fall() { return this.output.fall; }
 
-  set fall(v) {
-    this.input.fall = v;
-    this.output.fall = v;
-  }
+  set fall(v) { this.input.fall = v; this.output.fall = v; }
 
-  get wpm() {
-    return this.output.wpm;
-  }
+  get speed() { return this.output.wpm; }
 
-  set wpm(v) {
-    this.input.wpm = v;
-    this.output.wpm = v;
-  }
+  set speed(v) { this.input.wpm = v; this.output.wpm = v; }
 
-  get dah() {
-    return this.output.dah;
-  }
+  get dah() { return this.output.dah; }
 
-  set dah(v) {
-    this.input.dah = v;
-    this.output.dah = v;
-  }
+  set dah(v) { this.input.dah = v; this.output.dah = v; }
 
-  get ies() {
-    return this.output.ies;
-  }
+  get ies() { return this.output.ies; }
 
-  set ies(v) {
-    this.input.ies = v;
-    this.output.ies = v;
-  }
+  set ies(v) { this.input.ies = v; this.output.ies = v; }
 
-  get ils() {
-    return this.output.ils;
-  }
+  get ils() { return this.output.ils; }
 
-  set ils(v) {
-    this.input.ils = v;
-    this.output.ils = v;
-  }
+  set ils(v) { this.input.ils = v; this.output.ils = v; }
 
-  get iws() {
-    return this.output.iws;
-  }
+  get iws() { return this.output.iws; }
 
-  set iws(v) {
-    this.input.iws = v;
-    this.output.iws = v;
-  }
+  set iws(v) { this.input.iws = v; this.output.iws = v; }
 
-  get midi() {
-    return this.input.midi;
-  }
+  get midi() { return this.input.midi; }
 
-  set midi(v) {
-    this.input.midi = v;
-  }
+  set midi(v) { this.input.midi = v; }
 
-  get swapped() {
-    return this.input.swapped;
-  }
+  get swapped() { return this.input.swapped; }
 
-  set swapped(v) {
-    this.input.swapped = v;
-  }
+  set swapped(v) { this.input.swapped = v; }
 
-  get type() {
-    return this.input.type;
-  }
+  get type() { return this.input.type; }
 
-  set type(v) {
-    this.input.type = v;
-  }
+  set type(v) { this.input.type = v; }
 
   static async createAudioProcessor(context, source, name) {
     try {

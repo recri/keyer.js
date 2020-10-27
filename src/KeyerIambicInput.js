@@ -2,21 +2,13 @@ import { KeyerIambicKeyer } from './KeyerIambicKeyer.js';
 
 export class KeyerIambicInput extends KeyerIambicKeyer {
   // handlers for focus and key events
-  onfocus() {
-    this.start();
-  }
+  onfocus() { this.start(); }
 
-  onblur() {
-    this.stop();
-  }
+  onblur() { this.stop(); }
 
-  keydown(key) {
-    this.keyset(key, true);
-  }
+  keydown(key) { this.keyset(key, true); }
 
-  keyup(key) {
-    this.keyset(key, false);
-  }
+  keyup(key) { this.keyset(key, false); }
 
   // handler for MIDI
   /* eslint no-bitwise: ["error", { "allow": ["&", "^"] }] */
@@ -49,9 +41,7 @@ export class KeyerIambicInput extends KeyerIambicKeyer {
     this.clock();
   }
 
-  start() {
-    this.startClock();
-  }
+  start() { this.startClock(); }
 
   stop() {
     this.rawDitOn = false;
