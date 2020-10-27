@@ -3,7 +3,7 @@ import { keyerLogo } from './keyer-logo.js';
 import { Keyer } from './Keyer.js';
 
 // wpm speed limits
-const qrqStep = 10;
+const qrqStep = 1;
 const qrsStep = 1;
 const qrqMax = 150;
 const qrsMax = 50;
@@ -11,12 +11,12 @@ const qrqMin = 10;
 const qrsMin = 10;
 
 // application color scheme, from material design color tool
-const color_primary = css`#1d62a7`;
-const color_p_light = css`#5b8fd9`;
-const color_p_dark  = css`#003977`;
-const color_secondary = css`#9e9e9e`;
-const color_s_light = css`#cfcfcf`;
-const color_s_dark =  css`#707070`;
+// const colorPrimary = css`#1d62a7`;
+// const colorPLight = css`#5b8fd9`;
+// const colorPDark  = css`#003977`;
+// const colorSecondary = css`#9e9e9e`;
+// const colorSLight = css`#cfcfcf`;
+// const colorSDark =  css`#707070`;
 
 export class RecriKeyer extends LitElement {
 
@@ -146,7 +146,7 @@ export class RecriKeyer extends LitElement {
         height: 300px;
         overflow-y: auto;
 	border: inset;
-	border-color: ${color_secondary};
+	border-color: #9e9e9e;
 	border-width: 5px;
       }
 
@@ -187,6 +187,13 @@ export class RecriKeyer extends LitElement {
 
   keydown(e) {
     // console.log(`keydown e.target.tagName ${e.target.tagName}`);
+    if (RecriKeyer.isshift(e.key)) {
+      // e.key -> Control | Alt | Shift
+      // e.location -> 1 for Left, 2 for Right
+      // e.code -> (Control | Alt | Shift) (Left | Right)
+      // console.log(`keydown e.key ${e.key} e.location ${e.location} e.code ${e.code}`);
+      this.keyer.keydown(e);
+    }
     if (RecriKeyer.isshift(e.key)) this.keyer.keydown(e);
     // disable space scrolling of page, but keep space in text entry
     if (e.keyCode === 32) {
@@ -200,7 +207,7 @@ export class RecriKeyer extends LitElement {
   }
 
   keypress(e) {
-    // console.log(`keypress e.target.tagName ${e.target.tagName}`);
+    // console.log(`keypress e.key ${e.key}`);
     this.text = this.text.concat([['pending', e.key]]);
     this.keyer.keypress(e);
   }

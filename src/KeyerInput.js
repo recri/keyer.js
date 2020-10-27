@@ -12,7 +12,7 @@ export class KeyerInput {
     this.keyboardInput = new KeyerKeyboardInput();
     this._type = null;
     this.midiInput.on('refresh', this.midiOnRefresh, this);
-    this.type = 'iambic';
+    this.type = 'straight';
   }
 
   connect(target) {
@@ -21,25 +21,15 @@ export class KeyerInput {
   }
 
   // handlers defer to selected input type in 'iambic', 'straight', and more to come
-  onblur() {
-    if (this._type && this[this._type]) this[this._type].onblur();
-  }
+  onblur() { if (this._type) this[this._type].onblur(); }
 
-  onfocus() {
-    if (this._type && this[this._type]) this[this._type].onfocus();
-  }
+  onfocus() { this[this._type].onfocus(); }
 
-  onmidievent(...args) {
-    if (this._type && this[this._type]) this[this._type].onmidievent(...args);
-  }
+  onmidievent(e) { this[this._type].onmidievent(e); }
 
-  keydown(...args) {
-    if (this._type && this[this._type]) this[this._type].keydown(...args);
-  }
+  keydown(e) { this[this._type].keydown(e); }
 
-  keyup(...args) {
-    if (this._type && this[this._type]) this[this._type].keyup(...args);
-  }
+  keyup(e) { this[this._type].keyup(e); }
 
   // type handling
   get type() { return this._type; }
@@ -65,7 +55,10 @@ export class KeyerInput {
 
   get gain() { return this.iambic.gain; }
 
-  set gain(gain) { this.iambic.gain = gain; this.straight.gain = gain; }
+  set gain(gain) { 
+    // console.log(`KeyerInput set gain ${gain}`);
+    this.iambic.gain = gain; this.straight.gain = gain; 
+  }
 
   get rise() { return this.iambic.rise; }
 

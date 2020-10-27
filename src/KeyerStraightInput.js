@@ -5,6 +5,8 @@ export class KeyerStraightInput extends KeyerPlayer {
     super(context);
     this.raw_key_on = false;
     this.is_on = false;
+    this.keycodes = [ 'AltRight', 'ControlRight', 'ShiftRight', 'AltLeft', 'ControlLeft', 'ShiftLeft' ];
+    this.keycode = 'ShiftRight';
   }
 
   keyset(key, on) {
@@ -16,16 +18,14 @@ export class KeyerStraightInput extends KeyerPlayer {
     }
   }
 
-  //
-  keydown(key) { this.keyset(key, true); }
+  keydown(e) { if (e.code === this.keycode) this.keyset(null, true); }
 
-  keyup(key) { this.keyset(key, false); }
+  keyup(e) { if (e.code === this.keycode) this.keyset(null, false); }
 
-  //
   /* eslint class-methods-use-this: ["error", { "exceptMethods": ["onfocus"] }] */
   onfocus() {}
 
-  onblur() { this.keyset(0, false); }
+  onblur() { this.keyset(null, false); }
 
   // handlers for MIDI
   /* eslint no-bitwise: ["error", { "allow": ["&"] }] */

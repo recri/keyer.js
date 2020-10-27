@@ -1,26 +1,39 @@
 import { KeyerIambicKeyer } from './KeyerIambicKeyer.js';
 
 export class KeyerIambicInput extends KeyerIambicKeyer {
+  constructor(context) {
+    super(context);
+    this.keycodes = [ 'AltRight', 'ControlRight', 'ShiftRight', 'AltLeft', 'ControlLeft', 'ShiftLeft' ];
+    this.leftkeycode = 'AltRight';
+    this.rightkeycode = 'ControlRight';
+  }
+
   // handlers for focus and key events
   onfocus() { this.start(); }
 
   onblur() { this.stop(); }
 
-  keydown(key) { this.keyset(key, true); }
+  keydown(e) { 
+    if (e.code === this.leftkeycode) this.keyset(true, true);
+    if (e.code === this.rightkeycode) this.keyset(false, true);
+  }
 
-  keyup(key) { this.keyset(key, false); }
+  keyup(e) { 
+    if (e.code === this.leftkeycode) this.keyset(true, false);
+    if (e.code === this.rightkeycode) this.keyset(false, false);
+  }
 
   // handler for MIDI
   /* eslint no-bitwise: ["error", { "allow": ["&", "^"] }] */
-  onmidievent(event) {
-    if (event.data.length === 3) {
-      // console.log("onmidievent "+event.data[0]+" "+event.data[1]+" "+event.data[2].toString(16));
-      switch (event.data[0] & 0xf0) {
+  onmidievent(e) {
+    if (e.data.length === 3) {
+      // console.log("onmidievent "+e.data[0]+" "+e.data[1]+" "+e.data[2].toString(16));
+      switch (e.data[0] & 0xf0) {
         case 0x90:
-          this.keyset((event.data[1] & 1) ^ 1, event.data[2] !== 0);
+          this.keyset((e.data[1] & 1) ^ 1, e.data[2] !== 0);
           break;
         case 0x80:
-          this.keyset((event.data[1] & 1) ^ 1, false);
+          this.keyset((e.data[1] & 1) ^ 1, false);
           break;
         default:
           break;

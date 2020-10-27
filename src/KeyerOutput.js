@@ -22,31 +22,39 @@ export class KeyerOutput extends KeyerPlayer {
   send(string) {
     const code = this.table.encode(string);
     let time = this.cursor;
+    let lastc = 0;
     for (let i = 0; i < code.length; i += 1) {
       let c = code.charAt(i);
       switch (c) {
-        case ' ': // inter-letter space at the beginning
-          time = this.keyHoldFor(this.ils * this.dit);
-          this.emit('element', c, time);
-          continue;
-        case '\t': // inter-word space at the beginning
+      case ' ': // inter-letter space at the beginning
+        time = this.keyHoldFor(this.ils * this.dit);
+        this.emit('element', c, time);
+	lastc = c;
+        continue;
+      case '\t': // inter-word space at the beginning
+	if (lastc === ' ')	// after inter-letter space
+          time = this.keyHoldFor((this.iws-this.ils) * this.dit);
+	else			// after anything else
           time = this.keyHoldFor(this.iws * this.dit);
-          this.emit('element', c, time);
-          continue;
-        case '.':
-          this.keyOnAt(time);
-          time = this.keyHoldFor(this.dit);
-          this.keyOffAt(time);
-          this.emit('element', c, time);
-          break;
-        case '-':
-          this.keyOnAt(time);
-          time = this.keyHoldFor(this.dah * this.dit);
-          this.keyOffAt(time);
-          this.emit('element', c, time);
-          break;
-        default:
-          continue;
+        this.emit('element', c, time);
+	lastc = c
+        continue;
+      case '.':
+        this.keyOnAt(time);
+        time = this.keyHoldFor(this.dit);
+        this.keyOffAt(time);
+        this.emit('element', c, time);
+	lastc = c;
+        break;
+      case '-':
+        this.keyOnAt(time);
+        time = this.keyHoldFor(this.dah * this.dit);
+        this.keyOffAt(time);
+        this.emit('element', c, time);
+	lastc = c;
+        break;
+      default:
+        continue;
       }
       if (i + 1 === code.length) {
         time = this.keyHoldFor(this.ies * this.dit);
