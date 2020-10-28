@@ -3,12 +3,12 @@
 ** [x] visible frame for keyboard input
 ** [x] style button text to match elsewhere
 ** [x] make scheme colors available inside RecriKeyer.js
-** [ ] color text according to sent status
+** [ ] color input text according to sent/skipped/pending status
 ** [x] enable backspace for limited editing of input text
 ** [x] enable newline to insert <br> of input text
 ** [x ] explore the contenteditable solution to input text
 ** [ ] cancel button
-** [ ] edit color of text classes
+** [ ] edit color of input text classes
 ** [x] define material design color set
 ** [ ] use material design color set
 ** [x] play/pause button
@@ -49,13 +49,13 @@
 ** [x] one size fits all logo is too chunky
 ** [x] solve window not fitting viewport
    used css to resize logo to fit
-** [x ] icons need to be maskable
+** [x] icons need to be maskable
    ie, content can be masked to radius 40% circle without
    losing out.  Most were that way already.
 ** [x] multiple input spaces collapsed to single by html
 ** [ ] iambic needs gain twiddle to start playing
 ** [ ] straight needs gain twiddle to start playing
-** [ ] implement weight and the other key bending controls from recri/keyer
+** [x] implement weight and the other key bending controls from recri/keyer
    #if FRAMEWORK_OPTIONS_KEYER_OPTIONS_WEIGHT
    { "-weight",	 "weight",    "Weight",  "50",	    fw_option_float,    fw_flag_none,	    offsetof(_t, opts.weight),	  "keyer mark/space weight" },
    #endif
