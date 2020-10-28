@@ -29,6 +29,9 @@ export class RecriKeyer extends LitElement {
       gain: { type: Number },
       speed: { type: Number },
       qrq: { type: Boolean },
+      weight: { type: Number },
+      ratio: { type: Number },
+      compensation: { type: Number },
       rise: { type: Number },
       fall: { type: Number },
       midi: { type: String },
@@ -43,68 +46,56 @@ export class RecriKeyer extends LitElement {
     };
   }
 
-  // set and get properties, delegate to keyer
-  set pitch(v) { 
-    const o = this.keyer.pitch;
-    this.keyer.pitch = v;
-    this.requestUpdate('pitch', o);
+  // setter with updateRequest
+  updateControl(control, newv) {
+    // console.log(`updateControl ${control} ${newv}`);
+    const oldv = this.keyer[control];
+    this.keyer[control] = newv;
+    this.requestUpdate(control, oldv);
   }
+
+  // set and get properties, delegate to keyer
+  set pitch(v) { this.updateControl('pitch', v); }
 
   get pitch() { return this.keyer.pitch; }
 
-  set gain(v) { 
-    const o = this.keyer.gain;
-    this.keyer.gain = v;
-    this.requestUpdate('gain', o);
-  }
+  set gain(v) { this.updateControl('gain', v); }
   
   get gain() { return Math.round(this.keyer.gain); }
 
-  set speed(v) {
-    const o = this.keyer.speed;
-    this.keyer.speed = v;
-    this.requestUpdate('speed', o);
-  }
+  set speed(v) { this.updateControl('speed', v); }
 
   get speed() { return this.keyer.speed; }
 
-  set rise(v) {
-    const o = this.keyer.rise;
-    this.keyer.rise = v;
-    this.requestUpdate('rise', o);
-  }
+  set weight(v) { this.updateControl('weight', v); }
+
+  get weight() { return this.keyer.weight; }
+
+  set ratio(v) { this.updateControl('ratio', v); }
+
+  get ratio() { return this.keyer.ratio; }
+
+  set compensation(v) { this.updateControl('compensation', v); }
+
+  get compensation() { return this.keyer.compensation; }
+
+  set rise(v) { this.updateControl('rise', v); }
 
   get rise() { return this.keyer.rise; }
 
-  set fall(v) { 
-    const o = this.keyer.fall;
-    this.keyer.fall = v;
-    this.requestUpdate('fall', o);
-  }
+  set fall(v) {  this.updateControl('fall', v); }
 
   get fall() { return this.keyer.fall; }
 
-  set swapped(v) { 
-    const o = this.keyer.swapped;
-    this.keyer.swapped = v;
-    this.requestUpdate('swapped', o);
-  }
+  set swapped(v) {  this.updateControl('swapped', v); }
 
   get swapped() { return this.keyer.swapped; }
 
-  set type(v) {
-    const o = this.keyer.type;
-    this.keyer.type = v;
-    this.requestUpdate('type', o);
-  }
+  set type(v) { this.updateControl('type', v); }
 
   get type() { return this.keyer.type; }
 
-  set midi(v) {
-    const o = this.keyer.midi;
-    this.keyer.midi = v;
-    this.requestUpdate('midi', o);
-  }
+  set midi(v) { this.updateControl('midi', v); }
 
   get midi() { return this.keyer.midi; }
 
@@ -168,6 +159,9 @@ export class RecriKeyer extends LitElement {
     // default property values
     this.pitch = 700;
     this.gain = -26;
+    this.weight = 50;
+    this.ratio = 50;
+    this.compensation = 0;
     this.rise = 4;
     this.fall = 4;
     this.speed = 20;
@@ -317,6 +311,24 @@ export class RecriKeyer extends LitElement {
 		.value=${this.pitch} step="1"
 		@input=${function(e) { this.pitch = e.target.value; }}>
 	  <label for="pitch">Pitch ${this.pitch} (Hz)</label>
+	</div>
+	<div>
+	  <input type="range" id="weight" name="weight" min="25" max="75"
+		.value=${this.weight} step="0.1"
+		@input=${function(e) { this.weight = e.target.value; }}>
+	  <label for="weight">Weight ${this.weight} (%)</label>
+	</div>
+	<div>
+	  <input type="range" id="ratio" name="ratio" min="25" max="75"
+		.value=${this.ratio} step="0.1"
+		@input=${function(e) { this.ratio = e.target.value; }}>
+	  <label for="ratio">Ratio ${this.ratio} (%)</label>
+	</div>
+	<div>
+	  <input type="range" id="compensation" name="compensation" min="-15" max="15"
+		.value=${this.compensation} step="0.1"
+		@input=${function(e) { this.compensation = e.target.value; }}>
+	  <label for="compensation">Compensation ${this.compensation} (%)</label>
 	</div>
 	<div>
 	  <input type="range" id="rise" name="rise" min="1" max="10" 

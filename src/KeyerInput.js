@@ -1,20 +1,26 @@
 import { KeyerEvent } from './KeyerEvent.js';
+import { KeyerNoneInput } from './KeyerNoneInput.js';
 import { KeyerStraightInput } from './KeyerStraightInput.js';
 import { KeyerIambicInput } from './KeyerIambicInput.js';
-import { KeyerMidiInput } from './KeyerMidiInput.js';
-import { KeyerKeyboardInput } from './KeyerKeyboardInput.js';
+import { KeyerNoneSource } from './KeyerNoneSource.js';
+import { KeyerMidiSource } from './KeyerMidiSource.js';
+import { KeyerKeyboardSource } from './KeyerKeyboardSource.js';
 
 // translate keyup/keydown into keyed oscillator sidetone
 export class KeyerInput extends KeyerEvent {
   constructor(context) {
     super(context);
+    this.none = new KeyerNoneInput(context);
     this.straight = new KeyerStraightInput(context);
     this.iambic = new KeyerIambicInput(context);
-    this.midiInput = new KeyerMidiInput(context);
-    this.keyboardInput = new KeyerKeyboardInput(context);
-    this._type = null;
-    this.midiInput.on('refresh', this.midiOnRefresh, this);
+    this.inputs = ['none', 'straight', 'iambic'];
+    this._type = 'none';
     this.type = 'straight';
+    
+    this.noneSource = new KeyerNoneSource(context);
+    this.midiSource = new KeyerMidiSource(context);
+    this.keyboardSource = new KeyerKeyboardSource(context);
+    this.midiSource.on('refresh', this.midiOnRefresh, this);
   }
 
   connect(target) {
@@ -23,7 +29,7 @@ export class KeyerInput extends KeyerEvent {
   }
 
   // handlers defer to selected input type in 'iambic', 'straight', and more to come
-  onblur() { if (this._type) this[this._type].onblur(); }
+  onblur() { this[this._type].onblur(); }
 
   onfocus() { this[this._type].onfocus(); }
 
@@ -42,13 +48,11 @@ export class KeyerInput extends KeyerEvent {
     this.onfocus();
   }
 
-  midiOnRefresh() {
-    this.midiInput.rebind(event => this.onmidievent(event));
-  }
+  midiOnRefresh() { this.midiSource.rebind(event => this.onmidievent(event)); }
 
-  midiRefresh() { this.midiInput.refresh(); }
+  midiRefresh() { this.midiSource.refresh(); }
 
-  midiNames() { return this.midiInput.names(); }
+  midiNames() { return this.midiSource.names(); }
 
   // properties of keyer
   get pitch() { return this.iambic.pitch; }

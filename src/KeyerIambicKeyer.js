@@ -1,4 +1,4 @@
-import { KeyerPlayer } from './KeyerPlayer.js';
+import { KeyerTimer } from './KeyerTimer.js';
 
 // keyer states
 const IDLE = 0; // waiting for a paddle closure
@@ -6,7 +6,7 @@ const DIT = 1; // making a dit or the space after
 const DAH = 2; // making a dah or the space after
 
 // translate iambic paddle events into keyup/keydown events
-export class KeyerIambicKeyer extends KeyerPlayer {
+export class KeyerIambicKeyer extends KeyerTimer {
   /*
    ** This has been stripped down to the minimal iambic state machine
    ** from the AVR sources that accompany the article in QEX March/April
@@ -46,20 +46,8 @@ export class KeyerIambicKeyer extends KeyerPlayer {
     this.dahPending = false; // memory for dah seen while playing a dit
     this.timer = 0; // seconds counting down to next decision
 
-    // seconds per feature
-    this._perDit = 0;
-    this._perDah = 0;
-    this._perIes = 0;
-    this._perIls = 0;
-    this._perIws = 0;
-
     // parameters
     this._swapped = false; // true if paddles are swapped
-    this._wpm = 20; // words per minute
-    this._dahLen = 3; // dits per dah
-    this._iesLen = 1; // dits per space between dits and dahs
-    this._ilsLen = 3; // dits per space between letters
-    this._iwsLen = 7; // dits per space between words
 
     // timer, 1/4 dit of samples
     this._buffer = null;
@@ -70,34 +58,16 @@ export class KeyerIambicKeyer extends KeyerPlayer {
     this.rawDahOn = false;
     this.lastTick = this.context.currentTime;
 
-    this.update();
+    this.on('updateTiming', this.updateTimerBuffer, this)
   }
 
-  // update the clock computations
-  // for reference a dit is
-  //              80ms at 15wpm
-  //              60ms at 20wpm
-  //              48ms at 25wpm
-  //              40ms at 30wpm
-  //              30ms at 40wpm
-  //              24ms at 50wpm
-  update() {
-    // second timing
-    this._perDit = 60.0 / (this._wpm * 50);
-    this._perDah = this._perDit * this._dahLen;
-    this._perIes = this._perDit * this._iesLen;
-    this._perIls = this._perDit * this._ilsLen;
-    this._perIws = this._perDit * this._iwsLen;
-    // console.log('iambic_keyer.update', '_perIes', _perIes);
-    // console.log('iambic_keyer.update', '_perIls', _perIls);
-    // console.log('iambic_keyer.update', '_perIws', _perIws);
+  // update the clock timer
+  updateTimerBuffer() {
     this._buffer = this.context.createBuffer(
       1,
-      Math.floor((this.context.sampleRate * this._perDit) / 4),
+      Math.floor((this.context.sampleRate * this._perRawDit) / 4),
       this.context.sampleRate
     );
-    // console.log("update:_buffer", _buffer.length, _buffer.duration, _buffer.sampleRate);
-    // console.log("update:_data", _buffer.getChannelData(0)[0], _buffer.getChannelData(0)[1], _buffer.getChannelData(0)[2]);
   }
 
   startClock() {
@@ -220,30 +190,6 @@ export class KeyerIambicKeyer extends KeyerPlayer {
 
   get swapped() { return this._swapped; }
 
-  // set the words per minute generated
-  set wpm(wpm) { this._wpm = wpm; this.update(); }
-
-  get wpm() { return this._wpm; }
-
-  // set the dah length in dits
-  set dah(dahLen) { this._dahLen = dahLen; this.update(); }
-
-  get dah() { return this._dahLen; }
-
-  // set the inter-element length in dits
-  set ies(iesLen) { this._iesLen = iesLen; this.update(); }
-
-  get ies() { return this._iesLen; }
-
-  // set the inter-letter length in dits
-  set ils(ilsLen) { this._ilsLen = ilsLen; this.update(); }
-
-  get ils() { return this._ilsLen; }
-
-  // set the inter-word length in dits
-  set iws(iwsLen) { this._iwsLen = iwsLen; this.update(); }
-
-  get iws() { return this._iwsLen; }
 }
 // Local Variables: 
 // mode: JavaScript

@@ -59,6 +59,9 @@ export class Keyer extends KeyerEvent {
     this.pitch = 700;
     this.gain = -26;
     this.speed = 15;
+    this.weight = 50;
+    this.ratio = 50;
+    this.compensation = 0;
     this.rise = 4;
     this.fall = 4;
     this.dah = 3;
@@ -124,6 +127,18 @@ export class Keyer extends KeyerEvent {
 
   set gain(v) { this.input.gain = v; this.output.gain = v; }
 
+  set weight(v) { this.input.weight = v; this.output.weight = v; }
+
+  get weight() { return this.output.weight; }
+
+  set ratio(v) { this.input.ratio = v; this.output.ratio = v; }
+
+  get ratio() { return this.output.ratio; }
+  
+  set compensation(v) { this.input.compensation = v; this.output.compensation = v; }
+
+  get compensation() { return this.output.compensation; }
+  
   get rise() { return this.output.rise; }
 
   set rise(v) { this.input.rise = v; this.output.rise = v; }

@@ -4,11 +4,12 @@
 ** [x] style button text to match elsewhere
 ** [x] make scheme colors available inside RecriKeyer.js
 ** [ ] color text according to sent status
-** [ ] enable backspace for limited editing of input text
-** [ ] enable newline to insert <br> of input text
-** [ ] explore the contenteditable solution to input text
+** [x] enable backspace for limited editing of input text
+** [x] enable newline to insert <br> of input text
+** [x ] explore the contenteditable solution to input text
 ** [ ] cancel button
 ** [ ] edit color of text classes
+** [x] define material design color set
 ** [ ] use material design color set
 ** [x] play/pause button
 ** [x] keyboard source to straight key
@@ -36,10 +37,11 @@
 ** [x] a nice straight key logo
 ** [x] a nice favicon
 ** [ ] factor KeyerSink from KeyerOutput
-** [ ] factor KeyerSource from KeyerInput
-** [ ] refactor Input -> Input/Source
+** [x] factor KeyerSource from KeyerInput
+** [x] refactor Input -> Input/Source
 ** [ ] refactor Output -> Output/Sink
-** [ ] does KeyerPlayer.connect() ever get called?
+** [x] does KeyerPlayer.connect() ever get called?
+   gets called to connect to the destination.
 ** [x] incorporarate PWA functionality
 ** [x] push to netlify
 ** [x] controls don't render update on change
@@ -50,7 +52,31 @@
 ** [x ] icons need to be maskable
    ie, content can be masked to radius 40% circle without
    losing out.  Most were that way already.
-** [ ] multiple input spaces collapsed to single by html
+** [x] multiple input spaces collapsed to single by html
 ** [ ] iambic needs gain twiddle to start playing
 ** [ ] straight needs gain twiddle to start playing
 ** [ ] implement weight and the other key bending controls from recri/keyer
+   #if FRAMEWORK_OPTIONS_KEYER_OPTIONS_WEIGHT
+   { "-weight",	 "weight",    "Weight",  "50",	    fw_option_float,    fw_flag_none,	    offsetof(_t, opts.weight),	  "keyer mark/space weight" },
+   #endif
+   #if FRAMEWORK_OPTIONS_KEYER_OPTIONS_RATIO
+   { "-ratio",	 "ratio",    "Ratio",    "50",	    fw_option_float,    fw_flag_none,	    offsetof(_t, opts.ratio),	  "keyer dit/dah ratio" },
+   #endif
+   #if FRAMEWORK_OPTIONS_KEYER_OPTIONS_COMP
+   { "-comp",     "comp",     "Comp",      "0",	    fw_option_float,    fw_flag_none,	    offsetof(_t, opts.comp),       "keyer ms compensation" },
+   #endif
+	parts per thousand = per mille = ‰
+	    {* -weight} - 
+	    {* -ratio} { $self describe $option value -format %.1f -min 25.0 -max 75.0 -step 0.1 -units % -graticule 20 -steps-per-div 50}
+	    {* -comp} { $self describe $option value -format %.1f -min -15.0 -max 15.0 -step 0.1 -units ms -graticule 20 -steps-per-div 50}
+      float r = (dp->opts.ratio-50)/100.0; // why 50 is zero is left as an exercise
+      float w = (dp->opts.weight-50)/100.0;
+      float c = 1000.0 * dp->opts.comp / microsPerDit;
+      dp->k.k.setTiming(1000000.0  / sdrkit_sample_rate(dp),
+			dp->opts.wpm, 
+			dp->opts.word, 
+			dp->opts.dit+r+w+c, 
+			dp->opts.dah-r+w+c,
+			dp->opts.ies  -w-c, 
+			dp->opts.ils  -w-c, 
+			dp->opts.iws  -w-c);

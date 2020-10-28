@@ -1,7 +1,7 @@
 import { KeyerEvent } from './KeyerEvent.js';
 /*
 */
-export class KeyerKeyboardInput extends KeyerEvent {
+export class KeyerNoneSource extends KeyerEvent {
 
 }
 // Local Variables: 

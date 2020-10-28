@@ -1,6 +1,9 @@
 import { KeyerEvent } from './KeyerEvent.js';
 
 // translate keyup/keydown into keyed sidetone
+// this layer handles keying the oscillator
+// so it knows the frequency, the volume,
+// the keying envelope, rise time, and fall time
 export class KeyerPlayer extends KeyerEvent {
   constructor(context) {
     super(context);

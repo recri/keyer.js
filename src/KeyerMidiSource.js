@@ -12,7 +12,7 @@ import { KeyerEvent } from './KeyerEvent.js';
  **  don't work now even though the browser continues to list them;
  */
 
-export class KeyerMidiInput extends KeyerEvent {
+export class KeyerMidiSource extends KeyerEvent {
   constructor(context) {
     super(context);
     this.midiOptions = { sysex: false };
