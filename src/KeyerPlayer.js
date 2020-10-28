@@ -3,8 +3,7 @@ import { KeyerEvent } from './KeyerEvent.js';
 // translate keyup/keydown into keyed sidetone
 export class KeyerPlayer extends KeyerEvent {
   constructor(context) {
-    super();
-    this.context = context;
+    super(context);
 
     // where we are in the sample time stream
     this.curpos = 0;
@@ -25,7 +24,7 @@ export class KeyerPlayer extends KeyerEvent {
 
     // initialize the gain
     this.volume = this.context.createGain();
-    this.volume.gain.value = 0;
+    this.gain = 0;
 
     // connect
     this.oscillator.connect(this.wave);
@@ -34,26 +33,18 @@ export class KeyerPlayer extends KeyerEvent {
 
   // connect our output samples to somewhere
   // this never gets called?
-  connect(target) {
-    this.volume.connect(target);
-  }
+  connect(target) { this.volume.connect(target); }
 
   set pitch(hertz) {
     this.oscillator.frequency.value = hertz;
     this.emit('change:pitch', hertz);
   }
 
-  get pitch() {
-    return this.oscillator.frequency.value;
-  }
+  get pitch() { return this.oscillator.frequency.value; }
 
-  static gainLinear(gainDecibel) {
-    return 10 ** (gainDecibel / 20);
-  }
+  static gainLinear(gainDecibel) { return 10 ** (gainDecibel / 20); }
 
-  static gainDecibel(gainLinear) {
-    return Math.log10(gainLinear) * 20;
-  }
+  static gainDecibel(gainLinear) { return Math.log10(gainLinear) * 20; }
 
   set gain(gain) {
     // console.log(`set gain ${gain} -> ${KeyerPlayer.gainLinear(gain)} -> ${KeyerPlayer.gainDecibel(KeyerPlayer.gainLinear(gain))}`);
@@ -61,38 +52,24 @@ export class KeyerPlayer extends KeyerEvent {
     this.emit('change:gain');
   }
 
-  get gain() {
-    return KeyerPlayer.gainDecibel(this.volume.gain.value);
-  }
+  get gain() { return KeyerPlayer.gainDecibel(this.volume.gain.value); }
 
-  set rise(ms) {
-    this._rise = ms || 4;
-  }
+  set rise(ms) { this._rise = ms || 4; }
 
-  get rise() {
-    return this._rise;
-  }
+  get rise() { return this._rise; }
 
-  set fall(ms) {
-    this._fall = ms || 4;
-  }
+  set fall(ms) { this._fall = ms || 4; }
 
-  get fall() {
-    return this._fall;
-  }
+  get fall() { return this._fall; }
 
   set envelope(env) {
     this._envelope = env;
     this.updateRiseFall();
   }
 
-  get envelope() {
-    return this._envelope;
-  }
+  get envelope() { return this._envelope; }
 
-  set cursor(seconds) {
-    this.curpos = seconds;
-  }
+  set cursor(seconds) { this.curpos = seconds; }
 
   get cursor() {
     this.curpos = Math.max(this.curpos, this.context.currentTime);
@@ -138,11 +115,7 @@ export class KeyerPlayer extends KeyerEvent {
   // schedule the key on at time
   keyOnAt(time) {
     // console.log("keyOnAt", time, " at ", this.context.currentTime)
-    this.wave.gain.setValueCurveAtTime(
-      this._riseCurve,
-      time,
-      this.rise / 1000.0
-    );
+    this.wave.gain.setValueCurveAtTime(this._riseCurve, time, this.rise / 1000.0);
     this.cursor = time;
     this.emit('transition', 1, time);
   }
@@ -150,11 +123,7 @@ export class KeyerPlayer extends KeyerEvent {
   // schedule the key off at time
   keyOffAt(time) {
     // console.log("keyOffAt", time, " at ", this.context.currentTime)
-    this.wave.gain.setValueCurveAtTime(
-      this._fallCurve,
-      time,
-      this.fall / 1000.0
-    );
+    this.wave.gain.setValueCurveAtTime(this._fallCurve, time, this.fall / 1000.0);
     this.cursor = time;
     this.emit('transition', 0, time);
   }
@@ -171,9 +140,7 @@ export class KeyerPlayer extends KeyerEvent {
   // this will cause a click if we were sounding
   cancel() {
     // console.log("cancel at ", this.context.currentTime);
-    this.volume.gain.cancelScheduledValues(
-      (this.cursor = this.context.currentTime)
-    );
+    this.volume.gain.cancelScheduledValues((this.cursor = this.context.currentTime));
     this.volume.gain.value = 0;
   }
 }

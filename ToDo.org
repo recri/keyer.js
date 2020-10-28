@@ -9,16 +9,23 @@
 ** [ ] explore the contenteditable solution to input text
 ** [ ] cancel button
 ** [ ] edit color of text classes
+** [ ] use material design color set
 ** [x] play/pause button
-** [ ] keyboard source to straight key
-** [ ] keyboard source to iambic key
-** [ ] see if left/right is in the event
-** [ ] midi source to straight key
-** [ ] midi source to iambic key
+** [x] keyboard source to straight key
+** [x] keyboard source to iambic key
+** [ ] select keyboard key for straight key
+** [ ] select keyboard keys for iambic paddle
+** [ ] select midi events for straight key
+** [ ] select midi events for iambic paddle
+** [x] see if left/right is in the event
+   yes, it's in e.code
+** [x] midi source to straight key
+** [x] midi source to iambic key
 ** [ ] and bug keyer
 ** [ ] and ultimatic keyer
 ** [ ] fix KeyerDetone
 ** [ ] fix KeyerDetime
+   straight key wants detime for decoder
 ** [ ] decode microphone tone source
 ** [ ] decode microphone sung source
 ** [ ] webrtc tone sink
@@ -43,3 +50,7 @@
 ** [x ] icons need to be maskable
    ie, content can be masked to radius 40% circle without
    losing out.  Most were that way already.
+** [ ] multiple input spaces collapsed to single by html
+** [ ] iambic needs gain twiddle to start playing
+** [ ] straight needs gain twiddle to start playing
+** [ ] implement weight and the other key bending controls from recri/keyer

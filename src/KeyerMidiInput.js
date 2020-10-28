@@ -13,8 +13,8 @@ import { KeyerEvent } from './KeyerEvent.js';
  */
 
 export class KeyerMidiInput extends KeyerEvent {
-  constructor() {
-    super();
+  constructor(context) {
+    super(context);
     this.midiOptions = { sysex: false };
     this.midi = null; // global MIDIAccess object
     this.refresh();

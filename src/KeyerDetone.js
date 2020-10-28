@@ -13,8 +13,7 @@ export class KeyerDetone extends KeyerEvent {
    ** at TAPR DCC 2011 by George Heron N2APB and Dave Collins AD7JT.
    */
   constructor(context) {
-    super();
-    this.context = context;
+    super(context);
     this.scriptNode = this.context.createScriptProcessor(1024, 1, 1);
     this.center = 600;
     this.bandwidth = 100;

@@ -11,12 +11,12 @@ const qrqMin = 10;
 const qrsMin = 10;
 
 // application color scheme, from material design color tool
-const color_primary = css`#1d62a7`;
-const color_p_light = css`#5b8fd9`;
-const color_p_dark  = css`#003977`;
-const color_secondary = css`#9e9e9e`;
-const color_s_light = css`#cfcfcf`;
-const color_s_dark =  css`#707070`;
+// const colorPrimary = css`#1d62a7`;
+// const colorPLight = css`#5b8fd9`;
+// const colorPDark  = css`#003977`;
+// const colorSecondary = css`#9e9e9e`;
+// const colorSLight = css`#cfcfcf`;
+// const colorSDark =  css`#707070`;
 
 export class RecriKeyer extends LitElement {
 
@@ -146,7 +146,7 @@ export class RecriKeyer extends LitElement {
         height: 300px;
         overflow-y: auto;
 	border: inset;
-	border-color: ${color_secondary};
+	border-color: #9e9e9e;
 	border-width: 5px;
       }
 
@@ -164,7 +164,7 @@ export class RecriKeyer extends LitElement {
   constructor() {
     super();
     // start the engine
-    this.keyer = new Keyer();
+    this.keyer = new Keyer(new AudioContext());
     // default property values
     this.pitch = 700;
     this.gain = -26;
@@ -205,24 +205,38 @@ export class RecriKeyer extends LitElement {
   }
 
   keypress(e) {
-    // console.log(`keypress e.target.tagName ${e.target.tagName}`);
+    // console.log(`keypress e.key ${e.key}`);
     this.text = this.text.concat([['pending', e.key]]);
     this.keyer.keypress(e);
   }
 
+  /* eslint class-methods-use-this: ["error", { "exceptMethods": ["divBeforeInput"] }] */
+  divBeforeInput(e) {
+    if (e.inputType !== 'insertText' && e.inputType !== 'deleteTextBackward')
+      console.log(`divBeforeInput for ${e.inputType}`);
+  }
+
   divInput(e) {
     switch (e.inputType) {
-    case 'insertText': this.keyer.outputSend(e.data); break;
-    case 'deleteTextBackward': break; // e.data deleted
-    case 'deleteByCut': break; // e.data is null
-    case 'insertFromPaste': break; // e.data is null
-    case 'insertFromDrop': break; // e.data is null
-    default: console.log(`divInput: ${e}`); break;
+    case 'insertText':
+      this.keyer.outputSend(e.data); break; // e.data inserted
+    case 'insertParagraph':
+      break;
+    case 'deleteTextBackward':
+      this.output.unsend(e.data); break; // e.data deleted
+    case 'deleteByCut':
+      this.output.unsend(e.data); break; // e.data is null
+    case 'insertFromPaste':
+      break; // e.data is null
+    case 'insertFromDrop':
+      break; // e.data is null
+    default:
+      console.log(`divInput:\n${e}`); break;
     }
   }
 
   divChange(e) {
-    console.log(`divChange: ${e}`);
+    console.log(`divChange: ${e} ${this.keyer.type}`);
   }
 
   playPause() {
@@ -268,7 +282,7 @@ export class RecriKeyer extends LitElement {
 	  <span>Cancel</span>
         </button>
 	<div>
-	<div class="keyboard" contenteditable="true" @input=${this.divInput} @change=${this.divChange} @keydown=${this.keydown} @keyup=${this.keyup}>
+	<div class="keyboard" contenteditable="true" @input=${this.divInput} @beforeinput=${this.divBeforeInput} @keydown=${this.keydown} @keyup=${this.keyup}>
 	  ${this.text.map(t => t[0] !== 'pending' ? html`<span class="${t[0]}" contenteditable="false">${t[1]}</span>` : html`${t[1]}`)}
 	</div>
 	<h2>Settings</h2>

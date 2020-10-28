@@ -1,3 +1,4 @@
+import { KeyerEvent } from './KeyerEvent.js';
 import { KeyerOutput } from './KeyerOutput.js';
 import { KeyerDecode } from './KeyerDecode.js';
 import { KeyerInput } from './KeyerInput.js';
@@ -7,11 +8,11 @@ const USE_DETONER = false; // decode from sidetone
 const USE_DETIMER = false; // decode from transitions
 
 // combine inputs and outputs
-export class Keyer {
+export class Keyer extends KeyerEvent {
 
-  constructor(params) {
+  constructor(context) {
+    super(context);
     this.enabled = false;
-    this.context = new AudioContext();
     this.output = new KeyerOutput(this.context);
     this.outputDecoder = new KeyerDecode(this.context);
     this.input = new KeyerInput(this.context);
@@ -22,109 +23,57 @@ export class Keyer {
     // decode from elements, except for decoding straight key
     // output decoder wiring
     if (USE_DETONER) {
-      this.output.on('change:pitch', pitch =>
-        this.outputDecoder.onchangepitch(pitch)
-      );
+      this.output.on('change:pitch', pitch => this.outputDecoder.onchangepitch(pitch));
       this.outputDecoder.onchangepitch(this.output.pitch);
       this.output.connect(this.outputDecoder.target);
       this.outputDecoder.connect(this.context.destination);
     } else if (USE_DETIMER) {
       this.output.connect(this.context.destination);
-      this.output.on(
-        'transition',
-        this.outputDecoder.ontransition,
-        this.outputDecoder
-      );
+      this.output.on('transition', this.outputDecoder.ontransition, this.outputDecoder);
     } else {
       this.output.connect(this.context.destination);
-      this.output.on(
-        'element',
-        this.outputDecoder.onelement,
-        this.outputDecoder
-      );
+      this.output.on('element', this.outputDecoder.onelement, this.outputDecoder);
     }
 
     // input decoder wiring
     if (USE_DETONER) {
-      this.input.straight.on('change:pitch', pitch =>
-        this.inputDecoder.onchangepitch(pitch)
-      );
-      this.input.iambic.on('change:pitch', pitch =>
-        this.inputDecoder.onchangepitch(pitch)
-      );
+      this.input.straight.on('change:pitch', pitch => this.inputDecoder.onchangepitch(pitch));
+      this.input.iambic.on('change:pitch', pitch => this.inputDecoder.onchangepitch(pitch));
       this.inputDecoder.onchangepitch(this.input.pitch);
       this.input.connect(this.inputDecoder.target);
       this.inputDecoder.connect(this.context.destination);
     } else if (USE_DETIMER) {
       this.input.connect(this.context.destination);
-      this.input.straight.on(
-        'transition',
-        this.inputDecoder.ontransition,
-        this.inputDecoder
-      );
-      this.input.iambic.on(
-        'transition',
-        this.inputDecoder.ontransition,
-        this.inputDecoder
-      );
+      this.input.straight.on('transition', this.inputDecoder.ontransition, this.inputDecoder);
+      this.input.iambic.on('transition', this.inputDecoder.ontransition, this.inputDecoder);
     } else {
       this.input.connect(this.context.destination);
-      this.input.straight.on(
-        'transition',
-        this.inputDecoder.ontransition,
-        this.inputDecoder
-      );
-      this.input.iambic.on(
-        'element',
-        this.inputDecoder.onelement,
-        this.inputDecoder
-      );
+      this.input.straight.on('transition', this.inputDecoder.ontransition, this.inputDecoder);
+      this.input.iambic.on('element', this.inputDecoder.onelement, this.inputDecoder);
     }
 
     this.table = this.output.table;
     this.outputDecoder.table = this.table;
     this.inputDecoder.table = this.table;
 
-    // console.log("station", params);
-    if (params) this.setParams(params);
-    else this.setDefaults();
+    this.pitch = 700;
+    this.gain = -26;
+    this.speed = 15;
+    this.rise = 4;
+    this.fall = 4;
+    this.dah = 3;
+    this.ies = 1;
+    this.ils = 3;
+    this.iws = 7;
+    this.midi = 'none';
+    this.swapped = false;
+    this.type = 'iambic';
+
+    this.itemsPerSession = 5;
+    this.repsPerItem = 5;
   }
 
   // parameters
-  static defaults = {
-    pitch: 622.25 /* Eb5 */,
-
-    gain: -26,
-    speed: 15,
-    rise: 4,
-    fall: 4,
-    dah: 3,
-    ies: 1,
-    ils: 3,
-    iws: 7,
-    midi: 'none',
-    swapped: false,
-    type: 'iambic',
-
-    itemsPerSession: 5,
-    repsPerItem: 5,
-  };
-
-  getParams() {
-    const params = {};
-    for (const name of Object.keys(Keyer.defaults)) {
-      params[name] = this[name];
-    }
-    return params;
-  }
-
-  setParams(params) {
-    for (const name of Object.keys(params)) {
-      this[name] = params[name];
-    }
-  }
-
-  setDefaults() { this.setParams(Keyer.defaults); }
 
   // keyboard handlers
   /* eslint class-methods-use-this: ["error", { "exceptMethods": ["keydown","keyup","keypress"] }] */
@@ -137,7 +86,9 @@ export class Keyer {
   // useful actions
   outputSend(text) { this.output.send(text); }
 
-  outputCancel() { this.output.keyOff(); }
+  outputUnsend(text) { this.output.unsend(text); }
+
+  outputCancel() { this.output.cancel(); }
 
   outputDecoderOnLetter(callback, context) { this.outputDecoder.on('letter', callback, context); }
 

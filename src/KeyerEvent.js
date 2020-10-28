@@ -2,7 +2,8 @@ export class KeyerEvent {
   /**
    * events: installed event handlers
    */
-  constructor() {
+  constructor(audioContext) {
+    this.context = audioContext;
     this.events = [];
   }
 

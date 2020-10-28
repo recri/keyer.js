@@ -1,18 +1,20 @@
+import { KeyerEvent } from './KeyerEvent.js';
 import { KeyerStraightInput } from './KeyerStraightInput.js';
 import { KeyerIambicInput } from './KeyerIambicInput.js';
 import { KeyerMidiInput } from './KeyerMidiInput.js';
 import { KeyerKeyboardInput } from './KeyerKeyboardInput.js';
 
 // translate keyup/keydown into keyed oscillator sidetone
-export class KeyerInput {
+export class KeyerInput extends KeyerEvent {
   constructor(context) {
+    super(context);
     this.straight = new KeyerStraightInput(context);
     this.iambic = new KeyerIambicInput(context);
-    this.midiInput = new KeyerMidiInput();
-    this.keyboardInput = new KeyerKeyboardInput();
+    this.midiInput = new KeyerMidiInput(context);
+    this.keyboardInput = new KeyerKeyboardInput(context);
     this._type = null;
     this.midiInput.on('refresh', this.midiOnRefresh, this);
-    this.type = 'iambic';
+    this.type = 'straight';
   }
 
   connect(target) {
@@ -21,25 +23,15 @@ export class KeyerInput {
   }
 
   // handlers defer to selected input type in 'iambic', 'straight', and more to come
-  onblur() {
-    if (this._type && this[this._type]) this[this._type].onblur();
-  }
+  onblur() { if (this._type) this[this._type].onblur(); }
 
-  onfocus() {
-    if (this._type && this[this._type]) this[this._type].onfocus();
-  }
+  onfocus() { this[this._type].onfocus(); }
 
-  onmidievent(...args) {
-    if (this._type && this[this._type]) this[this._type].onmidievent(...args);
-  }
+  onmidievent(e) { this[this._type].onmidievent(e); }
 
-  keydown(e) {
-    if (this._type && this[this._type]) this[this._type].keydown(e);
-  }
+  keydown(e) { this[this._type].keydown(e); }
 
-  keyup(e) {
-    if (this._type && this[this._type]) this[this._type].keyup(e);
-  }
+  keyup(e) { this[this._type].keyup(e); }
 
   // type handling
   get type() { return this._type; }
@@ -65,7 +57,10 @@ export class KeyerInput {
 
   get gain() { return this.iambic.gain; }
 
-  set gain(gain) { this.iambic.gain = gain; this.straight.gain = gain; }
+  set gain(gain) { 
+    // console.log(`KeyerInput set gain ${gain}`);
+    this.iambic.gain = gain; this.straight.gain = gain; 
+  }
 
   get rise() { return this.iambic.rise; }
 
