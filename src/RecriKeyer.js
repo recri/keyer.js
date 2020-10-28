@@ -210,7 +210,7 @@ export class RecriKeyer extends LitElement {
     this.keyer.keypress(e);
   }
 
-  /* eslint class-methods-use-this: ["error", { "exceptMethods": ["divBeforeInput"] }] */
+  /* eslint class-methods-use-this: ["error", { "exceptMethods": ["divBeforeInput","divChange"] }] */
   divBeforeInput(e) {
     switch (e.inputType) {
     case 'insertText': break;
@@ -246,7 +246,8 @@ export class RecriKeyer extends LitElement {
   }
 
   divChange(e) {
-    console.log(`divChange: ${e} ${this.keyer.type}`);
+    console.log("divChange:");
+    console.log(e);
   }
 
   playPause() {
