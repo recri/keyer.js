@@ -178,7 +178,7 @@ export class RecriKeyer extends LitElement {
     this.itemsPerSession = 5;
     this.repsPerItem = 5;
     this.running = this.keyer.context.state !== 'suspended';
-    this.text = [['sent', 'This is done'], ['pending', '']];
+    this.text = [['sent', ''], ['pending', '']];
   }
 
   static isshift(key) {
@@ -212,8 +212,16 @@ export class RecriKeyer extends LitElement {
 
   /* eslint class-methods-use-this: ["error", { "exceptMethods": ["divBeforeInput"] }] */
   divBeforeInput(e) {
-    if (e.inputType !== 'insertText' && e.inputType !== 'deleteTextBackward')
-      console.log(`divBeforeInput for ${e.inputType}`);
+    switch (e.inputType) {
+    case 'insertText': break;
+    case 'deleteContentBackward': break;
+    case 'insertFromPaste': break;
+    case 'insertParagraph': break;
+    default:
+      console.log('divBeforeInput:');
+      console.log(e);
+      break;
+    }
   }
 
   divInput(e) {
@@ -222,16 +230,18 @@ export class RecriKeyer extends LitElement {
       this.keyer.outputSend(e.data); break; // e.data inserted
     case 'insertParagraph':
       break;
-    case 'deleteTextBackward':
-      this.output.unsend(e.data); break; // e.data deleted
+    case 'deleteContentBackward':
+      this.keyer.outputUnsend(e.data); break; // e.data deleted
     case 'deleteByCut':
-      this.output.unsend(e.data); break; // e.data is null
+      this.keyer.outputUnsend(e.data); break; // e.data is null
     case 'insertFromPaste':
       break; // e.data is null
     case 'insertFromDrop':
       break; // e.data is null
     default:
-      console.log(`divInput:\n${e}`); break;
+      console.log('divInput:');
+      console.log(e);
+      break;
     }
   }
 
