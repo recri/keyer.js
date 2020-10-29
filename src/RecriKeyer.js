@@ -2,6 +2,22 @@ import { LitElement, html, css } from 'lit-element';
 import { keyerLogo } from './keyer-logo.js';
 import { Keyer } from './Keyer.js';
 
+// default values
+const pitchDefault = 700;
+const gainDefault = -26;
+const weightDefault = 50;
+const ratioDefault = 50;
+const compensationDefault = 0;
+const riseDefault = 4;
+const fallDefault = 4;
+const speedDefault = 20;
+const qrqDefault = false;
+const inputKeyerDefault = 'iambic';
+const swappedDefault = false;
+const leftPaddleKeyDefault = 'AltRight';
+const rightPaddleKeyDefault = 'ControlRight';
+const straightKeyDefault = 'ControlRight';
+
 // wpm speed limits
 const qrqStep = 1;
 const qrsStep = 1;
@@ -36,10 +52,10 @@ export class RecriKeyer extends LitElement {
       fall: { type: Number },
       midi: { type: String },
       swapped: { type: Boolean },
-      type: { type: String },
-
-      itemsPerSession: { type: Number },
-      repsPerItem: { type: Number },
+      inputKeyer: { type: String },
+      leftPaddleKey: { type: String },
+      rightPaddleKey: { type: String },
+      straightKey: { type: String },
 
       running: { type: Boolean },
       text: { type: Array },
@@ -51,6 +67,7 @@ export class RecriKeyer extends LitElement {
     // console.log(`updateControl ${control} ${newv}`);
     const oldv = this.keyer[control];
     this.keyer[control] = newv;
+    localStorage.setItem(control, newv);
     this.requestUpdate(control, oldv);
   }
 
@@ -91,107 +108,69 @@ export class RecriKeyer extends LitElement {
 
   get swapped() { return this.keyer.swapped; }
 
-  set type(v) { this.updateControl('type', v); }
+  set inputKeyer(v) { this.updateControl('inputKeyer', v); }
 
-  get type() { return this.keyer.type; }
+  get inputKeyer() { return this.keyer.inputKeyer; }
 
-  set midi(v) { this.updateControl('midi', v); }
+  set leftPaddleKey(v) { this.updateControl('leftPaddleKey', v); }
 
-  get midi() { return this.keyer.midi; }
+  get leftPaddleKey() { return this.keyer.leftPaddleKey; }
 
-  // styles
-  static get styles() {
-    return css`
-      :host {
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-start;
-        font-size: calc(10px + 2vmin);
-        color: black;
-        max-width: 960px;
-        margin: 0 auto;
-        text-align: center;
-      }
+  set rightPaddleKey(v) { this.updateControl('rightPaddleKey', v); }
 
-      main {
-        flex-grow: 1;
-      }
+  get rightPaddleKey() { return this.keyer.rightPaddleKey; }
 
-      .logo > svg {
-	margin-left: 5%;
-	max-width: 90%;
-        margin-top: 16px;
-      }
+  set straightKey(v) { this.updateControl('straightKey', v); }
 
-      button > span {
-	font-size: calc(10px + 2vmin);
-      }
-
-      div.keyboard {
-        display: block;
-	margin-top: 16px;
-	margin-left: 10%
-        width: 90%;
-        height: 300px;
-        overflow-y: auto;
-	border: inset;
-	border-color: #9e9e9e;
-	border-width: 5px;
-      }
-
-      .app-footer {
-        font-size: calc(12px + 0.5vmin);
-        align-items: center;
-      }
-
-      .app-footer a {
-        margin-left: 5px;
-      }
-    `;
-  }
+  get straightKey() { return this.keyer.straightKey; }
 
   constructor() {
     super();
     // start the engine
     this.keyer = new Keyer(new AudioContext());
+    // this was for debugging the need to twiddle the gain to get iambic or straight keying to work
+    // this.keyer.input.straight.on('change:gain', g => console.log(`straight change:gain ${g}`), window);
+    // this.keyer.input.iambic.on('change:gain', g => console.log(`iambic change:gain ${g}`), window);
+    // this.keyer.output.on('change:gain', g => console.log(`output change:gain ${g}`), window);
+
     // default property values
-    this.pitch = 700;
-    this.gain = -26;
-    this.weight = 50;
-    this.ratio = 50;
-    this.compensation = 0;
-    this.rise = 4;
-    this.fall = 4;
-    this.speed = 20;
-    this.qrq = false;
-    this.midi = 'none';
-    this.swapped = false;
-    this.type = 'iambic';
-    this.itemsPerSession = 5;
-    this.repsPerItem = 5;
+    // using localStorage to persist defaults between sessions
+    // defaults set at top of file
+    this.pitch = localStorage.pitch || pitchDefault;
+    this.gain = localStorage.gain || gainDefault;
+    this.weight = localStorage.weight || weightDefault;
+    this.ratio = localStorage.ratio || ratioDefault;
+    this.compensation = localStorage.compensation || compensationDefault;
+    this.rise = localStorage.rise || riseDefault;
+    this.fall = localStorage.fall || fallDefault;
+    this.speed = localStorage.speed || speedDefault;
+    this.qrq = localStorage.qrq || qrqDefault;
+    this.swapped = localStorage.swapped || swappedDefault;
+    this.inputKeyer = localStorage.inputKeyer || inputKeyerDefault;
+    this.leftPaddleKey = localStorage.leftPaddleKey || leftPaddleKeyDefault;
+    this.rightPaddleKey = localStorage.rightPaddleKey || rightPaddleKeyDefault;
+    this.straightKey = localStorage.straightKey || straightKeyDefault;
+
     this.running = this.keyer.context.state !== 'suspended';
     this.text = [['sent', ''], ['pending', '']];
+
+    // this.keyer.outputDecoderOnLetter((ltr, code) => console.log(`output '${ltr}' '${code}'`));
+    // this.keyer.inputDecoderOnLetter((ltr, code) => console.log(`input '${ltr}' '${code}'`));
+    // this.keyer.output.on('sent', ltr => console.log(`sent '${ltr}'`));
   }
 
   static isshift(key) {
     return key === 'Control' || key === 'Alt' || key === 'Shift';
   }
 
+  // e.key -> Control | Alt | Shift
+  // e.location -> 1 for Left, 2 for Right
+  // e.code -> (Control | Alt | Shift) (Left | Right)
   keydown(e) {
     if (RecriKeyer.isshift(e.key)) {
-      // e.key -> Control | Alt | Shift
-      // e.location -> 1 for Left, 2 for Right
-      // e.code -> (Control | Alt | Shift) (Left | Right)
       // console.log(`keydown e.key ${e.key} e.location ${e.location} e.code ${e.code}`);
       this.keyer.keydown(e);
     }
-    // disable space scrolling of page, but keep space in text entry
-    // if (e.keyCode === 32) {
-      // this.keypress(e);
-      // e.preventDefault();
-    // }
   }
 
   keyup(e) {
@@ -249,6 +228,10 @@ export class RecriKeyer extends LitElement {
     if (this.keyer.context.state === 'suspended') {
       this.keyer.context.resume();
       this.running = true;
+      // this cures need to twiddle the gain to get iambic keying to work
+      // I wish I understood why
+      this.gain += 1;
+      this.gain -= 1;
     } else {
       this.keyer.context.suspend();
       this.running = false;
@@ -269,6 +252,74 @@ export class RecriKeyer extends LitElement {
     } else {
       this.speed = Math.min(this.speed, qrsMax);
     }
+  }
+
+  selectInputKeyer(e) { this.inputKeyer = e.target.value; }
+  
+  toggleSwapped(e) { 
+    console.log(`toggleSwapped e.target.value ${e.target.value} swapped ${this.swapped}`);
+    this.swapped = ! this.swapped;
+  }
+
+  selectLeftPaddleKey(e) { this.leftPaddleKey = e.target.value; }
+
+  selectRigthtPaddleKey(e) { this.rightPaddleKey = e.target.value; }
+
+  selectStraightKey(e) { this.straightKey = e.target.value; }
+
+  // styles
+  static get styles() {
+    return css`
+      :host {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        font-size: calc(10px + 2vmin);
+        color: black;
+        max-width: 960px;
+        margin: 0 auto;
+        text-align: center;
+      }
+
+      main {
+        flex-grow: 1;
+      }
+
+      .logo > svg {
+	margin-left: 5%;
+	max-width: 90%;
+        margin-top: 16px;
+      }
+
+      button > span {
+	font-size: calc(10px + 2vmin);
+      }
+      select {
+	font-size: calc(10px + 2vmin);
+      }
+      div.keyboard {
+        display: block;
+	margin-top: 16px;
+	margin-left: 10%
+        width: 90%;
+        height: 300px;
+        overflow-y: auto;
+	border: inset;
+	border-color: #9e9e9e;
+	border-width: 5px;
+      }
+
+      .app-footer {
+        font-size: calc(12px + 0.5vmin);
+        align-items: center;
+      }
+
+      .app-footer a {
+        margin-left: 5px;
+      }
+    `;
   }
 
   render() {
@@ -342,6 +393,62 @@ export class RecriKeyer extends LitElement {
 		@input=${function(e) { this.fall = e.target.value; }}>
 	  <label for="fall">Fall ${this.fall} (ms)</label>
 	</div>
+	<div>
+	  <label>Input keyer:
+	    <select .value=${this.inputKeyer} @change=${this.selectInputKeyer}>
+	      <option>none</option>
+	      <option>straight</option>
+	      <option>iambic</option>
+	    </select>
+	  </label>
+	</div>
+	${this.inputKeyer === 'iambic' ? html`
+	<div>
+	  <label>Swap paddles: 
+	    <button role="switch" aria-checked=${this.swapped} @click=${this.toggleSwapped}>
+	      <span>${this.swapped ? 'Swapped' : 'Not swapped'}</span>
+	    </button>
+	</div>
+	<div>
+	  <label>Left paddle key:
+	    <select .value=${this.leftPaddleKey} @change=${this.selectLeftPaddleKey}>
+	      <option>none</option>
+	      <option>ShiftLeft</option>
+	      <option>ControlLeft</option>
+	      <option>AltLeft</option>
+	      <option>AltRight</option>
+	      <option>ControlRight</option>
+	      <option>ShiftRight</option>
+	    </select>
+	  </label>
+	</div>
+	<div>
+	  <label>Right paddle key:
+	    <select .value=${this.rightPaddleKey} @change=${this.selectRightPaddleKey}>
+	      <option>none</option>
+	      <option>ShiftLeft</option>
+	      <option>ControlLeft</option>
+	      <option>AltLeft</option>
+	      <option>AltRight</option>
+	      <option>ControlRight</option>
+	      <option>ShiftRight</option>
+	    </select>
+	  </label>
+	</div>` : html``}
+	${this.inputKeyer === 'straight' ? html`
+	<div>
+	  <label>Straight key:
+	    <select .value=${this.straightKey} @change=${this.selectStraightKey}>
+	      <option>none</option>
+	      <option>ShiftLeft</option>
+	      <option>ControlLeft</option>
+	      <option>AltLeft</option>
+	      <option>AltRight</option>
+	      <option>ControlRight</option>
+	      <option>ShiftRight</option>
+	    </select>
+	  </label>
+	</div>` : html``}
 	<h2>Status</h2>
 	Sample rate: ${this.keyer.context.sampleRate};<br/>
 	Current time: ${this.keyer.context.currentTime};<br/>

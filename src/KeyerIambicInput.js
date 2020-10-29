@@ -4,8 +4,8 @@ export class KeyerIambicInput extends KeyerIambicKeyer {
   constructor(context) {
     super(context);
     this.keycodes = [ 'AltRight', 'ControlRight', 'ShiftRight', 'AltLeft', 'ControlLeft', 'ShiftLeft' ];
-    this.leftkeycode = 'AltRight';
-    this.rightkeycode = 'ControlRight';
+    this.leftKey = 'AltRight';
+    this.rightKey = 'ControlRight';
   }
 
   // handlers for focus and key events
@@ -14,13 +14,13 @@ export class KeyerIambicInput extends KeyerIambicKeyer {
   onblur() { this.stop(); }
 
   keydown(e) { 
-    if (e.code === this.leftkeycode) this.keyset(true, true);
-    if (e.code === this.rightkeycode) this.keyset(false, true);
+    if (e.code === this.leftKey) this.keyset(true, true);
+    if (e.code === this.rightKey) this.keyset(false, true);
   }
 
   keyup(e) { 
-    if (e.code === this.leftkeycode) this.keyset(true, false);
-    if (e.code === this.rightkeycode) this.keyset(false, false);
+    if (e.code === this.leftKey) this.keyset(true, false);
+    if (e.code === this.rightKey) this.keyset(false, false);
   }
 
   // handler for MIDI

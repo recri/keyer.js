@@ -46,7 +46,7 @@ export class KeyerDetime extends KeyerDetone {
    ** Until detime has seen both dits and dahs, it may be a little confused.
    */
   detimeProcess(onoff, time) {
-    const frame = time * context.sampleRate; /* convert seconds to frames */
+    const frame = time * this.context.sampleRate; /* convert seconds to frames */
     const observation =
       frame - this.frame; /* float length of observed element or space */
     // let guess = 0
@@ -81,7 +81,7 @@ export class KeyerDetime extends KeyerDetone {
         // console.log("update="+update+", estimate="+this.estimate);
         this.estimate += update;
         this.estimate /= 2;
-        this.wpm = (context.sampleRate * 60) / (this.estimate * this.word);
+        this.wpm = (this.context.sampleRate * 60) / (this.estimate * this.word);
       }
       const guess = (100 * observation) / this.estimate; /* make a guess */
       if (guess < 200) {
@@ -109,7 +109,7 @@ export class KeyerDetime extends KeyerDetone {
       // console.log("update="+update+", estimate="+this.estimate);
       this.estimate += update;
       this.estimate /= 2;
-      this.wpm = (context.sampleRate * 60) / (this.estimate * this.word);
+      this.wpm = (this.context.sampleRate * 60) / (this.estimate * this.word);
       guess = (100 * observation) / this.estimate;
     }
     if (guess < 200) {

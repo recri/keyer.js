@@ -14,8 +14,8 @@ export class KeyerInput extends KeyerEvent {
     this.straight = new KeyerStraightInput(context);
     this.iambic = new KeyerIambicInput(context);
     this.inputs = ['none', 'straight', 'iambic'];
-    this._type = 'none';
-    this.type = 'straight';
+    this._keyer = 'none';
+    this.keyer = 'straight';
     
     this.noneSource = new KeyerNoneSource(context);
     this.midiSource = new KeyerMidiSource(context);
@@ -29,24 +29,15 @@ export class KeyerInput extends KeyerEvent {
   }
 
   // handlers defer to selected input type in 'iambic', 'straight', and more to come
-  onblur() { this[this._type].onblur(); }
+  onblur() { this[this._keyer].onblur(); }
 
-  onfocus() { this[this._type].onfocus(); }
+  onfocus() { this[this._keyer].onfocus(); }
 
-  onmidievent(e) { this[this._type].onmidievent(e); }
+  onmidievent(e) { this[this._keyer].onmidievent(e); }
 
-  keydown(e) { this[this._type].keydown(e); }
+  keydown(e) { this[this._keyer].keydown(e); }
 
-  keyup(e) { this[this._type].keyup(e); }
-
-  // type handling
-  get type() { return this._type; }
-
-  set type(type) {
-    this.onblur();
-    this._type = type;
-    this.onfocus();
-  }
+  keyup(e) { this[this._keyer].keyup(e); }
 
   midiOnRefresh() { this.midiSource.rebind(event => this.onmidievent(event)); }
 
@@ -61,11 +52,20 @@ export class KeyerInput extends KeyerEvent {
 
   get gain() { return this.iambic.gain; }
 
-  set gain(gain) { 
-    // console.log(`KeyerInput set gain ${gain}`);
-    this.iambic.gain = gain; this.straight.gain = gain; 
-  }
+  set gain(gain) { this.iambic.gain = gain; this.straight.gain = gain; }
 
+  set weight(v) { this.iambic.weight = v; }
+
+  get weight() { return this.iambic.weight; }
+
+  set ratio(v) { this.iambic.ratio = v; }
+
+  get ratio() { return this.iambic.ratio; }
+  
+  set compensation(v) { this.iambic.compensation = v; }
+
+  get compensation() { return this.iambic.compensation; }
+  
   get rise() { return this.iambic.rise; }
 
   set rise(ms) { this.iambic.rise = ms; this.straight.rise = ms; }
@@ -78,25 +78,30 @@ export class KeyerInput extends KeyerEvent {
 
   set wpm(wpm) { this.iambic.wpm = wpm; }
 
-  get dah() { return this.iambic.dah; }
-
-  set dah(dah) { this.iambic.dah = dah; }
-
-  get ies() { return this.iambic.ies; }
-
-  set ies(ies) { this.iambic.ies = ies; }
-
-  get ils() { return this.iambic.ils; }
-
-  set ils(ils) { this.iambic.ils = ils; }
-
-  get iws() { return this.iambic.iws; }
-
-  set iws(iws) { this.iambic.iws = iws; }
-
   get swapped() { return this.iambic.swapped; }
 
   set swapped(swapped) { this.iambic.swapped = swapped; }
+
+  get keyer() { return this._keyer; }
+
+  set keyer(keyer) {
+    this.onblur();
+    this._keyer = keyer;
+    this.onfocus();
+  }
+
+  set leftPaddleKey(v) { this.iambic.leftKey = v; }
+
+  get leftPaddleKey() { return this.iambic.leftKey; }
+
+  set rightPaddleKey(v) { this.iambic.rightKey = v; }
+
+  get rightPaddleKey() { return this.iambic.rightKey; }
+
+  set straightKey(v) { this.straight.key = v; }
+
+  get straightKey() { return this.straight.key; }
+
 }
 // Local Variables:
 // mode: JavaScript

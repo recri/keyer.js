@@ -38,21 +38,35 @@ export class KeyerOutput extends KeyerTimer {
       // inter-word space
       if (this.lastch === ' ' || this.lastch === '\t' || this.lastch === "\n") {
 	// repeated inter-word space
-	time = this.sendIws(time)
+	time = this.keyHoldFor(this._perIws);
+	this.emit('element', '\t', time);
       } else {
 	// inter-word space after character
 	// reduce by inter-letter space already queued
-	time = this.extendToIws(time);
+	time = this.keyHoldFor(this._perIws-this._perIls); 
+	this.emit('element', '\t', time);
       }
     } else {
       // translate character to dits and dahs and trailing inter-letter space
       for (const c of this.table.encode(ch).split('')) {
 	if (c === '.') { 	// send a dit
-	  time = this.sendDit(time);
+	  this.keyOnAt(time);
+	  time = this.keyHoldFor(this._perDit);
+	  this.keyOffAt(time);
+	  this.emit('element', '.', time);
+	  time = this.keyHoldFor(this._perIes);
+	  this.emit('element', '', time);
 	} else if (c === '-') {	// send a dah
-	  time = this.sendDah(time);
+	  this.keyOnAt(time);
+	  time = this.keyHoldFor(this._perDah);
+	  this.keyOffAt(time);
+	  this.emit('element', '-', time);
+	  time = this.keyHoldFor(this._perIes);
+	  this.emit('element', '', time);
 	} else if (c === ' ') {
-	  time = this.extendToIls(time);
+	  // reduce by inter-element space already queued
+	  time = this.keyHoldFor(this._perIls-this._perIes);
+	  this.emit('element', ' ', time);
 	} else {
 	  console.log(`why is {$c} in the code table for ${ch}?`);
 	}

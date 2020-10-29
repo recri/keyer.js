@@ -52,7 +52,7 @@ export class KeyerPlayer extends KeyerEvent {
   set gain(gain) {
     // console.log(`set gain ${gain} -> ${KeyerPlayer.gainLinear(gain)} -> ${KeyerPlayer.gainDecibel(KeyerPlayer.gainLinear(gain))}`);
     this.volume.gain.value = KeyerPlayer.gainLinear(gain);
-    this.emit('change:gain');
+    this.emit('change:gain', gain);
   }
 
   get gain() { return KeyerPlayer.gainDecibel(this.volume.gain.value); }

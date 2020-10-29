@@ -5,6 +5,7 @@ import { KeyerPlayer } from './KeyerPlayer.js';
 export class KeyerTimer extends KeyerPlayer {
   constructor(context) {
     super(context);
+
     // initialize
     this._weight = 50;
     this._ratio = 50;
@@ -38,9 +39,9 @@ export class KeyerTimer extends KeyerPlayer {
   //              30ms at 40wpm
   //              24ms at 50wpm
   updateTiming() {
-    const dit = 60.0 / (this.wpm * 50);
+    const dit = 60.0 / (this.wpm * 50); // seconds/dit
     const microsPerDit = dit * 1e6;
-    const r = (this._ratio-50)/100.0; // why 50 is zero is left as an exercise
+    const r = (this._ratio-50)/100.0;
     const w = (this._weight-50)/100.0;
     const c = 1000.0 * this._compensation / microsPerDit;
     // console.log(`updateTiming r ${r} w ${w} c ${c} dit ${dit}`);
@@ -52,51 +53,6 @@ export class KeyerTimer extends KeyerPlayer {
     this._perIws = dit*(7  -w-c);
     this.emit('updateTiming');
   }
-
-  sendDit(time0) {
-    let time = time0;
-    this.keyOnAt(time);
-    time = this.keyHoldFor(this._perDit);
-    this.keyOffAt(time);
-    this.emit('element', '.', time);
-    time = this.keyHoldFor(this._perIes);
-    this.emit('element', '', time);
-    return time;
-  }
-
-  sendDah(time0) {
-    let time = time0;
-    this.keyOnAt(time);
-    time = this.keyHoldFor(this._perDah);
-    this.keyOffAt(time);
-    this.emit('element', '-', time);
-    time = this.keyHoldFor(this._perIes);
-    this.emit('element', '', time);
-    return time;
-  }
-
-  extendToIls(time0) {
-    let time = time0;
-    // reduce by inter-element space already queued
-    time = this.keyHoldFor(this._perIls-this._perIes);
-    this.emit('element', ' ', time);
-    return time;
-  }
-
-  extendToIws(time0) {
-    let time = time0;
-    time = this.keyHoldFor(this._perIws-this._perIls); 
-    this.emit('element', '\t', time);
-    return time;
-  }
-
-  sendIws(time0) {
-    let time = time0;
-    time = this.keyHoldFor(this._perIws);
-    this.emit('element', '\t', time);
-    return time;
-  }
-
 }
 // Local Variables: 
 // mode: JavaScript

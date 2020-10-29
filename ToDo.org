@@ -14,8 +14,8 @@
 ** [x] play/pause button
 ** [x] keyboard source to straight key
 ** [x] keyboard source to iambic key
-** [ ] select keyboard key for straight key
-** [ ] select keyboard keys for iambic paddle
+** [x] select keyboard key for straight key
+** [x] select keyboard keys for iambic paddle
 ** [ ] select midi events for straight key
 ** [ ] select midi events for iambic paddle
 ** [x] see if left/right is in the event
@@ -53,8 +53,10 @@
    ie, content can be masked to radius 40% circle without
    losing out.  Most were that way already.
 ** [x] multiple input spaces collapsed to single by html
-** [ ] iambic needs gain twiddle to start playing
-** [ ] straight needs gain twiddle to start playing
+** [x] iambic needs gain twiddle to start playing
+   twiddled it at startup
+** [x ] straight needs gain twiddle to start playing
+   turned out that straight key worked fine
 ** [x] implement weight and the other key bending controls from recri/keyer
    #if FRAMEWORK_OPTIONS_KEYER_OPTIONS_WEIGHT
    { "-weight",	 "weight",    "Weight",  "50",	    fw_option_float,    fw_flag_none,	    offsetof(_t, opts.weight),	  "keyer mark/space weight" },
@@ -80,3 +82,5 @@
 			dp->opts.ies  -w-c, 
 			dp->opts.ils  -w-c, 
 			dp->opts.iws  -w-c);
+** [x] collapse out some irrelevant UI components
+

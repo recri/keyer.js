@@ -6,7 +6,7 @@ export class KeyerStraightInput extends KeyerPlayer {
     this.raw_key_on = false;
     this.is_on = false;
     this.keycodes = [ 'AltRight', 'ControlRight', 'ShiftRight', 'AltLeft', 'ControlLeft', 'ShiftLeft' ];
-    this.keycode = 'ShiftRight';
+    this.key = 'ControlRight';
   }
 
   keyset(key, on) {
