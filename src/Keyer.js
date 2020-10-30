@@ -139,9 +139,13 @@ export class Keyer extends KeyerEvent {
 
   set speed(v) { this.input.wpm = v; this.output.wpm = v; }
 
-  get swapped() { return this.input.swapped; }
+  get qrq() { return this.output.qrq ? 'on' : 'off'; }
 
-  set swapped(v) { this.input.swapped = v; }
+  set qrq(v) { this.output.qrq = v === 'on'; }
+
+  get swapped() { return this.input.swapped ? 'on' : 'off'; }
+
+  set swapped(v) { this.input.swapped = v === 'on'; }
 
   set inputKeyer(v) { this.input.keyer = v; }
 

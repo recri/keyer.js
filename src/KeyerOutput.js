@@ -81,6 +81,7 @@ export class KeyerOutput extends KeyerTimer {
   }
 
   cancelPending() {
+    // this will probably make a crunch
     this.cancel();
     this.keyOffAt(this.context.currentTime+Math.max(this.rise, this.fall)/1000.0);
     this.pending.forEach(ch => this.emit('skipped', ch));

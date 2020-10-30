@@ -6,24 +6,26 @@
       "description": "An application for keying morse code",
       "properties": [
         { "name": "title", "type": "String", "default": "Keyer",
-          "description": "The title of your application"
-        },
+          "description": "The title of your application" },
         { "name": "page", "type": "String", "default": "main",
-          "description": "Which page to show"
-        },
+          "description": "Which page to show" },
 	{ "name": "pitch", "type": "Number", "default": "700",
-	  "description": "The frequency of the tone"
-	},
+	  "description": "The frequency of the tone" },
 	{ "name": "gain", "type": "Number", "default": "-26",
-	  "description": "The volume in Decibels relative to full scale."
-	},
+	  "description": "The volume in Decibels relative to full scale." },
 	{ "name": "speed", "type": "Number", "default": "20",
-	  "description": "The speed of morse in words per minute (WPM)."
-	},
-	{ "name": "rise", "type": "Number", "default": "4"
-	},
-	{ "name": "fall", "type": "Number", "default": "4"
-	}
+	  "description": "The speed of morse in words per minute (WPM)." },
+	{ "name": "rise", "type": "Number", "default": "4" },
+	{ "name": "fall", "type": "Number", "default": "4" }
+	{ "name": "weight", "type": "Number", "default": "50" },
+	{ "name": "ratio", "type": "Number", "default": "50" },
+	{ "name": "compensation", "type": "Number", "default": "0" },
+	{ "name": "qrq", "type", "String", "default", "off" },
+	{ "name": "inputKeyer", "type", "String", "default": "iambic" },
+	{ "name": "swapped", "type", "String", "default": "off" },
+	{ "name": "leftPaddleKey", "type": "String", "default": "AltRight" },
+	{ "name": "rightPaddleKey", "type": "String", "default": "ControlRight" },
+	{ "name": "straightKey", "type": "String", "default": "ControlRight" },
       ],
       "events": [],
       "slots": [],

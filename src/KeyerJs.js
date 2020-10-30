@@ -11,9 +11,9 @@ const compensationDefault = 0;
 const riseDefault = 4;
 const fallDefault = 4;
 const speedDefault = 20;
-const qrqDefault = false;
+const qrqDefault = 'off';
 const inputKeyerDefault = 'iambic';
-const swappedDefault = false;
+const swappedDefault = 'off';
 const leftPaddleKeyDefault = 'AltRight';
 const rightPaddleKeyDefault = 'ControlRight';
 const straightKeyDefault = 'ControlRight';
@@ -44,14 +44,14 @@ export class KeyerJs extends LitElement {
       pitch: { type: Number },
       gain: { type: Number },
       speed: { type: Number },
-      qrq: { type: Boolean },
+      qrq: { type: String },
       weight: { type: Number },
       ratio: { type: Number },
       compensation: { type: Number },
       rise: { type: Number },
       fall: { type: Number },
       midi: { type: String },
-      swapped: { type: Boolean },
+      swapped: { type: String },
       inputKeyer: { type: String },
       leftPaddleKey: { type: String },
       rightPaddleKey: { type: String },
@@ -67,7 +67,7 @@ export class KeyerJs extends LitElement {
     // console.log(`updateControl ${control} ${newv}`);
     const oldv = this.keyer[control];
     this.keyer[control] = newv;
-    localStorage.setItem(control, newv);
+    localStorage[control] = newv;
     this.requestUpdate(control, oldv);
   }
 
@@ -84,6 +84,10 @@ export class KeyerJs extends LitElement {
 
   get speed() { return this.keyer.speed; }
 
+  set qrq(v) { this.updateControl('qrq', v); }
+
+  get qrq() { return this.keyer.qrq; }
+  
   set weight(v) { this.updateControl('weight', v); }
 
   get weight() { return this.keyer.weight; }
@@ -125,8 +129,12 @@ export class KeyerJs extends LitElement {
   get straightKey() { return this.keyer.straightKey; }
 
   static defaultControl(control, defaultValue) {
-    const saved = localStorage.getItem(control);
-    return saved === null ? defaultValue : saved;
+    if (localStorage[control] === undefined) {
+      console.log(`defaultControl localStorage[${control}] is undefined, default to ${defaultValue}`);
+    } else {
+      console.log(`defaultControl localStorage[${control}] is defined, using ${localStorage[control]}`);
+    }
+    return localStorage[control] === undefined ? defaultValue : localStorage[control];
   }
 
   constructor() {
@@ -155,6 +163,12 @@ export class KeyerJs extends LitElement {
     this.leftPaddleKey = KeyerJs.defaultControl('leftPaddleKey', leftPaddleKeyDefault);
     this.rightPaddleKey = KeyerJs.defaultControl('rightPaddleKey', rightPaddleKeyDefault);
     this.straightKey = KeyerJs.defaultControl('straightKey', straightKeyDefault);
+
+    // this.leftPaddleMidi = KeyerJs.defaultControl('leftPaddleMidi', leftPaddleMidiDefault);
+    // this.rightPaddleMidi = KeyerJs.defaultControl('rightPaddleMidi', rightPaddleMidiDefault);
+    // this.straightMidi = KeyerJs.defaultControl('straightMidi', straightMidiDefault);
+    // this.touchPaddle = KeyerJs.defaultControl('touchPaddle', touchPaddleDefault);
+    // this.touchStraight = KeyerJs.defaultControl('touchStraight', touchStraightDefault);
 
     this.running = this.keyer.context.state !== 'suspended';
     this.text = [['sent', ''], ['pending', '']];
@@ -251,8 +265,9 @@ export class KeyerJs extends LitElement {
   }
 
   toggleQrq() {
-    this.qrq = ! this.qrq
-    if (this.qrq) {
+    console.log(`toggleQrq qrq ${this.qrq}`);
+    this.qrq = this.qrq === 'off' ? 'on' : 'off';
+    if (this.qrq === 'on') {
       this.speed = Math.max(qrqMin, qrqStep * Math.floor(this.speed/qrqStep));
     } else {
       this.speed = Math.min(this.speed, qrsMax);
@@ -262,8 +277,8 @@ export class KeyerJs extends LitElement {
   selectInputKeyer(e) { this.inputKeyer = e.target.value; }
   
   toggleSwapped(e) { 
-    console.log(`toggleSwapped e.target.value ${e.target.value} swapped ${this.swapped}`);
-    this.swapped = ! this.swapped;
+    console.log(`toggleSwapped swapped ${this.swapped}`);
+    this.swapped = this.swapped === 'on' ? 'off' : 'on';
   }
 
   selectLeftPaddleKey(e) { this.leftPaddleKey = e.target.value; }
@@ -348,12 +363,12 @@ export class KeyerJs extends LitElement {
 	</div>
 	<h2>Settings</h2>
 	<div>
-	  <input type="range" id="speed" name="speed" min=${this.qrq ? qrqMin : qrsMin} max=${this.qrq ? qrqMax : qrsMax}
-		.value=${this.speed} step=${this.qrq ? qrqStep : qrsStep}
+	  <input type="range" id="speed" name="speed" min=${this.qrq === 'on' ? qrqMin : qrsMin} max=${this.qrq === 'on' ? qrqMax : qrsMax}
+		.value=${this.speed} step=${this.qrq === 'on' ? qrqStep : qrsStep}
 		@input=${function(e) { this.speed = e.target.value; }}>
 	  <label for="speed">Speed ${this.speed} (WPM)</label>
-	  <button role="switch" aria-checked=${this.qrq} @click=${this.toggleQrq}>
-	    <span>${this.qrq ? 'QRQ' : 'QRS'}</span>
+	  <button role="switch" aria-checked=${this.qrq === 'on'} @click=${this.toggleQrq}>
+	    <span>${this.qrq === 'on' ? 'QRQ' : 'QRS'}</span>
 	  </button>
 	</div>
 	<div>
@@ -410,8 +425,8 @@ export class KeyerJs extends LitElement {
 	${this.inputKeyer === 'iambic' ? html`
 	<div>
 	  <label>Swap paddles: 
-	    <button role="switch" aria-checked=${this.swapped} @click=${this.toggleSwapped}>
-	      <span>${this.swapped ? 'Swapped' : 'Not swapped'}</span>
+	    <button role="switch" aria-checked=${this.swapped === 'on'} @click=${this.toggleSwapped}>
+	      <span>${this.swapped}</span>
 	    </button>
 	</div>
 	<div>
