@@ -129,11 +129,11 @@ export class KeyerJs extends LitElement {
   get straightKey() { return this.keyer.straightKey; }
 
   static defaultControl(control, defaultValue) {
-    if (localStorage[control] === undefined) {
-      console.log(`defaultControl localStorage[${control}] is undefined, default to ${defaultValue}`);
-    } else {
-      console.log(`defaultControl localStorage[${control}] is defined, using ${localStorage[control]}`);
-    }
+    // if (localStorage[control] === undefined) {
+    // console.log(`defaultControl localStorage[${control}] is undefined, default to ${defaultValue}`);
+    // } else {
+    //  console.log(`defaultControl localStorage[${control}] is defined, using ${localStorage[control]}`);
+    // }
     return localStorage[control] === undefined ? defaultValue : localStorage[control];
   }
 
