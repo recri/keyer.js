@@ -29,11 +29,11 @@ export class KeyerIambicInput extends KeyerIambicKeyer {
     if (e.data.length === 3) {
       // console.log("onmidievent "+e.data[0]+" "+e.data[1]+" "+e.data[2].toString(16));
       switch (e.data[0] & 0xf0) {
-        case 0x90:
-          this.keyset((e.data[1] & 1) ^ 1, e.data[2] !== 0);
-          break;
-        case 0x80:
-          this.keyset((e.data[1] & 1) ^ 1, false);
+      case 0x90:
+        this.keyset((e.data[1] & 1) === 0, e.data[2] !== 0);
+        break;
+      case 0x80:
+        this.keyset((e.data[1] & 1) === 0, false);
           break;
         default:
           break;
@@ -43,7 +43,7 @@ export class KeyerIambicInput extends KeyerIambicKeyer {
 
   // common handlers
   keyset(key, on) {
-    // console.log(`keyset(${key}, ${on})`);
+    // console.log(`iambic ${key}, ${on}`);
     if (key) {
       this.rawDitOn = on;
       this.emit('key:dit', on, this.context.currentTime);
