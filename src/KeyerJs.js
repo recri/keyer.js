@@ -34,7 +34,7 @@ const qrsMin = 10;
 // const colorSLight = css`#cfcfcf`;
 // const colorSDark =  css`#707070`;
 
-export class RecriKeyer extends LitElement {
+export class KeyerJs extends LitElement {
 
   // declare LitElement properties
   static get properties() {
@@ -124,6 +124,11 @@ export class RecriKeyer extends LitElement {
 
   get straightKey() { return this.keyer.straightKey; }
 
+  static defaultControl(control, defaultValue) {
+    const saved = localStorage.getItem(control);
+    return saved === null ? defaultValue : saved;
+  }
+
   constructor() {
     super();
     // start the engine
@@ -136,20 +141,20 @@ export class RecriKeyer extends LitElement {
     // default property values
     // using localStorage to persist defaults between sessions
     // defaults set at top of file
-    this.pitch = localStorage.pitch || pitchDefault;
-    this.gain = localStorage.gain || gainDefault;
-    this.weight = localStorage.weight || weightDefault;
-    this.ratio = localStorage.ratio || ratioDefault;
-    this.compensation = localStorage.compensation || compensationDefault;
-    this.rise = localStorage.rise || riseDefault;
-    this.fall = localStorage.fall || fallDefault;
-    this.speed = localStorage.speed || speedDefault;
-    this.qrq = localStorage.qrq || qrqDefault;
-    this.swapped = localStorage.swapped || swappedDefault;
-    this.inputKeyer = localStorage.inputKeyer || inputKeyerDefault;
-    this.leftPaddleKey = localStorage.leftPaddleKey || leftPaddleKeyDefault;
-    this.rightPaddleKey = localStorage.rightPaddleKey || rightPaddleKeyDefault;
-    this.straightKey = localStorage.straightKey || straightKeyDefault;
+    this.pitch = KeyerJs.defaultControl('pitch', pitchDefault);
+    this.gain = KeyerJs.defaultControl('gain', gainDefault);
+    this.weight = KeyerJs.defaultControl('weight', weightDefault);
+    this.ratio = KeyerJs.defaultControl('ratio', ratioDefault);
+    this.compensation = KeyerJs.defaultControl('compensation', compensationDefault);
+    this.rise = KeyerJs.defaultControl('rise', riseDefault);
+    this.fall = KeyerJs.defaultControl('fall', fallDefault);
+    this.speed = KeyerJs.defaultControl('speed', speedDefault);
+    this.qrq = KeyerJs.defaultControl('qrq', qrqDefault);
+    this.swapped = KeyerJs.defaultControl('swapped', swappedDefault);
+    this.inputKeyer = KeyerJs.defaultControl('inputKeyer', inputKeyerDefault);
+    this.leftPaddleKey = KeyerJs.defaultControl('leftPaddleKey', leftPaddleKeyDefault);
+    this.rightPaddleKey = KeyerJs.defaultControl('rightPaddleKey', rightPaddleKeyDefault);
+    this.straightKey = KeyerJs.defaultControl('straightKey', straightKeyDefault);
 
     this.running = this.keyer.context.state !== 'suspended';
     this.text = [['sent', ''], ['pending', '']];
@@ -167,14 +172,14 @@ export class RecriKeyer extends LitElement {
   // e.location -> 1 for Left, 2 for Right
   // e.code -> (Control | Alt | Shift) (Left | Right)
   keydown(e) {
-    if (RecriKeyer.isshift(e.key)) {
+    if (KeyerJs.isshift(e.key)) {
       // console.log(`keydown e.key ${e.key} e.location ${e.location} e.code ${e.code}`);
       this.keyer.keydown(e);
     }
   }
 
   keyup(e) {
-    if (RecriKeyer.isshift(e.key)) this.keyer.keyup(e);
+    if (KeyerJs.isshift(e.key)) this.keyer.keyup(e);
   }
 
   keypress(e) {

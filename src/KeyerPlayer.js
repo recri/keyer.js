@@ -103,18 +103,6 @@ export class KeyerPlayer extends KeyerEvent {
     return curve;
   }
 
-  // turn the key on now
-  keyOn() {
-    this.cancel();
-    this.keyOnAt(this.context.currentTime);
-  }
-
-  // turn the key off now
-  keyOff() {
-    this.cancel();
-    this.offAt(this.context.currentTime);
-  }
-
   // schedule the key on at time
   keyOnAt(time) {
     // console.log("keyOnAt", time, " at ", this.context.currentTime)
