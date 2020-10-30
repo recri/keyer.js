@@ -15,7 +15,7 @@ export class KeyerInput extends KeyerEvent {
     this.iambic = new KeyerIambicInput(context);
     this.inputs = ['none', 'straight', 'iambic'];
     this._keyer = 'none';
-    this.keyer = 'straight';
+    this.keyer = 'none';
     
     this.noneSource = new KeyerNoneSource(context);
     this.midiSource = new KeyerMidiSource(context);
