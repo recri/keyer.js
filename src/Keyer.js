@@ -62,6 +62,7 @@ export class Keyer extends KeyerEvent {
     this.leftPaddleKey = 'AltRight';
     this.rightPaddleKey = 'ControlRight';
     this.straightKey = 'ControlRight';
+    this.qrq = 'off';
   }
 
   // parameters
@@ -138,10 +139,6 @@ export class Keyer extends KeyerEvent {
   get speed() { return this.output.wpm; }
 
   set speed(v) { this.input.wpm = v; this.output.wpm = v; }
-
-  get qrq() { return this.output.qrq ? 'on' : 'off'; }
-
-  set qrq(v) { this.output.qrq = v === 'on'; }
 
   get swapped() { return this.input.swapped ? 'on' : 'off'; }
 
