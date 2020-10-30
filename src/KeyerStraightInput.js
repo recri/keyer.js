@@ -1,20 +1,27 @@
 import { KeyerPlayer } from './KeyerPlayer.js';
 
 export class KeyerStraightInput extends KeyerPlayer {
+
   constructor(context) {
     super(context);
+    this.active = false;
     this.raw_key_on = false;
     this.is_on = false;
     this.keycodes = [ 'AltRight', 'ControlRight', 'ShiftRight', 'AltLeft', 'ControlLeft', 'ShiftLeft' ];
     this.key = 'ControlRight';
     this.rampEnd = this.context.currentTime
+    this.on('ramp-end', () => this.keyset(this.raw_key_on));
   }
 
-  keyset(on) {
+  _keyset(on) {
+    // console.log(`straight key ${on}`);
     this.raw_key_on = on;
     if (this.raw_key_on !== this.is_on) {
       if (this.cursor < this.rampEnd) {
-	this.on('ramp-end', () => this.keyset(this.raw_key_on));
+	// We received a new keystate before the previous keystate got started.
+	// When we reach the end of the ramp on or off we will receive the event
+	// in the handler set in the constructor, and apply the new raw_key_on
+	// value at that time.
       } else {
 	this.is_on = this.raw_key_on;
 	if (this.is_on) {
@@ -28,26 +35,26 @@ export class KeyerStraightInput extends KeyerPlayer {
     }
   }
 
-  keydown(e) { if (e.code === this.keycode) this.keyset(true); }
+  keydown(e) { if (this.active && (e.code === this.key)) this._keyset(true); }
 
-  keyup(e) { if (e.code === this.keycode) this.keyset(false); }
+  keyup(e) { if (this.active && (e.code === this.key)) this._keyset(false); }
 
   /* eslint class-methods-use-this: ["error", { "exceptMethods": ["onfocus"] }] */
-  onfocus() {}
+  onfocus() { this.active = true; }
 
-  onblur() { this.keyset(false); }
+  onblur() { this.active = false; this._keyset(false); }
 
   // handlers for MIDI
   /* eslint no-bitwise: ["error", { "allow": ["&"] }] */
   onmidievent(event) {
-    if (event.data.length === 3) {
+    if (this.active && event.data.length === 3) {
       // console.log("onmidievent "+event.data[0]+" "+event.data[1]+" "+event.data[2].toString(16));
       switch (event.data[0] & 0xf0) {
       case 0x90:
-        this.keyset(event.data[2] !== 0);
+        this._keyset(event.data[2] !== 0);
         break;
       case 0x80:
-        this.keyset(false);
+        this._keyset(false);
         break;
       default:
         break;
