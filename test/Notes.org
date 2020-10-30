@@ -1,1 +1,1 @@
-* KeyerPlayer.gainDecibels(Keyer.gainLinear(x)) === x
+* KeyerPlayer.gainDecibels(KeyerPlayer.gainLinear(x)) === x

@@ -49,10 +49,10 @@
   "lint-staged": {
     "*.js": []
   },
-  "name": "recri-keyer",
+  "name": "keyer-js",
   "version": "0.0.0",
-  "description": "Webcomponent recri-keyer following open-wc recommendations",
-  "author": "recri-keyer",
+  "description": "Webcomponent keyer-js following open-wc recommendations",
+  "author": "Roger E Critchlow Jr",
   "license": "MIT",
   "dependencies": {
     "lit-element": "^3.0.0-pre.1",
