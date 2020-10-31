@@ -130,7 +130,7 @@ export class KeyerPlayer extends KeyerEvent {
   // should probably cancel all pending text and transition events, too.
   // this will cause a click if we were sounding
   cancel() {
-    console.log("cancel at ", this.context.currentTime);
+    // console.log("cancel at ", this.context.currentTime);
     this.ramp.gain.cancelScheduledValues((this.cursor = this.context.currentTime));
     // this.ramp.gain.setValueCurveAtTime(this._fallCurve, this.context.currentTime, this.fall / 1000.0);
     this.ramp.gain.value = 0;
