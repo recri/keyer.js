@@ -259,14 +259,13 @@ export class KeyerJs extends LitElement {
 
   clear() { this.text = [['sent',''],['pending','']]; }
 
-  cancel() { 
-    this.keyer.outputCancel();
-    // clear pending queue
-  }
+  cancel() { this.keyer.outputCancel(); }
+
+  toggleControl(control) { this[control] = this[control] === 'off' ? 'on' : 'off'; }
 
   toggleQrq() {
     console.log(`toggleQrq qrq ${this.qrq}`);
-    this.qrq = this.qrq === 'off' ? 'on' : 'off';
+    this.toggleControl('qrq');
     if (this.qrq === 'on') {
       this.speed = Math.max(qrqMin, qrqStep * Math.floor(this.speed/qrqStep));
     } else {
@@ -274,19 +273,8 @@ export class KeyerJs extends LitElement {
     }
   }
 
-  selectInputKeyer(e) { this.inputKeyer = e.target.value; }
+  selectControl(control, e) { this[control] = e.target.value; }
   
-  toggleSwapped(e) { 
-    console.log(`toggleSwapped swapped ${this.swapped}`);
-    this.swapped = this.swapped === 'on' ? 'off' : 'on';
-  }
-
-  selectLeftPaddleKey(e) { this.leftPaddleKey = e.target.value; }
-
-  selectRigthtPaddleKey(e) { this.rightPaddleKey = e.target.value; }
-
-  selectStraightKey(e) { this.straightKey = e.target.value; }
-
   // styles
   static get styles() {
     return css`
@@ -362,6 +350,7 @@ export class KeyerJs extends LitElement {
 	  ${this.text.map(t => t[0] !== 'pending' ? html`<span class="${t[0]}" contenteditable="false">${t[1]}</span>` : html`${t[1]}`)}
 	</div>
 	<h2>Settings</h2>
+	<!-- basic keyboard output settings -->
 	<div>
 	  <input type="range" id="speed" name="speed" min=${this.qrq === 'on' ? qrqMin : qrsMin} max=${this.qrq === 'on' ? qrqMax : qrsMax}
 		.value=${this.speed} step=${this.qrq === 'on' ? qrqStep : qrsStep}
@@ -383,6 +372,7 @@ export class KeyerJs extends LitElement {
 		@input=${function(e) { this.pitch = e.target.value; }}>
 	  <label for="pitch">Pitch ${this.pitch} (Hz)</label>
 	</div>
+	<!-- advanced keyboard output settings -->
 	<div>
 	  <input type="range" id="weight" name="weight" min="25" max="75"
 		.value=${this.weight} step="0.1"
@@ -413,25 +403,27 @@ export class KeyerJs extends LitElement {
 		@input=${function(e) { this.fall = e.target.value; }}>
 	  <label for="fall">Fall ${this.fall} (ms)</label>
 	</div>
+	<!-- input keyer selection --->
 	<div>
 	  <label>Input keyer:
-	    <select .value=${this.inputKeyer} @change=${this.selectInputKeyer}>
+	    <select .value=${this.inputKeyer} @change=${e => this.selectControl('inputKeyer', e)}>
 	      <option>none</option>
 	      <option>straight</option>
 	      <option>iambic</option>
 	    </select>
 	  </label>
 	</div>
-	${this.inputKeyer === 'iambic' ? html`
+	<!-- input keyer settings, iambic -->
+	${this.inputKeyer !== 'iambic' ? html`` : html `
 	<div>
 	  <label>Swap paddles: 
-	    <button role="switch" aria-checked=${this.swapped === 'on'} @click=${this.toggleSwapped}>
+            <button role="switch" aria-checked=${this.swapped === 'on'} @click=${this.toggleControl('swapped')}>
 	      <span>${this.swapped}</span>
 	    </button>
 	</div>
 	<div>
 	  <label>Left paddle key:
-	    <select .value=${this.leftPaddleKey} @change=${this.selectLeftPaddleKey}>
+            <select .value=${this.leftPaddleKey} @change=${e => this.selectControl('leftPaddleKey', e)}>
 	      <option>none</option>
 	      <option>ShiftLeft</option>
 	      <option>ControlLeft</option>
@@ -444,7 +436,7 @@ export class KeyerJs extends LitElement {
 	</div>
 	<div>
 	  <label>Right paddle key:
-	    <select .value=${this.rightPaddleKey} @change=${this.selectRightPaddleKey}>
+            <select .value=${this.rightPaddleKey} @change=${e => this.select('rightPaddleKey', e)}>
 	      <option>none</option>
 	      <option>ShiftLeft</option>
 	      <option>ControlLeft</option>
@@ -454,11 +446,12 @@ export class KeyerJs extends LitElement {
 	      <option>ShiftRight</option>
 	    </select>
 	  </label>
-	</div>` : html``}
-	${this.inputKeyer === 'straight' ? html`
+	</div>`}
+	<!-- straight input keyer settings -->
+	${this.inputKeyer !== 'straight' ? html`` : html`
 	<div>
 	  <label>Straight key:
-	    <select .value=${this.straightKey} @change=${this.selectStraightKey}>
+            <select .value=${this.straightKey} @change=${e => this.selectControl('straightKey', e)}>
 	      <option>none</option>
 	      <option>ShiftLeft</option>
 	      <option>ControlLeft</option>
@@ -468,7 +461,7 @@ export class KeyerJs extends LitElement {
 	      <option>ShiftRight</option>
 	    </select>
 	  </label>
-	</div>` : html``}
+	</div>`}
 	<h2>Status</h2>
 	Sample rate: ${this.keyer.context.sampleRate};<br/>
 	Current time: ${this.keyer.context.currentTime};<br/>
