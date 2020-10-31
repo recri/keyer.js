@@ -17,11 +17,13 @@ export class KeyerOutput extends KeyerTimer {
   unsend(ch) { if (ch !== this.pending.pop()) console.log(`lost unsend ${ch}`); }
 
   send(ch) {
+    // console.log(`output send '${ch}' idle ${this.idle} pending.length ${this.pending.length}`);
     this.pending.push(ch);
     if (this.idle) this.sendPending();
   }
 
   sendPending() {
+    // console.log(`sendPending lastch '${this.lastch}' pending ${this.pending.length}`);
     if (this.lastch !== null) 
       this.emit('sent', this.lastch);
     if (this.pending.length === 0) {
@@ -30,7 +32,7 @@ export class KeyerOutput extends KeyerTimer {
       return;
     }
     // not apparently idle, 
-    // probably a race here
+    // but probably a race here
     this.idle = false;
     let time = this.cursor;
     const ch = this.pending.shift();
@@ -82,10 +84,12 @@ export class KeyerOutput extends KeyerTimer {
 
   cancelPending() {
     // this will probably make a crunch
+    const skipped = this.pending
+    this.pending = [];
     this.cancel();
     this.keyOffAt(this.context.currentTime+Math.max(this.rise, this.fall)/1000.0);
-    this.pending.forEach(ch => this.emit('skipped', ch));
-    this.pending = [];
+    // console.log(`cancelPending skipping ${skipped.length} characters`);
+    skipped.forEach(ch => this.emit('skipped', ch));
   }
 
 }
