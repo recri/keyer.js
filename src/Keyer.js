@@ -80,7 +80,7 @@ export class Keyer extends KeyerEvent {
 
   outputUnsend(text) { this.output.unsend(text); }
 
-  outputCancel() { this.output.cancel(); }
+  outputCancel() { this.output.cancelPending(); }
 
   outputDecoderOnLetter(callback, context) { this.outputDecoder.on('letter', callback, context); }
 
