@@ -4,6 +4,30 @@
 ** [x] style button text to match elsewhere
 ** [x] make scheme colors available inside RecriKeyer.js
 ** [ ] color input text according to sent/skipped/pending status
+*** It turns out that I cannot use contenteditable and lit-html
+    in the same node, so I need to rewrite the contents of the
+    div in the dom myself.
+*** That is simplified in that I will usually only be moving
+    text from one node to another, so I can keep the skeleton
+    of the DOM as it is.
+***  Can I enclose <br> in <span></span>?  Yes, but it's not
+    nice for screen readers.
+***   There is a neat snippet to make contenteditable not insert
+    div's, only br's: display: inline-block;
+***   This snippet will move the editor caret to the end of text
+    in an element.
+	    var range = document.createRange();
+            range.selectNodeContents(el);
+            range.collapse(atStart);
+            var sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+*** This snippet will find the div with class="keyboard"
+    var el = document.querySelector(".keyboard");
+*** I can probably enclose all the sent and skipped text
+    inside one <span class="sent" contenteditable="false">
+    by enclosing the <span class="skip">text</span> spans
+    inside of it, along with text nodes and <br>'s.
 ** [x] enable backspace for limited editing of input text
 ** [x] enable newline to insert <br> of input text
 ** [x ] explore the contenteditable solution to input text
@@ -55,7 +79,7 @@
 ** [x] multiple input spaces collapsed to single by html
 ** [x] iambic needs gain twiddle to start playing
    twiddled it at startup
-** [x ] straight needs gain twiddle to start playing
+** [x] straight needs gain twiddle to start playing
    turned out that straight key worked fine
 ** [x] implement weight and the other key bending controls from recri/keyer
    #if FRAMEWORK_OPTIONS_KEYER_OPTIONS_WEIGHT
@@ -83,4 +107,15 @@
 			dp->opts.ils  -w-c, 
 			dp->opts.iws  -w-c);
 ** [x] collapse out some irrelevant UI components
-
+** [ ] hide/show parts of settings according to properties
+   I can do this by conditionally including/excluding html`` for each part,
+   however, I think lit-html works better if I render the whole thing and
+   mark parts as displayed/hidden according to the same conditions.
+   so that's the css property { display: none; } to disappear,
+   { display: block } to show a div.
+   Menu marker characters:
+***   &#x23f4; left filled triangle
+***   &#x23f5; right filled triangle
+***   &#x23f6; up filled triangle
+***   &#x23f7; down filled triangle
+***   &#9776; hamburger menu, all yang trigram
