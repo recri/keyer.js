@@ -66,13 +66,13 @@ const saveControl = (control, newValue) => { localStorage[control] = newValue; }
 const isshift = (key) => key === 'Control' || key === 'Alt' || key === 'Shift';
 
 // generate a list of <option>name</option> html templates
-const templateOptions = (names) => names.map(x => html`<option>${x}</option>`);
+const templateOptions = (names, selected) => names.map(x => html`<option value=${x} ?selected=${x === selected}>${x}</option>`);
 
 // list of left/right qualified shift keys
 const shiftKeys = ['None','ShiftLeft','ControlLeft','AltLeft','AltRight','ControlRight','ShiftRight'];
 
 // generate a list of shift key <option>name</option> html templates
-const shiftKeyOptions = () => templateOptions(shiftKeys);
+const shiftKeyOptions = (selected) => templateOptions(shiftKeys, selected);
 
 // application color scheme, from material design color tool
 // const colorPrimary = css`#1d62a7`;
@@ -488,7 +488,7 @@ export class KeyerJs extends LitElement {
 	<div>
 	  <label>Straight key:
             <select .value=${this.straightKey} @change=${this.selectStraightKey}>
-	      ${shiftKeyOptions()}
+	      ${shiftKeyOptions(this.straightKey)}
 	    </select>
 	  </label>
         </div>
@@ -504,14 +504,14 @@ export class KeyerJs extends LitElement {
 	<div>
 	  <label>Left paddle key:
             <select .value=${this.leftPaddleKey} @change=${this.selectLeftPaddleKey}>
-	      ${shiftKeyOptions()}
+	      ${shiftKeyOptions(this.leftPaddleKey)}
 	    </select>
 	  </label>
 	</div>
 	<div>
 	  <label>Right paddle key:
             <select .value=${this.rightPaddleKey} @change=${this.selectRightPaddleKey}>
-	      ${shiftKeyOptions()}
+	      ${shiftKeyOptions(this.rightPaddleKey)}
 	    </select>
 	  </label>
 	</div>
