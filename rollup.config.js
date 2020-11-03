@@ -32,7 +32,7 @@ export default merge(baseConfig, {
     plugins: [
 	copy({
 	    targets: [
-		{ src: './manifest.json', dest: 'dist' },
+		{ src: './manifest.webmanifest', dest: 'dist' },
 		{ src: './favicon.ico', dest: 'dist' },
 		{ src: './img/icon-512x512.png', dest: 'dist/img' },
 		{ src: './img/icon-192x192.png', dest: 'dist/img' },
