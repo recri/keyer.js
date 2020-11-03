@@ -1,3 +1,5 @@
+// rewrite this to drop the ctx argument to .on()
+// let everyone handle their own binding
 export class KeyerEvent {
   /**
    * events: installed event handlers
@@ -23,6 +25,7 @@ export class KeyerEvent {
     if (!type) this.events = {};
     const list = this.events[type] || [];
     let i = func ? list.length : 0;
+    // as written this loses if func occurs twice in a row
     while (i > 0) {
       i -= 1;
       if (func === list[i].f) list.splice(i, 1);
