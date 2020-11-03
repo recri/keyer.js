@@ -59,13 +59,17 @@ export class Keyer extends KeyerEvent {
     this.iws = 7;
     this.swapped = false;
     this.inputKeyer = 'iambic';
+    this.inputSources = ['keyboard'];
+    this.inputMidi = 'none';
     this.leftPaddleKey = 'AltRight';
     this.rightPaddleKey = 'ControlRight';
     this.straightKey = 'ControlRight';
+    this.leftPaddleMidi = 'none';
+    this.rightPaddleMidi = 'none';
+    this.straightMidi = 'none';
+
     this.qrq = 'off';
   }
-
-  // parameters
 
   // keyboard handlers
   /* eslint class-methods-use-this: ["error", { "exceptMethods": ["keydown","keyup","keypress"] }] */
@@ -89,8 +93,6 @@ export class Keyer extends KeyerEvent {
   inputMidiOnRefresh(callback, context) { this.input.midiOnRefresh(callback, context); }
 
   inputMidiRefresh() { this.input.midiRefresh(); }
-
-  inputMidiNames() { return this.input.midiNames(); }
 
   inputDecoderOnLetter(callback, context) { this.inputDecoder.on('letter', callback, context); }
 
@@ -148,6 +150,16 @@ export class Keyer extends KeyerEvent {
 
   get inputKeyer() { return this.input.keyer; }
 
+  set inputSources(v) { this.input.sources = v; }
+
+  get inputSources() { return this.input.sources; }
+
+  set inputMidi(v) { this.input.midi = v; }
+
+  get inputMidi() { return this.input.midi; }
+  
+  get inputMidiNames() { return this.input.midiNames; }
+  
   set leftPaddleKey(v) { this.input.leftPaddleKey = v; }
 
   get leftPaddleKey() { return this.input.leftPaddleKey; }
