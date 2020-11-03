@@ -7,6 +7,7 @@ import { Keyer } from './Keyer.js';
 
 // default values for properties
 const defaults = {
+  // properties that delegate to this.keyer
   pitch: 700,
   gain: -26,
   weight: 50,
@@ -17,16 +18,21 @@ const defaults = {
   speed: 20,
   qrq: 'off',
   inputKeyer: 'iambic',
+  inputSource: ['keyboard'],
+  inputMidi: 'none',
   straightKey: 'ControlRight',
+  straightMidi: 'none',
   swapped: 'off',
   leftPaddleKey: 'AltRight',
   rightPaddleKey: 'ControlRight',
-
-  displaySettings: 'on',
-  displayStatus: 'on',
+  leftPaddleMidi: 'none',
+  rightPaddleMidi: 'none',
+  // properties that are local
   displayTouchKey: 'off',
+  displaySettings: 'on',
   displayAdvanced: 'off',
-  displayInputKeys: 'off'
+  displayInputKeys: 'off',
+  displayStatus: 'on',
 }
 
 // wpm speed limits
@@ -40,39 +46,52 @@ const qrsMin = 10;
 // menu indicators
 const hiddenMenuIndicator = html`<span>&#x23f5;</span>`;
 const shownMenuIndicator = html`<span>&#x23f7;</span>`;
+const uncheckedCheckBox = html`<span>&#x2610;</span>`;
+const checkedCheckBox = html`<span>&#x2611;</span>`;
 
-// toggle between block and none
+// toggle between on and off
 const toggleOnOff = (onOff) => ({ on: 'off', off: 'on' }[onOff]);
+const isOn = (onOff) => onOff === 'on';
+const isOff = (onOff) => onOff === 'off';
+const isOnOff = (onOff) => isOn(onOff) || isOff(onOff);
 
 // force default values
 const forceDefault = true;
 
 // grab a value from localStorage or return the default value
+// had fits trying to use Booleans here, which is why they're all 'on'||'off' instead
 const defaultControl = (control, defaultValue) => {
-  // if (localStorage[control] === undefined) {
-  // console.log(`defaultControl localStorage[${control}] is undefined, default to ${defaultValue}`);
-  // } else {
-  //  console.log(`defaultControl localStorage[${control}] is defined, using ${localStorage[control]}`);
-  // }
   const value = localStorage[control] === undefined || typeof(localStorage[control]) === 'undefined' || forceDefault ?
 	defaultValue : localStorage[control];
   localStorage[control] = value;
   return value;
 }
-
 const saveControl = (control, newValue) => { localStorage[control] = newValue; }
-
-// is this a shift key
-const isshift = (key) => key === 'Control' || key === 'Alt' || key === 'Shift';
 
 // generate a list of <option>name</option> html templates
 const templateOptions = (names, selected) => names.map(x => html`<option value=${x} ?selected=${x === selected}>${x}</option>`);
+
+// generate a list of <input type="checkbox"></input> html templates
+const templateAlternates = (names, selected, handler) => names.map(x => {
+  const isSelected = selected.includes(x);
+  const checkBox = isSelected ? checkedCheckBox : uncheckedCheckBox;
+  return html`<button role="switch" aria-checked=${isSelected} @click=${e => handler(e,x)}>${checkBox} ${x}</button>`;
+});
 
 // list of left/right qualified shift keys
 const shiftKeys = ['None','ShiftLeft','ControlLeft','AltLeft','AltRight','ControlRight','ShiftRight'];
 
 // generate a list of shift key <option>name</option> html templates
 const shiftKeyOptions = (selected) => templateOptions(shiftKeys, selected);
+const isShiftKey = (value) => shiftKeys.includes(value);
+
+// list of valid inputKeys
+const inputKeyers = [ 'none', 'straight', 'iambic' ];
+const isInputKeyer = (value) => inputKeyers.includes(value);
+
+// list of valid inputSources
+const inputSources = [ 'touch', 'keyboard', 'midi' ];
+const isInputSource = (value) => inputSources.includes(value);
 
 // application color scheme, from material design color tool
 // const colorPrimary = css`#1d62a7`;
@@ -89,6 +108,7 @@ export class KeyerJs extends LitElement {
     return {
       title: { type: String },
       page: { type: String },
+      // properties that delegate to this.keyer
       pitch: { type: Number },
       gain: { type: Number },
       speed: { type: Number },
@@ -98,24 +118,34 @@ export class KeyerJs extends LitElement {
       compensation: { type: Number },
       rise: { type: Number },
       fall: { type: Number },
-      midi: { type: String },
-      swapped: { type: String },
       inputKeyer: { type: String },
+      inputSource: { type: Array },
+      inputMidi: { type: String },
+      swapped: { type: String },
+      straightKey: { type: String },
+      straightMidi: { type: String },
       leftPaddleKey: { type: String },
       rightPaddleKey: { type: String },
-      straightKey: { type: String },
-
+      leftPaddleMidi: { type: String },
+      rightPaddleMidi: { type: String },
+      // properties read only from this.keyer.context
+      state: { type: String },
+      sampleRate: { type: Number },
+      currentTime: { type: Number },
+      baseLatency: { type: Number },
+      // properties that are local
       displayTouchKey: { type: String },
       displaySettings: { type: String },
       displayStatus: { type: String },
       displayAdvanced: { type: String },
       displayInputKeys: { type: String },
-
-      running: { type: Boolean }
+      // property computed
+      running: { type: Boolean },
     };
   }
 
   // setter with updateRequest
+  // all of these controls are delegated to this.keyer
   updateControl(control, newv) {
     // console.log(`updateControl ${control} ${newv}`);
     const oldv = this.keyer[control];
@@ -181,6 +211,37 @@ export class KeyerJs extends LitElement {
 
   get rightPaddleKey() { return this.keyer.rightPaddleKey; }
 
+  set inputMidi(v) { this.updateControl('inputMidi', v); }
+
+  get inputMidi() { return this.keyer.inputMidi; }
+
+  get inputMidiNames() { return this.keyer.inputMidiNames; }
+
+  set inputSource(v) { this.updateControl('inputSource', v); }
+
+  get inputSource() { return this.keyer.inputSource; }
+
+  set straightMidi(v) { this.updateControl('straightMidi', v); }
+
+  get straightMidi() { return this.keyer.straightMidi; }
+
+  set leftPaddleMidi(v) { this.updateControl('leftPaddleMidi', v); }
+
+  get leftPaddleMidi() { return this.keyer.leftPaddleMidi; }
+
+  set rightPaddleMidi(v) { this.updateControl('rightPaddleMidi', v); }
+
+  get rightPaddleMidi() { return this.keyer.rightPaddleMidi; }
+
+  // get properties delegated to this.keyer.context
+  get currentTime() { return this.keyer.context.currentTime; }
+
+  get sampleRate() { return this.keyer.context.sampleRate; }
+
+  get baseLatency() { return this.keyer.context.baseLatency; }
+
+  get state() { return this.keyer.context.state; }
+  
   constructor() {
     super();
     // start the engine
@@ -204,25 +265,39 @@ export class KeyerJs extends LitElement {
     this.running = this.keyer.context.state !== 'suspended';
     this.text = [['sent', ''], ['pending', '']];
 
+    this.validate();
+    
     // this.keyer.outputDecoderOnLetter((ltr, code) => console.log(`output '${ltr}' '${code}'`));
     // this.keyer.inputDecoderOnLetter((ltr, code) => console.log(`input '${ltr}' '${code}'`));
     // this.keyer.output.on('sent', ltr => console.log(`sent '${ltr}'`));
   }
 
+  validate() {
+    shiftKeys.forEach(x => isShiftKey(x) || console.log(`shiftKey ${x} failed isShiftKey`));
+    inputKeyers.forEach(x => isInputKeyer(x) || console.log(`inputKeyer ${x} failed isInputKeyer`));
+    inputSources.forEach(x => isInputSource(x) || console.log(`inputSource ${x} failed isInputSource`));
+    ['qrq','swapped','displayTouchKey', 'displaySettings', 'displayAdvanced', 'displayInputKeys', 'displayStatus'].
+      forEach(x => isOnOff(this[x]) || console.log(`property '${x}' failed isOnOff: ${this[x]}`));
+    ['straightKey', 'leftPaddleKey', 'rightPaddleKey'].
+      forEach(x => isShiftKey(this[x]) || console.log(`property '${x}' failed isShiftKey: ${this[x]}`));
+    ['inputKeyer'].
+      forEach(x => isInputKeyer(this[x]) || console.log(`property '${x}' failed isInputKeyer: ${this[x]}`));
+    this.inputSource.forEach(x => isInputSource(x) || console.log(`property 'inputSource' failed isInputSource: '${x}'`));
+  }
+	       
   // e.key -> Control | Alt | Shift
   // e.location -> 1 for Left, 2 for Right
   // e.code -> (Control | Alt | Shift) (Left | Right)
-  keydown(e) {
-    if (isshift(e.key)) {
-      // console.log(`keydown e.key ${e.key} e.location ${e.location} e.code ${e.code}`);
-      this.keyer.keydown(e);
-    }
-  }
+  keydown(e) {  if (isShiftKey(e.code)) this.keyer.keydown(e); }
 
-  keyup(e) {
-    if (isshift(e.key)) this.keyer.keyup(e);
-  }
+  keyup(e) { if (isShiftKey(e.code)) this.keyer.keyup(e); }
 
+  touchKey(e) { this.keyer.touchKey(e); }
+  
+  touchLeftKey(e) { this.keyer.touchLeftKey(e); }
+
+  touchRightKey(e) { this.keyer.touchLeftKey(e); }
+  
   keypress(e) {
     // console.log(`keypress e.key ${e.key}`);
     this.text = this.text.concat([['pending', e.key]]);
@@ -288,14 +363,14 @@ export class KeyerJs extends LitElement {
   cancel() { this.keyer.outputCancel(); }
 
   toggleControl(control) { 
-    this[control] = (this[control] === 'off' ? 'on' : 'off');
+    this[control] = toggleOnOff(this[control]);
     saveControl(control, this[control]);
   }
 
   toggleQrq() {
     // console.log(`toggleQrq qrq ${this.qrq}`);
     this.toggleControl('qrq');
-    if (this.qrq === 'on') {
+    if (isOn(this.qrq)) {
       this.speed = Math.max(qrqMin, qrqStep * Math.floor(this.speed/qrqStep));
     } else {
       this.speed = Math.min(this.speed, qrsMax);
@@ -312,12 +387,23 @@ export class KeyerJs extends LitElement {
   
   selectInputKeyer(e) { this.selectControl('inputKeyer', e); }
   
+  selectInputMidi(e) { this.selectControl('inputMidi', e); }
+  
   selectStraightKey(e) { this.selectControl('straightKey', e); }
   
   selectLeftPaddleKey(e) { this.selectControl('leftPaddleKey', e); }
   
   selectRightPaddleKey(e) { this.selectControl('rightPaddleKey', e); }
   
+  selectSource(e,b) {
+    if (this.inputSource.includes(b))
+      this.inputSource = this.inputSource.filter(x => x !== b);
+    else
+      this.inputSource = this.inputSource.concat(b)
+    // console.log(`selectSource ${e} ${b} '${this.inputSource}'`);
+    // console.log(e);
+  }
+   
   selectGain(e) { this.selectControl('gain', e); }
 
   selectPitch(e) { this.selectControl('pitch', e); }
@@ -337,7 +423,7 @@ export class KeyerJs extends LitElement {
   // display panel selectors
   toggleTouchKey() { this.displayTouchKey = toggleOnOff(this.displayTouchKey); }
 
-  toggleSettings() { console.log("toggleSettings"); this.displaySettings = toggleOnOff(this.displaySettings); }
+  toggleSettings() { this.displaySettings = toggleOnOff(this.displaySettings); }
 
   toggleAdvanced() { this.displayAdvanced = toggleOnOff(this.displayAdvanced); }
 
@@ -371,10 +457,7 @@ export class KeyerJs extends LitElement {
         margin-top: 16px;
       }
 
-      button > span {
-        font-size: calc(10px + 2vmin);
-      }
-      select {
+      button, select {
         font-size: calc(10px + 2vmin);
       }
 
@@ -416,26 +499,25 @@ export class KeyerJs extends LitElement {
   }
 
   touchKeyRender() {
-    if (this.displayTouchKey === 'on')
-      switch (this.inputKeyer) {
-      case 'straight':
-	return html`
+    if ( ! this.inputSource.includes('touch'))
+      return html``;
+    switch (this.inputKeyer) {
+    case 'straight':
+      return html`
 	  <button class="key" @click=${this.touchKey}></button>
 	`;
-      case 'iambic': 
-	return html`
+    case 'iambic': 
+      return html`
 	  <button class="key" @click=${this.touchLeftKey}></button>
 	  <button class="key" @click=${this.touchRightKey}></button>
 	`;
-      default:
-	console.log(`touchKeyRender this.displayTouchKey ${this.displayTouchKey}`);
-	return html``;
-      }
-    return html``;
+    default: 
+      return html``;
+    }
   }
 
   advancedRender() {
-    if (this.displayAdvanced === 'off')
+    if (isOff(this.displayAdvanced))
       return html``;
     return html`
 	<div>
@@ -467,13 +549,21 @@ export class KeyerJs extends LitElement {
 	  .value=${this.fall} step="0.1"
 	  @input=${this.selectFall}>
 	  <label for="fall">Fall ${this.fall} (ms)</label>
+	</div>
+	<div>
+	  <label>Envelope: 
+	    <select .value=${this.envelope} @change=${this.selectEnvelope}>
+	      <option>linear</option>
+	      <option>exponential</option>
+	      <option>raised-cosine</option>
+	    </select>
+	  </label>
 	</div>`;
   }
 
   inputKeysRender() {
-    if (this.displayInputKeys === 'off')
-      return html``;
-    return html`
+    return isOff(this.displayInputKeys) ?  html`` : [
+      html`
 	<div>
 	  <label>Input keyer:
 	    <select .value=${this.inputKeyer} @change=${this.selectInputKeyer}>
@@ -482,25 +572,41 @@ export class KeyerJs extends LitElement {
 	      <option>iambic</option>
 	    </select>
 	  </label>
-	</div>
+	</div>`,
+      this.inputKeyer === 'none' ? html`` : html`
+	<div>
+	  <label>Key sources:
+	    ${templateAlternates(inputSources, this.inputSource, (e,s) => this.selectSource(e,s))}
+	  </label>
+	</div>`,
+      ! (this.inputKeyer !== 'none' && this.inputSource.includes('midi')) ? html`` : html`
+	<div>
+	  <label>Midi interface: 
+            <select .value=${this.inputMidi} @change=${this.selectInputMidi}>
+	      ${templateOptions(this.inputMidiNames, this.inputMidi)}
+	    </select>
+	  </label>
+	</div>`,
+      ! (this.inputKeyer === 'straight' && this.inputSource.includes('keyboard')) ? html`` : html`
 	<!-- straight input keyer settings -->
-	<h4>Straight Key</h4>
 	<div>
 	  <label>Straight key:
             <select .value=${this.straightKey} @change=${this.selectStraightKey}>
 	      ${shiftKeyOptions(this.straightKey)}
 	    </select>
 	  </label>
-        </div>
+        </div>`,
+      this.inputKeyer !== 'iambic' ? html`` : html`
 	<!-- input keyer settings, iambic -->
-	<h4>Iambic Key</h4>
 	<div>
 	  <label>Swap paddles: 
-            <button role="switch" aria-checked=${this.swapped === 'on'} @click=${this.toggleSwapped}>
+            <button role="switch" aria-checked=${isOn(this.swapped)} @click=${this.toggleSwapped}>
 	      <span>${this.swapped}</span>
 	    </button>
 	  </label>
-	</div>
+	</div>`,
+      ! (this.inputKeyer === 'iambic' && this.inputSource.includes('keyboard')) ? html`` : html`
+	<!-- input keyer settings, iambic, keyboard selection -->
 	<div>
 	  <label>Left paddle key:
             <select .value=${this.leftPaddleKey} @change=${this.selectLeftPaddleKey}>
@@ -515,22 +621,20 @@ export class KeyerJs extends LitElement {
 	    </select>
 	  </label>
 	</div>
-      </div>`;
+      </div>`
+    ];
   }
 
   settingsRender() {
-    console.log(`settingsRender this.displaySettings === '${this.displaySettings}'`);
-    if (this.displaySettings === 'off')
-      return html``;
-    return html`
+    return isOff(this.displaySettings) ? html`` : html`
       <div>
 	<!-- basic keyboard output settings -->
 	<div>
-	  <input type="range" id="speed" name="speed" min=${this.qrq === 'on' ? qrqMin : qrsMin} max=${this.qrq === 'on' ? qrqMax : qrsMax}
-	  .value=${this.speed} step=${this.qrq === 'on' ? qrqStep : qrsStep} @input=${this.selectSpeed}>
+	  <input type="range" id="speed" name="speed" min=${isOn(this.qrq) ? qrqMin : qrsMin} max=${isOn(this.qrq) ? qrqMax : qrsMax}
+	  .value=${this.speed} step=${isOn(this.qrq) ? qrqStep : qrsStep} @input=${this.selectSpeed}>
 	  <label for="speed">Speed ${this.speed} (WPM)</label>
-	  <button role="switch" aria-checked=${this.qrq === 'on'} @click=${this.toggleQrq}>
-	    <span>${this.qrq === 'on' ? 'QRQ' : 'QRS'}</span>
+	  <button role="switch" aria-checked=${isOn(this.qrq)} @click=${this.toggleQrq}>
+	    <span>${isOn(this.qrq) ? 'QRQ' : 'QRS'}</span>
 	  </button>
 	</div>
 	<div>
@@ -541,28 +645,25 @@ export class KeyerJs extends LitElement {
 	  <input type="range" id="pitch" name="pitch" min="250" max="2000" .value=${this.pitch} step="1" @input=${this.selectPitch}>
 	  <label for="pitch">Pitch ${this.pitch} (Hz)</label>
 	</div>
-	<!-- advanced keyboard output settings -->
-	<h3 @click=${this.toggleAdvanced}>
-	  ${this.displayAdvanced === 'off' ? hiddenMenuIndicator : shownMenuIndicator} Advanced
-	</h3>
-	${this.advancedRender()}
 	<!-- input keyer selection --->
 	<h3 @click=${this.toggleInputKeys}>
-	  ${this.displayInputKeys === 'off' ? hiddenMenuIndicator : shownMenuIndicator} Input Keys
+	  ${isOff(this.displayInputKeys) ? hiddenMenuIndicator : shownMenuIndicator} Input Keys
 	</h3>
 	${this.inputKeysRender()}
+	<!-- advanced keyboard output settings -->
+	<h3 @click=${this.toggleAdvanced}>
+	  ${isOff(this.displayAdvanced) ? hiddenMenuIndicator : shownMenuIndicator} Advanced
+	</h3>
+	${this.advancedRender()}
     `;
   }
 
   statusRender() {
-    console.log(`statusRender this.displayStatus === '${this.displayStatus}'`);
-    if (this.displayStatus === 'off')
-      return html``;
-    return html`
+    return isOff(this.displayStatus) ?  html`` : html`
       <div>
-	Sample rate: ${this.keyer.context.sampleRate}<br/>
-	Current time: ${this.keyer.context.currentTime}<br/>
-	Base latency: ${this.keyer.context.baseLatency}<br/>
+	Sample rate: ${this.sampleRate}<br/>
+	Current time: ${this.currentTime}<br/>
+	Base latency: ${this.baseLatency}<br/>
       </div>
     `;
   }
@@ -591,7 +692,7 @@ export class KeyerJs extends LitElement {
 	</div>
 	<h2 @click=${this.toggleSettings}>
 	<div>
-	  ${this.displaySettings === 'off' ? hiddenMenuIndicator : shownMenuIndicator} Settings
+	  ${isOff(this.displaySettings) ? hiddenMenuIndicator : shownMenuIndicator} Settings
 	</div>
 	</h2>
 	<div>
@@ -599,7 +700,7 @@ export class KeyerJs extends LitElement {
 	  ${this.settingsRender()}
 	</div>
         <h2 @click=${this.toggleStatus}>
-	  ${this.displayStatus === 'off' ? hiddenMenuIndicator : shownMenuIndicator} Status
+	  ${isOff(this.displayStatus) ? hiddenMenuIndicator : shownMenuIndicator} Status
 	</h2>
 	<div>
 	  ${this.statusRender()}
