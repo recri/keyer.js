@@ -10,17 +10,19 @@ import { KeyerKeyboardSource } from './KeyerKeyboardSource.js';
 export class KeyerInput extends KeyerEvent {
   constructor(context) {
     super(context);
+
+    this.noneSource = new KeyerNoneSource(context);
+    this.midiSource = new KeyerMidiSource(context);
+    this.keyboardSource = new KeyerKeyboardSource(context);
+    this.midiSource.on('refresh', this.midiOnRefresh, this);
+
     this.none = new KeyerNoneInput(context);
     this.straight = new KeyerStraightInput(context);
     this.iambic = new KeyerIambicInput(context);
     this.inputs = ['none', 'straight', 'iambic'];
     this._keyer = 'none';
     this.keyer = 'none';
-    
-    this.noneSource = new KeyerNoneSource(context);
-    this.midiSource = new KeyerMidiSource(context);
-    this.keyboardSource = new KeyerKeyboardSource(context);
-    this.midiSource.on('refresh', this.midiOnRefresh, this);
+    this.midi = 'none';
   }
 
   connect(target) {
@@ -39,12 +41,19 @@ export class KeyerInput extends KeyerEvent {
 
   keyup(e) { this[this._keyer].keyup(e); }
 
-  midiOnRefresh() { this.midiSource.rebind(event => this.onmidievent(event)); }
+  midiOnRefresh() { this.midiSource.rebind(e => this.onmidievent(e)); }
 
   midiRefresh() { this.midiSource.refresh(); }
 
-  midiNames() { return this.midiSource.names(); }
+  // properties of midiSource
+  get midi() { return this.midiSource.midi; }
+  
+  set midi(v) { this.midiSource.midi = v; }
 
+  get midiNames() { return this.midiSource.names; }
+
+  get midiNotes() { return this.midiSource.notes; }
+  
   // properties of keyer
   get pitch() { return this.iambic.pitch; }
 
