@@ -10,7 +10,7 @@ export class KeyerStraightInput extends KeyerPlayer {
     this.keycodes = [ 'AltRight', 'ControlRight', 'ShiftRight', 'AltLeft', 'ControlLeft', 'ShiftLeft' ];
     this.key = 'ControlRight';
     this.rampEnd = this.context.currentTime
-    this.on('ramp-end', () => this.keyset(this.raw_key_on));
+    this.on('end:ramp', () => this._keyset(this.raw_key_on));
   }
 
   _keyset(on) {
