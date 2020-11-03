@@ -28,6 +28,8 @@
     inside one <span class="sent" contenteditable="false">
     by enclosing the <span class="skip">text</span> spans
     inside of it, along with text nodes and <br>'s.
+** [ ] write a <pre> component for viewing the text windows
+   contents.
 ** [x] enable backspace for limited editing of input text
 ** [x] enable newline to insert <br> of input text
 ** [x ] explore the contenteditable solution to input text
@@ -55,6 +57,7 @@
 ** [ ] decode microphone sung source
 ** [ ] webrtc tone sink
 ** [ ] webrtc tone source
+** [x] limited menu of envelopes
 ** [ ] full window menu for envelope
    window functions make nice keying envelopes
 ** [ ] animated straight key logo
@@ -119,3 +122,22 @@
 ***   &#x23f6; up filled triangle
 ***   &#x23f7; down filled triangle
 ***   &#9776; hamburger menu, all yang trigram
+***   &#x23F5; Play button
+***   &#x25B6; Play button emoji
+***   &#xe23a; Play button emoji
+***   &#x23F8; Pause button    
+***   &#xFE0F; Pause button emoji
+
+** [ ] Oh, to avoid the nasty message about web audio in the console, I have to avoid
+   opening an AudioContext until I'm in a user initiated gesture.  That is, the
+   whole chain of objects I create cannot be created until the first click on Play,
+   or I need to rewrite them all to take implement a set context().
+** [ ] Separate Key and Keyer.  Key can be 'straight' or 'paddle'.
+** [ ] A Key which is a 'paddle' can have a Keyer which could be
+   'iambic-a', 'iambic-b', 'bug', 'ultimatic', or 'swiper'.
+** [ ] No idea how to avoid the nasty message from web midi.
+** [ ] Discovered chrome.socket.udp today, so an HL2 PWA is going to happen.
+** [-] Rewriting pulse shaping using independently timed buffers was frustrating,
+   couldn't find a way to do it and backed out.
+** [ ] Write a scope web-component.
+   

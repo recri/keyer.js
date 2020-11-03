@@ -1,4 +1,5 @@
 import { KeyerEvent } from './KeyerEvent.js';
+import { KeyerRamp } from './KeyerRamp.js';
 
 // translate keyup/keydown into keyed sidetone
 // this layer handles keying the oscillator
@@ -14,7 +15,7 @@ export class KeyerPlayer extends KeyerEvent {
     // initialize parameters
     this._rise = 4;
     this._fall = 4;
-    this.envelopes = ['linear', 'exponential', 'raised-cosine'];
+    this.envelopes = KeyerRamp.ramps;
     this._envelope = 'raised-cosine';
     this.updateRise();
     this.updateFall();
@@ -77,41 +78,15 @@ export class KeyerPlayer extends KeyerEvent {
   updateRise() { 
     const n = Math.round((this.rise / 1000.0) * this.context.sampleRate);
     this._riseCurve = new Float32Array(n);
-    for (let i = 0; i < n; i += 1) {
-      const lin = i / (n-1);
-      switch (this._envelope) {
-      default:
-      case 'raised-cosine':
-	this._riseCurve[i] = (1 + Math.cos(Math.PI + lin * Math.PI)) / 2;
-	break;
-      case 'linear':
-	this._riseCurve[i] = lin; 
-	break;
-      case 'exponential':
-	this._riseCurve[i] = lin**0.1;
-	break;
-      }
-    }
+    for (let i = 0; i < n; i += 1)
+      this._riseCurve[i] = KeyerRamp.rise(this.envelope, n-1, i);
   }
 
   updateFall() { 
     const n = Math.round((this.fall / 1000.0) * this.context.sampleRate);
     this._fallCurve = new Float32Array(n);
-    for (let i = 0; i < n; i += 1) {
-      const lin = i / (n-1);
-      switch (this.envelope) {
-      default:
-      case 'raised-cosine':
-	this._fallCurve[i] = (1 + Math.cos(lin * Math.PI)) / 2;
-	break;
-      case 'linear':
-	this._fallCurve[i] = 1-lin; 
-	break;
-      case 'exponential':
-	this._fallCurve[i] = 1-(lin**0.1);
-	break;
-      }
-    }
+    for (let i = 0; i < n; i += 1)
+      this._fallCurve[i] = KeyerRamp.fall(this.envelope, n-1, i);
   }
 
   rampEnded(e, riseFall) { this.emit('end:ramp', riseFall); }
