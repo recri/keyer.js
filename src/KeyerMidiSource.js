@@ -1,3 +1,5 @@
+/* eslint no-param-reassign: ["error", { "props": false }] */
+/* eslint no-bitwise: ["error", { "allow": ["&","|","<<"] }] */
 import { KeyerEvent } from './KeyerEvent.js';
 /*
  ** The MIDI interface may need to be enabled in chrome://flags,
@@ -16,47 +18,67 @@ export class KeyerMidiSource extends KeyerEvent {
   constructor(context) {
     super(context);
     this.midiOptions = { sysex: false };
-    this.midi = null; // global MIDIAccess object
+    this.midiAccess = null; // global MIDIAccess object
+    this._midi = null;
+    this._notes = []
     this.refresh();
   }
 
+  onmidievent(e) { 
+    this.emit('midi:event', e);
+    // accumulate the NoteOn/NoteOff events seen channel:note
+    if (e.data.length === 3) {
+      // console.log("onmidievent "+event.data[0]+" "+event.data[1]+" "+event.data[2].toString(16));
+      const note = (e.data[0]<<16)|(e.data[1]<<8);
+      switch (e.data[0] & 0xf0) {
+      case 0x90:		// note on
+	if (e.data[2] === 0)
+	  this.emit('midi:noteoff', note);
+	else 
+	  this.emit('midi:noteon', note);
+	break;
+      case 0x80:		// note off
+	this.emit('midi:noteoff', note)
+        break;
+      default:
+        return;
+      }
+      this._notes[note] += 1;
+    }
+  }
+  
+  set midi(v) {
+    if (this._midi && this.midiAccess)
+      this.inputsvalues().forEach(
+	x => { if (x.name === this._midi) x.onmidimessage = null; }
+      );
+    this._midi = v;
+    this._notes = []
+    if (v && this.midiAccess)
+      this.inputsvalues().forEach(
+	x => { if (x.name === v) x.onmidimessage = e => this.onmidievent(e); }
+      );
+  }
+
+  get midi() { return this._midi; }
+  
+  get names() { return ['none'].concat(this.midiAccess ? this.inputsvalues.map(x => x.name) : []); }
+  
+  get inputsvalues() { return this.midiAccess ? Array.from(this.midiAccess.inputs.values()) : []; }
+
+  get notes() { return this._notes; }
+
+  onStateChange() { this.emit('midi:refresh', this.names); }
+  
   onMIDISuccess(midiAccess) {
-    this.midi = midiAccess;
-    this.midi.onstatechange = (event) => this.onStateChange(event);
-    this.emit('refresh', this.names());
+    this.midiAccess = midiAccess;
+    this.midiAccess.onstatechange = (event) => this.onStateChange(event);
+    this.emit('midi:refresh', this.names);
   }
 
   onMIDIFailure() {
-    this.midi = null;
-    this.emit('refresh', this.names());
-  }
-
-  onStateChange() { this.emit('refresh', this.names()); }
-  
-  rebind(handler) { this.names().forEach( (name) => this.connect(name, handler) ); }
-  
-  names() { return Array.from(this.midi.inputs.values()).map(x => x.name) }
-
-  connect(name, handler) {
-    if (name && name !== 'none' && this.midi) {
-      for (const x of this.midi.inputs.values()) {
-        if (x.name === name) {
-          // console.log(`installing handler for ${name}`);
-          x.onmidimessage = handler;
-        }
-      }
-    }
-  }
-
-  disconnect(name) {
-    if (name && name !== 'none' && this.midi) {
-      for (const x of this.midi.inputs.values()) {
-        if (x.name === name) {
-          // console.log(`uninstalling handler for ${name}`);
-          x.onmidimessage = null;
-        }
-      }
-    }
+    this.midiAccess = null;
+    this.emit('midi:refresh', this.names);
   }
 
   refresh() {
@@ -65,9 +87,10 @@ export class KeyerMidiSource extends KeyerEvent {
         .requestMIDIAccess()
         .then((...args) => this.onMIDISuccess(...args), (...args) => this.onMIDIFailure(...args));
     } else {
-      // console.log("no navigator.requestMIDIAccess found");
+      console.log("no navigator.requestMIDIAccess found");
     }
   }
+
 }
 // Local Variables: 
 // mode: JavaScript
