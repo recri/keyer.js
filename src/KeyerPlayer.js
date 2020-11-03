@@ -12,36 +12,38 @@ export class KeyerPlayer extends KeyerEvent {
     this.curpos = 0;
 
     // initialize parameters
-    this.rise = 4;
-    this.fall = 4;
-    this.envelope = 'raised-cosine';
+    this._rise = 4;
+    this._fall = 4;
+    this.envelopes = ['linear', 'exponential', 'raised-cosine'];
+    this._envelope = 'raised-cosine';
+    this.updateRise();
+    this.updateFall();
 
     // initialize the oscillator
     this.oscillator = this.context.createOscillator();
     this.oscillator.type = 'sine';
-    this.oscillator.start();
 
     // initialize the wave shaper
     this.ramp = this.context.createGain();
     this.ramp.gain.value = 0;
 
-    // initialize the gain
+    // initialize the output gain
     this.volume = this.context.createGain();
-    this.gain = 0;
+    this.volume.gain.value = 0;
 
     // connect
     this.oscillator.connect(this.ramp);
     this.ramp.connect(this.volume);
+
+    // start
+    this.oscillator.start();
   }
 
   // connect our output samples to somewhere
   // this never gets called?
   connect(target) { this.volume.connect(target); }
 
-  set pitch(hertz) {
-    this.oscillator.frequency.value = hertz;
-    this.emit('change:pitch', hertz);
-  }
+  set pitch(hertz) { this.oscillator.frequency.value = hertz; }
 
   get pitch() { return this.oscillator.frequency.value; }
 
@@ -49,26 +51,19 @@ export class KeyerPlayer extends KeyerEvent {
 
   static gainDecibel(gainLinear) { return Math.log10(gainLinear) * 20; }
 
-  set gain(gain) {
-    // console.log(`set gain ${gain} -> ${KeyerPlayer.gainLinear(gain)} -> ${KeyerPlayer.gainDecibel(KeyerPlayer.gainLinear(gain))}`);
-    this.volume.gain.value = KeyerPlayer.gainLinear(gain);
-    this.emit('change:gain', gain);
-  }
+  set gain(gain) { this.volume.gain.value = KeyerPlayer.gainLinear(gain); }
 
   get gain() { return KeyerPlayer.gainDecibel(this.volume.gain.value); }
 
-  set rise(ms) { this._rise = ms || 4; }
+  set rise(ms) { if (this.rise !== ms) { this._rise = ms; this.updateRise(); } }
 
   get rise() { return this._rise; }
 
-  set fall(ms) { this._fall = ms || 4; }
+  set fall(ms) { if (this._fall !== ms) { this._fall = ms; this.updateFall(); } }
 
   get fall() { return this._fall; }
 
-  set envelope(env) {
-    this._envelope = env;
-    this.updateRiseFall();
-  }
+  set envelope(env) { if (this._envelope !== env) { this._envelope = env; this.updateRise(); this.updateFall(); } }
 
   get envelope() { return this._envelope; }
 
@@ -79,42 +74,73 @@ export class KeyerPlayer extends KeyerEvent {
     return this.curpos;
   }
 
-  // update rise and fall curves
-  updateRiseFall() {
-    this._riseCurve = KeyerPlayer.riseCurve();
-    this._fallCurve = KeyerPlayer.fallCurve();
+  updateRise() { 
+    const n = Math.round((this.rise / 1000.0) * this.context.sampleRate);
+    this._riseCurve = new Float32Array(n);
+    for (let i = 0; i < n; i += 1) {
+      const lin = i / (n-1);
+      switch (this._envelope) {
+      default:
+      case 'raised-cosine':
+	this._riseCurve[i] = (1 + Math.cos(Math.PI + lin * Math.PI)) / 2;
+	break;
+      case 'linear':
+	this._riseCurve[i] = lin; 
+	break;
+      case 'exponential':
+	this._riseCurve[i] = lin**0.1;
+	break;
+      }
+    }
   }
 
-  static riseCurve() {
-    const n = 64;
-    const curve = new Float32Array(n + 1);
-    const max = 1.0;
-    for (let i = 0; i <= n; i += 1)
-      curve[i] = (max * (1 + Math.cos(Math.PI + (i * Math.PI) / n))) / 2;
-    return curve;
+  updateFall() { 
+    const n = Math.round((this.fall / 1000.0) * this.context.sampleRate);
+    this._fallCurve = new Float32Array(n);
+    for (let i = 0; i < n; i += 1) {
+      const lin = i / (n-1);
+      switch (this.envelope) {
+      default:
+      case 'raised-cosine':
+	this._fallCurve[i] = (1 + Math.cos(lin * Math.PI)) / 2;
+	break;
+      case 'linear':
+	this._fallCurve[i] = 1-lin; 
+	break;
+      case 'exponential':
+	this._fallCurve[i] = 1-(lin**0.1);
+	break;
+      }
+    }
   }
 
-  static fallCurve() {
-    const n = 64;
-    const curve = new Float32Array(n + 1);
-    const max = 1.0;
-    for (let i = 0; i <= n; i += 1)
-      curve[i] = (max * (1 + Math.cos((i * Math.PI) / n))) / 2;
-    return curve;
+  rampEnded(e, riseFall) { this.emit('end:ramp', riseFall); }
+  
+  timeout(start, extent, handler) {
+    const timer = this.context.createConstantSource();
+    timer.onended = handler;
+    timer.start(start);
+    timer.stop(start+extent);
   }
 
   // schedule the key on at time
   keyOnAt(time) {
-    // console.log("keyOnAt", time, " at ", this.context.currentTime)
-    this.ramp.gain.setValueCurveAtTime(this._riseCurve, time, this.rise / 1000.0);
+    // console.log(`keyOnAt now+${time-this.context.currentTime} seconds`);
+    // console.log(`keyOnAt now+${(time-this.context.currentTime)*this.context.sampleRate} samples`);
+    const dtime = this._riseCurve.length / this.context.sampleRate;
+    this.ramp.gain.setValueCurveAtTime(this._riseCurve, time, dtime);
+    this.timeout(time, dtime, e => this.rampEnded(e, 'rise'))
     this.cursor = time;
     this.emit('transition', 1, time);
   }
 
   // schedule the key off at time
   keyOffAt(time) {
-    // console.log("keyOffAt", time, " at ", this.context.currentTime)
-    this.ramp.gain.setValueCurveAtTime(this._fallCurve, time, this.fall / 1000.0);
+    // console.log(`keyOffAt now+${time-this.context.currentTime} seconds`);
+    // console.log(`keyOffAt now+${(time-this.context.currentTime)*this.context.sampleRate} samples`);
+    const dtime = this._fallCurve.length / this.context.sampleRate;
+    this.ramp.gain.setValueCurveAtTime(this._fallCurve, time, dtime);
+    this.timeout(time, dtime, e => this.rampEnded(e, 'fall'))
     this.cursor = time;
     this.emit('transition', 0, time);
   }
