@@ -7,13 +7,17 @@ export class KeyerTimer extends KeyerPlayer {
     super(context);
 
     // initialize
-    this._weight = 50;
-    this._ratio = 50;
-    this._compensation = 0;
-    this._wpm = 20;
-    this.updateTiming();
+    this.weight = 50;
+    this.ratio = 50;
+    this.compensation = 0;
+    this.wpm = 20;
   }
     
+  dumpProperties(tag) {
+    const lead = `dumpProperties ${tag || ""}`;
+    Array.from(Object.keys(this)).forEach(prop => console.log(`${lead}: ${prop}: ${this[prop]}`))
+  }
+
   set wpm(v) { this._wpm = v; this.updateTiming(); }
 
   get wpm() { return this._wpm; }
@@ -45,12 +49,12 @@ export class KeyerTimer extends KeyerPlayer {
     const w = (this._weight-50)/100.0;
     const c = 1000.0 * this._compensation / microsPerDit;
     // console.log(`updateTiming r ${r} w ${w} c ${c} dit ${dit}`);
-    this._perRawDit = dit;
-    this._perDit = dit*(1+r+w+c);
-    this._perDah = dit*(3-r+w+c);
-    this._perIes = dit*(1  -w-c);
-    this._perIls = dit*(3  -w-c); 
-    this._perIws = dit*(7  -w-c);
+    this.perRawDit = dit;
+    this.perDit = dit*(1+r+w+c);
+    this.perDah = dit*(3-r+w+c);
+    this.perIes = dit*(1  -w-c);
+    this.perIls = dit*(3  -w-c); 
+    this.perIws = dit*(7  -w-c);
     this.emit('updateTiming');
   }
 }
