@@ -53,10 +53,7 @@ export class Keyer extends KeyerEvent {
     this.compensation = 0;
     this.rise = 4;
     this.fall = 4;
-    this.dah = 3;
-    this.ies = 1;
-    this.ils = 3;
-    this.iws = 7;
+    this.envelope = 'raised-cosine';
     this.swapped = false;
     this.inputKeyer = 'iambic';
     this.inputSources = ['keyboard'];
@@ -106,8 +103,6 @@ export class Keyer extends KeyerEvent {
 
   inputBlur() { this.input.onblur(); }
 
-  currentTime() { return this.context.currentTime; }
-
   // direct getters and setters on properties
   // setting input and output the same
   get pitch() { return this.output.pitch; }
@@ -138,6 +133,12 @@ export class Keyer extends KeyerEvent {
 
   set fall(v) { this.input.fall = v; this.output.fall = v; }
 
+  get envelope() { return this.output.envelope; }
+
+  set envelope(v) { this.input.envelope = v; this.output.envelope = v; }
+  
+  static get envelopes() { return KeyerOutput.envelopes; }
+  
   get speed() { return this.output.wpm; }
 
   set speed(v) { this.input.wpm = v; this.output.wpm = v; }
