@@ -23,6 +23,10 @@ export class KeyerPlayer extends KeyerEvent {
     this._fall = 4;
     this.updateRise();
     this.updateFall();
+    this.weight = 50;
+    this.ratio = 50;
+    this.compensation = 0;
+    this.wpm = 20;
 
     // initialize the oscillator
     this.oscillator = this.context.createOscillator();
@@ -70,6 +74,22 @@ export class KeyerPlayer extends KeyerEvent {
 
   static get envelopes() { return KeyerRamp.ramps; }
 
+  set wpm(v) { this._wpm = v; this.updateTiming(); }
+
+  get wpm() { return this._wpm; }
+
+  set weight(v) { this._weight = v; this.updateTiming(); }
+
+  get weight() { return this._weight; }
+
+  set ratio(v) { this._ratio = v; this.updateTiming(); }
+
+  get ratio() { return this._ratio; }
+  
+  set compensation(v) { this._compensation = v; this.updateTiming(); }
+
+  get compensation() { return this._compensation; }
+
   set cursor(seconds) { this._cursor = seconds; }
 
   get cursor() {
@@ -91,6 +111,22 @@ export class KeyerPlayer extends KeyerEvent {
     for (let i = 0; i < n; i += 1)
       this._fallCurve[i] = KeyerRamp.fall(this.envelope, n-1, i);
     // console.log(`updateFall ${this.rise} rise time ${this.sampleRate} samples/sec makes ${n} samples`);
+  }
+
+  updateTiming() {
+    const dit = 60.0 / (this.wpm * 50); // seconds/dit
+    const microsPerDit = dit * 1e6;
+    const r = (this._ratio-50)/100.0;
+    const w = (this._weight-50)/100.0;
+    const c = 1000.0 * this._compensation / microsPerDit;
+    // console.log(`updateTiming r ${r} w ${w} c ${c} dit ${dit}`);
+    this.perRawDit = dit;
+    this.perDit = dit*(1+r+w+c);
+    this.perDah = dit*(3-r+w+c);
+    this.perIes = dit*(1  -w-c);
+    this.perIls = dit*(3  -w-c); 
+    this.perIws = dit*(7  -w-c);
+    this.emit('updateTiming');
   }
 
   rampEnded(e, riseFall) {

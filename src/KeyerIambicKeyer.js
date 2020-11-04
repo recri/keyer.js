@@ -1,4 +1,4 @@
-import { KeyerPlayerDelegate } from './KeyerPlayerDelegate.js';
+import { KeyerInputDelegate } from './KeyerInputDelegate.js';
 
 // keyer states
 const IDLE = 0; // waiting for a paddle closure
@@ -6,7 +6,7 @@ const DIT = 1; // making a dit or the space after
 const DAH = 2; // making a dah or the space after
 
 // translate iambic paddle events into keyup/keydown events
-export class KeyerIambicKeyer extends KeyerPlayerDelegate {
+export class KeyerIambicKeyer extends KeyerInputDelegate {
   /*
    ** This has been stripped down to the minimal iambic state machine
    ** from the AVR sources that accompany the article in QEX March/April
@@ -38,8 +38,8 @@ export class KeyerIambicKeyer extends KeyerPlayerDelegate {
   // 3.19.2012
   // iambic keyer
 
-  constructor(context, keyertimer) {
-    super(context, keyertimer);
+  constructor(context, input) {
+    super(context, input);
     // state variables
     this.keyerState = IDLE; // the keyer state
     this.ditPending = false; // memory for dit seen while playing a dah

@@ -1,5 +1,4 @@
-// import { KeyerEvent } from './KeyerEvent.js';
-import { KeyerTimer } from './KeyerTimer.js';
+import { KeyerPlayer } from './KeyerPlayer.js';
 import { KeyerNoneInput } from './KeyerNoneInput.js';
 import { KeyerStraightInput } from './KeyerStraightInput.js';
 import { KeyerIambicInput } from './KeyerIambicInput.js';
@@ -8,7 +7,7 @@ import { KeyerMidiSource } from './KeyerMidiSource.js';
 import { KeyerKeyboardSource } from './KeyerKeyboardSource.js';
 
 // translate keyup/keydown into keyed oscillator sidetone
-export class KeyerInput extends KeyerTimer {
+export class KeyerInput extends KeyerPlayer {
   constructor(context) {
     super(context);
 
@@ -20,6 +19,7 @@ export class KeyerInput extends KeyerTimer {
     this.none = new KeyerNoneInput(context, this);
     this.straight = new KeyerStraightInput(context, this);
     this.iambic = new KeyerIambicInput(context, this);
+
     this.inputs = ['none', 'straight', 'iambic'];
     this._keyer = 'none';
     this.keyer = 'none';

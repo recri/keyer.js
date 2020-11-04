@@ -1,8 +1,8 @@
 import { KeyerIambicKeyer } from './KeyerIambicKeyer.js';
 
 export class KeyerIambicInput extends KeyerIambicKeyer {
-  constructor(context, keyertimer) {
-    super(context, keyertimer);
+  constructor(context, input) {
+    super(context, input);
     this.keycodes = [ 'AltRight', 'ControlRight', 'ShiftRight', 'AltLeft', 'ControlLeft', 'ShiftLeft' ];
     this.leftKey = 'AltRight';
     this.rightKey = 'ControlRight';

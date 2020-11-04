@@ -1,9 +1,9 @@
 import { KeyerTable } from './KeyerTable.js';
-import { KeyerTimer } from './KeyerTimer.js';
+import { KeyerPlayer } from './KeyerPlayer.js';
 
 // translate text into keyed sidetone
 // extends the oscillator with a code table and timings for the elements of the code
-export class KeyerOutput extends KeyerTimer {
+export class KeyerOutput extends KeyerPlayer {
 
   constructor(context) {
     super(context);

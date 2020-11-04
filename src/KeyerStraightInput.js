@@ -1,9 +1,9 @@
-import { KeyerPlayerDelegate } from './KeyerPlayerDelegate.js';
+import { KeyerInputDelegate } from './KeyerInputDelegate.js';
 
-export class KeyerStraightInput extends KeyerPlayerDelegate {
+export class KeyerStraightInput extends KeyerInputDelegate {
 
-  constructor(context, keyertimer) {
-    super(context, keyertimer);
+  constructor(context, input) {
+    super(context, input);
     this.active = false;
     this.raw_key_on = false;
     this.is_on = false;
