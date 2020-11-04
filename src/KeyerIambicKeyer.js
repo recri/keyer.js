@@ -1,4 +1,4 @@
-import { KeyerTimer } from './KeyerTimer.js';
+import { KeyerPlayerDelegate } from './KeyerPlayerDelegate.js';
 
 // keyer states
 const IDLE = 0; // waiting for a paddle closure
@@ -6,7 +6,7 @@ const DIT = 1; // making a dit or the space after
 const DAH = 2; // making a dah or the space after
 
 // translate iambic paddle events into keyup/keydown events
-export class KeyerIambicKeyer extends KeyerTimer {
+export class KeyerIambicKeyer extends KeyerPlayerDelegate {
   /*
    ** This has been stripped down to the minimal iambic state machine
    ** from the AVR sources that accompany the article in QEX March/April
@@ -38,8 +38,8 @@ export class KeyerIambicKeyer extends KeyerTimer {
   // 3.19.2012
   // iambic keyer
 
-  constructor(context) {
-    super(context);
+  constructor(context, keyertimer) {
+    super(context, keyertimer);
     // state variables
     this.keyerState = IDLE; // the keyer state
     this.ditPending = false; // memory for dit seen while playing a dah
@@ -50,29 +50,22 @@ export class KeyerIambicKeyer extends KeyerTimer {
     this._swapped = false; // true if paddles are swapped
 
     // timer, 1/4 dit of samples
-    this._buffer = null;
-    this._source = null;
+    this._tick = 0.1;
     this._running = false;
 
     this.rawDitOn = false;
     this.rawDahOn = false;
-    this.lastTick = this.context.currentTime;
+    this.lastTick = this.currentTime;
 
-    this.on('updateTiming', this.updateTimerBuffer, this)
+    this.on('updateTiming', this.updateTimerTick, this)
   }
 
   // update the clock timer
-  updateTimerBuffer() {
-    this._buffer = this.context.createBuffer(
-      1,
-      Math.floor((this.context.sampleRate * this._perRawDit) / 4),
-      this.context.sampleRate
-    );
-  }
+  updateTimerTick() { this._tick = this.perRawDit/4; }
 
   startClock() {
     // console.log("start_clock");
-    this.lastTick = this.context.currentTime;
+    this.lastTick = this.currentTime;
     this._running = true;
     this.startTick();
   }
@@ -80,7 +73,6 @@ export class KeyerIambicKeyer extends KeyerTimer {
   stopClock() {
     // console.log("stop_clock");
     this._running = false;
-    if (this._source) this._source.stop();
   }
 
   restartClock() {
@@ -90,27 +82,22 @@ export class KeyerIambicKeyer extends KeyerTimer {
   }
 
   endTick() {
-    this._source = null;
     this.clock();
     if (this._running) this.startTick();
   }
 
-  startTick() {
-    this._source = this.context.createBufferSource();
-    this._source.buffer = this._buffer;
-    this._source.onended =  () => this.endTick();
-    this._source.connect(this.context.destination); // not sure why I needed this, but it doesn't help
-    this._source.start();
+  startTick() { 
+    this.after(this._tick, () => this.endTick());
   }
 
   transition(state, len) {
     // emit a space
     if (this.keyerState === IDLE) {
-      if (this.timer > -((this._perIes + this._perIls) / 2 - this._perIes)) {
+      if (this.timer > -((this.perIes + this.perIls) / 2 - this.perIes)) {
         // the timer has not reached the boundary between ies and ils
         this.emit('element', '', this.cursor);
       } else if (
-        this.timer > -((this._perIls + this._perIws) / 2 - this._perIes)
+        this.timer > -((this.perIls + this.perIws) / 2 - this.perIes)
       ) {
         // the timer has not reached the boundary between ils and iws
         this.emit('element', ' ', this.cursor);
@@ -131,13 +118,13 @@ export class KeyerIambicKeyer extends KeyerTimer {
 
     // reset the timer, count down to length of element plus inter-element space
     if (this.timer < 0) this.timer = 0;
-    this.timer += len + this._perIes;
+    this.timer += len + this.perIes;
 
     // schedule the element and the inter-element space
     const time = this.cursor;
     this.keyOnAt(time);
     this.keyOffAt(time + len);
-    this.keyHoldFor(this._perIes);
+    this.keyHoldFor(this.perIes);
   }
 
   clock() {
@@ -145,7 +132,7 @@ export class KeyerIambicKeyer extends KeyerTimer {
     const dahOn = this._swapped ? this.rawDitOn : this.rawDahOn;
 
     // compute time
-    const now = this.context.currentTime;
+    const now = this.currentTime;
     const ticks = now - this.lastTick;
     this.lastTick = now;
 
@@ -156,16 +143,16 @@ export class KeyerIambicKeyer extends KeyerTimer {
 
     // keyer state machine
     if (this.keyerState === IDLE) {
-      if (ditOn) this.transition(DIT, this._perDit);
-      else if (dahOn) this.transition(DAH, this._perDah);
-    } else if (this.timer <= this._perIes / 2) {
+      if (ditOn) this.transition(DIT, this.perDit);
+      else if (dahOn) this.transition(DAH, this.perDah);
+    } else if (this.timer <= this.perIes / 2) {
       if (this.keyerState === DIT) {
-        if (this.dahPending || dahOn) this.transition(DAH, this._perDah);
-        else if (this.ditOn) this.transition(DIT, this._perDit);
+        if (this.dahPending || dahOn) this.transition(DAH, this.perDah);
+        else if (this.ditOn) this.transition(DIT, this.perDit);
         else this.keyerState = IDLE;
       } else if (this.keyerState === DAH) {
-        if (this.ditPending || ditOn) this.transition(DIT, this._perDit);
-        else if (this.dahOn) this.transition(DAH, this._perDah);
+        if (this.ditPending || ditOn) this.transition(DIT, this.perDit);
+        else if (this.dahOn) this.transition(DAH, this.perDah);
         else this.keyerState = IDLE;
       }
     }
@@ -175,14 +162,14 @@ export class KeyerIambicKeyer extends KeyerTimer {
       ? this.keyerState !== DIT
       : ditOn &&
         this.keyerState === DAH &&
-        this.timer < this._perDah / 3 + this._perIes;
+        this.timer < this.perDah / 3 + this.perIes;
 
     // ******************  dah pending state machine   *********************
     this.dahPending = this.dahPending
       ? this.keyerState !== DAH
       : dahOn &&
         this.keyerState === DIT &&
-        this.timer < this._perDit / 2 + this._perIes;
+        this.timer < this.perDit / 2 + this.perIes;
   }
 
   // swap the dit and dah paddles
