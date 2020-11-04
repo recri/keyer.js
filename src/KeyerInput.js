@@ -2,18 +2,14 @@ import { KeyerPlayer } from './KeyerPlayer.js';
 import { KeyerNoneInput } from './KeyerNoneInput.js';
 import { KeyerStraightInput } from './KeyerStraightInput.js';
 import { KeyerIambicInput } from './KeyerIambicInput.js';
-import { KeyerNoneSource } from './KeyerNoneSource.js';
 import { KeyerMidiSource } from './KeyerMidiSource.js';
-import { KeyerKeyboardSource } from './KeyerKeyboardSource.js';
 
 // translate keyup/keydown into keyed oscillator sidetone
 export class KeyerInput extends KeyerPlayer {
   constructor(context) {
     super(context);
 
-    this.noneSource = new KeyerNoneSource(context);
     this.midiSource = new KeyerMidiSource(context);
-    this.keyboardSource = new KeyerKeyboardSource(context);
     this.midiSource.on('refresh', this.midiOnRefresh, this);
 
     this.none = new KeyerNoneInput(context, this);
