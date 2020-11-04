@@ -1,8 +1,8 @@
 import { KeyerIambicKeyer } from './KeyerIambicKeyer.js';
 
 export class KeyerIambicInput extends KeyerIambicKeyer {
-  constructor(context) {
-    super(context);
+  constructor(context, keyertimer) {
+    super(context, keyertimer);
     this.keycodes = [ 'AltRight', 'ControlRight', 'ShiftRight', 'AltLeft', 'ControlLeft', 'ShiftLeft' ];
     this.leftKey = 'AltRight';
     this.rightKey = 'ControlRight';
@@ -63,6 +63,7 @@ export class KeyerIambicInput extends KeyerIambicKeyer {
     this.cancel();
     this.stopClock();
   }
+
 }
 // Local Variables:
 // mode: JavaScript
