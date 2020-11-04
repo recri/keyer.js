@@ -4,6 +4,7 @@ import { KeyerTimer } from './KeyerTimer.js';
 // translate text into keyed sidetone
 // extends the oscillator with a code table and timings for the elements of the code
 export class KeyerOutput extends KeyerTimer {
+
   constructor(context) {
     super(context);
     // translation table
@@ -18,6 +19,7 @@ export class KeyerOutput extends KeyerTimer {
 
   send(ch) {
     // console.log(`output send '${ch}' idle ${this.idle} pending.length ${this.pending.length}`);
+    // this.dumpProperties();
     this.pending.push(ch);
     if (this.idle) this.sendPending();
   }
@@ -40,12 +42,12 @@ export class KeyerOutput extends KeyerTimer {
       // inter-word space
       if (this.lastch === ' ' || this.lastch === '\t' || this.lastch === "\n") {
 	// repeated inter-word space
-	time = this.keyHoldFor(this._perIws);
+	time = this.keyHoldFor(this.perIws);
 	this.emit('element', '\t', time);
       } else {
 	// inter-word space after character
 	// reduce by inter-letter space already queued
-	time = this.keyHoldFor(this._perIws-this._perIls); 
+	time = this.keyHoldFor(this.perIws-this.perIls); 
 	this.emit('element', '\t', time);
       }
     } else {
@@ -53,21 +55,21 @@ export class KeyerOutput extends KeyerTimer {
       for (const c of this.table.encode(ch).split('')) {
 	if (c === '.') { 	// send a dit
 	  this.keyOnAt(time);
-	  time = this.keyHoldFor(this._perDit);
+	  time = this.keyHoldFor(this.perDit);
 	  this.keyOffAt(time);
 	  this.emit('element', '.', time);
-	  time = this.keyHoldFor(this._perIes);
+	  time = this.keyHoldFor(this.perIes);
 	  this.emit('element', '', time);
 	} else if (c === '-') {	// send a dah
 	  this.keyOnAt(time);
-	  time = this.keyHoldFor(this._perDah);
+	  time = this.keyHoldFor(this.perDah);
 	  this.keyOffAt(time);
 	  this.emit('element', '-', time);
-	  time = this.keyHoldFor(this._perIes);
+	  time = this.keyHoldFor(this.perIes);
 	  this.emit('element', '', time);
 	} else if (c === ' ') {
 	  // reduce by inter-element space already queued
-	  time = this.keyHoldFor(this._perIls-this._perIes);
+	  time = this.keyHoldFor(this.perIls-this.perIes);
 	  this.emit('element', ' ', time);
 	} else {
 	  console.log(`why is {$c} in the code table for ${ch}?`);
@@ -76,10 +78,7 @@ export class KeyerOutput extends KeyerTimer {
     }
     this.lastch = ch
     this.emit('sending', ch);
-    const timer = this.context.createConstantSource();
-    timer.onended = () => this.sendPending();
-    timer.start(this.context.currentTime)
-    timer.stop(time-this._perDah);
+    this.when(time-this.perDah, () => this.sendPending());
   }
 
   cancelPending() {
