@@ -16,7 +16,7 @@ const ramp = (type, size, k, ...args) => ramps[type](size, k, ...args);
 const ramp2 = (type1, type2, size, k, ...args) => ramp(type1, size, k, ...args) * ramp(type2, size, k, ...args);
 
 export class KeyerRamp { 
-  static get ramps() { return Object.keys(ramps); }
+  static get ramps() { return Array.from(Object.keys(ramps)); }
   
   static rise(type, size, k, ...args) { return ramp(type, size, k, ...args); }
 
