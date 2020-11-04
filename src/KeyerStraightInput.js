@@ -1,9 +1,9 @@
-import { KeyerPlayer } from './KeyerPlayer.js';
+import { KeyerPlayerDelegate } from './KeyerPlayerDelegate.js';
 
-export class KeyerStraightInput extends KeyerPlayer {
+export class KeyerStraightInput extends KeyerPlayerDelegate {
 
-  constructor(context) {
-    super(context);
+  constructor(context, keyertimer) {
+    super(context, keyertimer);
     this.active = false;
     this.raw_key_on = false;
     this.is_on = false;
@@ -14,7 +14,6 @@ export class KeyerStraightInput extends KeyerPlayer {
   }
 
   _keyset(on) {
-    // console.log(`straight key ${on}`);
     this.raw_key_on = on;
     if (this.raw_key_on !== this.is_on) {
       if (this.cursor < this.rampEnd) {
