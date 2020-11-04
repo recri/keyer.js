@@ -1,5 +1,7 @@
 // rewrite this to drop the ctx argument to .on()
 // let everyone handle their own binding
+// add a timer, after(time, handler)
+// 
 export class KeyerEvent {
   /**
    * events: installed event handlers
@@ -9,6 +11,12 @@ export class KeyerEvent {
     this.events = [];
   }
 
+  get currentTime() { return this.context.currentTime; }
+
+  get sampleRate() { return this.context.sampleRate; }
+
+  get baseLatency() { return this.context.baseLatency; }
+  
   /**
    *  on: listen to events
    */
@@ -38,6 +46,29 @@ export class KeyerEvent {
   emit(type, ...args) {
     const list = this.events[type] || [];
     list.forEach(j => j.f.apply(j.c, args));
+  }
+
+  /**
+   * After: fire an event at some seconds into the future.
+   * using the web audio sample timer.
+   */
+  after(dtime, func) { 
+    this.when(this.currentTime+dtime, func);
+  }
+    
+  /**
+   * When: fire an event at a specified time.
+   * using the web audio sample timer.
+   */
+  when(time, func) {
+    if (time <= this.currentTime)
+      func();
+    else {
+      const timer = this.context.createConstantSource();
+      timer.onended = func;
+      timer.start();
+      timer.stop(time);
+    }
   }
 
   // eventDebug(type) {
