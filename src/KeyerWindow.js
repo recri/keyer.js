@@ -74,7 +74,7 @@ const windows = {
 const window = (type, size, k) => windows[type](size, k);
 
 export class KeyerWindow {
-  static get windows() { return Object.keys(windows); }
+  static get windows() { return Array.from(Object.keys(windows)); }
 
   static window(type, n, i, ...args) { return window(type, n, i, ...args); }
 
