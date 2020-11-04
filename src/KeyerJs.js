@@ -15,6 +15,7 @@ const defaults = {
   compensation: 0,
   rise: 4,
   fall: 4,
+  envelope: 'raised-cosine',
   speed: 20,
   qrq: 'off',
   inputKeyer: 'iambic',
@@ -118,6 +119,7 @@ export class KeyerJs extends LitElement {
       compensation: { type: Number },
       rise: { type: Number },
       fall: { type: Number },
+      envelope: { type: String },
       inputKeyer: { type: String },
       inputSource: { type: Array },
       inputMidi: { type: String },
@@ -191,6 +193,12 @@ export class KeyerJs extends LitElement {
 
   get fall() { return this.keyer.fall; }
 
+  set envelope(v) { this.updateControl('envelope', v); }
+
+  get envelope() { return this.keyer.envelope; }
+
+  static get envelopes() { return Keyer.envelopes; }
+  
   set swapped(v) {  this.updateControl('swapped', v); }
 
   get swapped() { return this.keyer.swapped; }
@@ -234,11 +242,11 @@ export class KeyerJs extends LitElement {
   get rightPaddleMidi() { return this.keyer.rightPaddleMidi; }
 
   // get properties delegated to this.keyer.context
-  get currentTime() { return this.keyer.context.currentTime; }
+  get currentTime() { return this.keyer.currentTime; }
 
-  get sampleRate() { return this.keyer.context.sampleRate; }
+  get sampleRate() { return this.keyer.sampleRate; }
 
-  get baseLatency() { return this.keyer.context.baseLatency; }
+  get baseLatency() { return this.keyer.baseLatency; }
 
   get state() { return this.keyer.context.state; }
   
@@ -380,7 +388,7 @@ export class KeyerJs extends LitElement {
   toggleSwapped() { this.toggleControl('swapped'); }
   
   selectControl(control, e) { 
-    console.log(`selectControl('${control}', ${e.target.value})`);
+    // console.log(`selectControl('${control}', ${e.target.value})`);
     this[control] = e.target.value;
     saveControl(control, e.target.value);
   }
@@ -420,6 +428,8 @@ export class KeyerJs extends LitElement {
 
   selectCompensation(e) { this.selectControl('compensation', e); }
     
+  selectEnvelope(e) { this.selectControl('envelope', e); }
+  
   // display panel selectors
   toggleTouchKey() { this.displayTouchKey = toggleOnOff(this.displayTouchKey); }
 
@@ -553,9 +563,7 @@ export class KeyerJs extends LitElement {
 	<div>
 	  <label>Envelope: 
 	    <select .value=${this.envelope} @change=${this.selectEnvelope}>
-	      <option>linear</option>
-	      <option>exponential</option>
-	      <option>raised-cosine</option>
+	      ${templateOptions(KeyerJs.envelopes, this.envelope)}
 	    </select>
 	  </label>
 	</div>`;
