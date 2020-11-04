@@ -1,6 +1,10 @@
 import { KeyerEvent } from './KeyerEvent.js';
 import { KeyerRamp } from './KeyerRamp.js';
 
+const gainLinear = (decibel) => 10 ** (decibel / 20);
+
+const gainDecibel = (linear) => Math.log10(linear) * 20;
+
 // translate keyup/keydown into keyed sidetone
 // this layer handles keying the oscillator
 // so it knows the frequency, the volume,
@@ -10,13 +14,13 @@ export class KeyerPlayer extends KeyerEvent {
     super(context);
 
     // where we are in the sample time stream
-    this.curpos = 0;
+    this.cursor = this.currentTime;
 
     // initialize parameters
+    this.state = 'off';
+    this._envelope = 'raised-cosine';
     this._rise = 4;
     this._fall = 4;
-    this.envelopes = KeyerRamp.ramps;
-    this._envelope = 'raised-cosine';
     this.updateRise();
     this.updateFall();
 
@@ -48,81 +52,92 @@ export class KeyerPlayer extends KeyerEvent {
 
   get pitch() { return this.oscillator.frequency.value; }
 
-  static gainLinear(gainDecibel) { return 10 ** (gainDecibel / 20); }
+  set gain(gain) { this.volume.gain.value = gainLinear(gain); }
 
-  static gainDecibel(gainLinear) { return Math.log10(gainLinear) * 20; }
+  get gain() { return gainDecibel(this.volume.gain.value); }
 
-  set gain(gain) { this.volume.gain.value = KeyerPlayer.gainLinear(gain); }
-
-  get gain() { return KeyerPlayer.gainDecibel(this.volume.gain.value); }
-
-  set rise(ms) { if (this.rise !== ms) { this._rise = ms; this.updateRise(); } }
+  set rise(ms) { this._rise = ms; this.updateRise(); }
 
   get rise() { return this._rise; }
 
-  set fall(ms) { if (this._fall !== ms) { this._fall = ms; this.updateFall(); } }
+  set fall(ms) { this._fall = ms; this.updateFall(); }
 
   get fall() { return this._fall; }
 
-  set envelope(env) { if (this._envelope !== env) { this._envelope = env; this.updateRise(); this.updateFall(); } }
+  set envelope(env) { this._envelope = env; this.updateRise(); this.updateFall(); }
 
   get envelope() { return this._envelope; }
 
-  set cursor(seconds) { this.curpos = seconds; }
+  static get envelopes() { return KeyerRamp.ramps; }
+
+  set cursor(seconds) { this._cursor = seconds; }
 
   get cursor() {
-    this.curpos = Math.max(this.curpos, this.context.currentTime);
-    return this.curpos;
+    this._cursor = Math.max(this._cursor, this.currentTime);
+    return this._cursor;
   }
 
   updateRise() { 
-    const n = Math.round((this.rise / 1000.0) * this.context.sampleRate);
+    const n = Math.round((this.rise / 1000.0) * this.sampleRate);
     this._riseCurve = new Float32Array(n);
     for (let i = 0; i < n; i += 1)
       this._riseCurve[i] = KeyerRamp.rise(this.envelope, n-1, i);
+    // console.log(`updateRise ${this.rise} rise time ${this.sampleRate} samples/sec makes ${n} samples`);
   }
 
   updateFall() { 
-    const n = Math.round((this.fall / 1000.0) * this.context.sampleRate);
+    const n = Math.round((this.fall / 1000.0) * this.sampleRate);
     this._fallCurve = new Float32Array(n);
     for (let i = 0; i < n; i += 1)
       this._fallCurve[i] = KeyerRamp.fall(this.envelope, n-1, i);
+    // console.log(`updateFall ${this.rise} rise time ${this.sampleRate} samples/sec makes ${n} samples`);
   }
 
-  rampEnded(e, riseFall) { this.emit('end:ramp', riseFall); }
+  rampEnded(e, riseFall) {
+    this.emit('end:ramp', riseFall);
+  }
   
-  timeout(start, extent, handler) {
-    const timer = this.context.createConstantSource();
-    timer.onended = handler;
-    timer.start(start);
-    timer.stop(start+extent);
+  riseEnded(e) {
+    this._state = 'on';
+    this.rampEnded(e, 'rise');
+  }
+
+  fallEnded(e) {
+    this._state = 'off';
+    this.rampEnded(e, 'fall');
   }
 
   // schedule the key on at time
   keyOnAt(time) {
-    // console.log(`keyOnAt now+${time-this.context.currentTime} seconds`);
-    // console.log(`keyOnAt now+${(time-this.context.currentTime)*this.context.sampleRate} samples`);
-    const dtime = this._riseCurve.length / this.context.sampleRate;
-    this.ramp.gain.setValueCurveAtTime(this._riseCurve, time, dtime);
-    this.timeout(time, dtime, e => this.rampEnded(e, 'rise'))
-    this.cursor = time;
-    this.emit('transition', 1, time);
+    const t = Math.max(time, this.currentTime);
+    // console.log(`keyOnAt now+${t-this.currentTime} seconds ${this._riseCurve.length} sample ramp`);
+    // console.log(`keyOnAt now+${(t-this.currentTime)*this.sampleRate} samples`);
+    // console.log(this._riseCurve);
+    const dtime = this._riseCurve.length / this.sampleRate;
+    this._state = 'rise';
+    this.ramp.gain.setValueCurveAtTime(this._riseCurve, t, dtime);
+    this.when(t+dtime, e => this.riseEnded(e))
+    this.cursor = t;
+    this.emit('transition', 1, t);
   }
 
   // schedule the key off at time
   keyOffAt(time) {
-    // console.log(`keyOffAt now+${time-this.context.currentTime} seconds`);
-    // console.log(`keyOffAt now+${(time-this.context.currentTime)*this.context.sampleRate} samples`);
-    const dtime = this._fallCurve.length / this.context.sampleRate;
-    this.ramp.gain.setValueCurveAtTime(this._fallCurve, time, dtime);
-    this.timeout(time, dtime, e => this.rampEnded(e, 'fall'))
-    this.cursor = time;
-    this.emit('transition', 0, time);
+    const t = Math.max(time, this.currentTime);
+    // console.log(`keyOffAt now+${t-this.currentTime} seconds`);
+    // console.log(`keyOffAt now+${(t-this.currentTime)*this.sampleRate} samples`);
+    const dtime = this._fallCurve.length / this.sampleRate;
+    this._state = 'fall'
+    this.ramp.gain.setValueCurveAtTime(this._fallCurve, t, dtime);
+    this.when(t+dtime, e => this.fallEnded(e))
+    this.cursor = t;
+    this.emit('transition', 0, t);
   }
 
   // hold the last scheduled key state for seconds
   keyHoldFor(seconds) {
-    // console.log("keyHoldFor until", this.cursor+seconds, "at", this.context.currentTime);
+    // console.log(`state ${this.state} keyHoldFor ${seconds} sec at cursor ${this.cursor} sec at time ${this.currentTime} sec`);
+    // console.log(`keyHoldFor until ${(this.cursor+seconds)/this.sampleRate} samples at ${this.currentTime/$this.sampleRate} samples`);
     this.cursor += seconds;
     return this.cursor;
   }
@@ -131,9 +146,9 @@ export class KeyerPlayer extends KeyerEvent {
   // should probably cancel all pending text and transition events, too.
   // this will cause a click if we were sounding
   cancel() {
-    // console.log("cancel at ", this.context.currentTime);
-    this.ramp.gain.cancelScheduledValues((this.cursor = this.context.currentTime));
-    // this.ramp.gain.setValueCurveAtTime(this._fallCurve, this.context.currentTime, this.fall / 1000.0);
+    // console.log("cancel at ", this.currentTime);
+    this.ramp.gain.cancelScheduledValues((this.cursor = this.currentTime));
+    // this.ramp.gain.setValueCurveAtTime(this._fallCurve, this.currentTime, this.fall / 1000.0);
     this.ramp.gain.value = 0;
   }
 }
