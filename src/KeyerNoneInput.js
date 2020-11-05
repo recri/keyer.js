@@ -1,20 +1,16 @@
-import { KeyerEvent } from './KeyerEvent.js';
+/* eslint class-methods-use-this: ["error", { "exceptMethods": ["onfocus","onblur"] }] */
+import { KeyerInputDelegate } from './KeyerInputDelegate.js';
 /*
 */
-export class KeyerNoneInput extends KeyerEvent {
+export class KeyerNoneInput extends KeyerInputDelegate {
 
-    onfocus() { this.start = true; }
+    onfocus() { }
 
-    onblur() { this.start = false; }
-
-    keydown(e) { this.event = e; }
-
-    keyup(e) {  this.event = e; }
-
-    onmidievent(e) { this.event = e; }
+    onblur() { }
 
 }
 // Local Variables: 
 // mode: JavaScript
 // js-indent-level: 2
 // End:
+

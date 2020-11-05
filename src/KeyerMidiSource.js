@@ -5,86 +5,99 @@ import { KeyerEvent } from './KeyerEvent.js';
  ** The MIDI interface may need to be enabled in chrome://flags,
  ** but even then it may not implement everything needed.
  **
- ** This mostly works in chrome-unstable as of 2015-04-16, Version 43.0.2357.18 dev (64-bit).
- ** but
- **  1) does not detect hot plugged MIDI devices, only those that are present when
- **  chrome is launched; or maybe it does, but not reliably;
- **  2) the supplied event timestamp has no value;
- **  3) the list of MIDI devices may become stale, ie they're there, they worked once, but they
- **  don't work now even though the browser continues to list them;
+ ** This works in chrome-stable as of 2020-11-04, Version 86.0.4240.111 (Official Build) (64-bit)
  */
 
 export class KeyerMidiSource extends KeyerEvent {
   constructor(context) {
     super(context);
-    this.midiOptions = { sysex: false };
     this.midiAccess = null; // global MIDIAccess object
-    this._midi = null;
-    this._notes = []
+    this.midi = 'none';	    // selected midi device
+    this.notesCache = [];   // notes received on each device
     this.refresh();
+    this.shortname = { none: 'none', 'LCMidiKey MIDI 1': 'MidiKey', 'Midi Through Port-0': 'MidiThrough' }
   }
 
-  onmidievent(e) { 
-    this.emit('midi:event', e);
+  onmidimessage(name, e) { 
     // accumulate the NoteOn/NoteOff events seen channel:note
     if (e.data.length === 3) {
-      // console.log("onmidievent "+event.data[0]+" "+event.data[1]+" "+event.data[2].toString(16));
-      const note = (e.data[0]<<16)|(e.data[1]<<8);
+      const note = `${1+(e.data[0]&0x0F)}:${e.data[1]}`; // channel:note 
+      let event = null;
       switch (e.data[0] & 0xf0) {
       case 0x90:		// note on
-	if (e.data[2] === 0)
-	  this.emit('midi:noteoff', note);
-	else 
-	  this.emit('midi:noteon', note);
+	event = e.data[2] === 0 ? 'off' : 'on';
 	break;
       case 0x80:		// note off
-	this.emit('midi:noteoff', note)
+	event = 'off';
         break;
       default:
         return;
       }
-      this._notes[note] += 1;
+      this.notesCache[name][note] += 1;
+      if (name === this.midi && name !== 'none')
+	this.emit('midi', event, note);
     }
   }
   
-  set midi(v) {
-    if (this._midi && this.midiAccess)
-      this.inputsvalues().forEach(
-	x => { if (x.name === this._midi) x.onmidimessage = null; }
-      );
-    this._midi = v;
-    this._notes = []
-    if (v && this.midiAccess)
-      this.inputsvalues().forEach(
-	x => { if (x.name === v) x.onmidimessage = e => this.onmidievent(e); }
-      );
+  shorten(name) {
+    if ( ! this.shortname[name]) {
+      console.log(`need shortname for '${name}'`);
+      this.shortname[name] = name;
+    }
+    return this.shortname[name];
   }
 
-  get midi() { return this._midi; }
-  
-  get names() { return ['none'].concat(this.midiAccess ? this.inputsvalues.map(x => x.name) : []); }
-  
-  get inputsvalues() { return this.midiAccess ? Array.from(this.midiAccess.inputs.values()) : []; }
+  lengthen(name) {
+    for (const n of Object.keys(this.shortname))
+      if (name === this.shortname[n])
+	return n;
+    console.log(`need longname for '${name}'`);
+    this.shortname[name] = name;
+    return name;
+  }
 
-  get notes() { return this._notes; }
+  get names() { return this.rawnames.map(name => this.shorten(name)); }
+  
+  get rawnames() { return ['none'].concat(this.midiAccess ? this.inputs.map(input => input.name) : []); }
+  
+  get inputs() { return this.midiAccess ? Array.from(this.midiAccess.inputs.values()) : []; }
 
-  onStateChange() { this.emit('midi:refresh', this.names); }
+  get outputs() { return this.midiAccess ? Array.from(this.midiAccess.outputs.values()) : []; }
+
+  get notes() { return this.midi && this.notesCache[this.midi] ? Array.from(Object.keys(this.notesCache[this.midi])) : []; }
+
+  rebind() {
+    const { notesCache } = this;
+    this.notesCache = []
+    this.inputs.forEach(input => {
+      const name = this.shorten(input.name);
+      // console.log(`rebind ${name}`);
+      this.notesCache[name] = notesCache[name] || [];
+      input.onmidimessage = e => this.onmidimessage(name, e)
+    });
+  }
+
+  onStateChange() { 
+    this.emit('midi', 'refresh', this.names);
+    this.rebind()
+  }
   
   onMIDISuccess(midiAccess) {
     this.midiAccess = midiAccess;
     this.midiAccess.onstatechange = (event) => this.onStateChange(event);
-    this.emit('midi:refresh', this.names);
+    this.emit('midi', 'refresh', this.names);
+    this.rebind();
   }
 
   onMIDIFailure() {
     this.midiAccess = null;
-    this.emit('midi:refresh', this.names);
+    this.emit('midi', 'refresh', this.names);
   }
 
   refresh() {
     if (navigator.requestMIDIAccess) {
       navigator
-        .requestMIDIAccess()
+        .requestMIDIAccess({ sysex: false })
         .then((...args) => this.onMIDISuccess(...args), (...args) => this.onMIDIFailure(...args));
     } else {
       console.log("no navigator.requestMIDIAccess found");

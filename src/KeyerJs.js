@@ -22,12 +22,12 @@ const defaults = {
   inputSource: ['keyboard'],
   inputMidi: 'none',
   straightKey: 'ControlRight',
-  straightMidi: 'none',
+  straightMidi: '1:1',
   swapped: 'off',
   leftPaddleKey: 'AltRight',
   rightPaddleKey: 'ControlRight',
-  leftPaddleMidi: 'none',
-  rightPaddleMidi: 'none',
+  leftPaddleMidi: '1:0',
+  rightPaddleMidi: '1:1',
   // properties that are local
   displayTouchKey: 'off',
   displaySettings: 'on',
@@ -49,6 +49,13 @@ const hiddenMenuIndicator = html`<span>&#x23f5;</span>`;
 const shownMenuIndicator = html`<span>&#x23f7;</span>`;
 const uncheckedCheckBox = html`<span>&#x2610;</span>`;
 const checkedCheckBox = html`<span>&#x2611;</span>`;
+
+const straightKeyArrow = html`<span>&#x23f7;</span>`;
+const leftKeyArrow = html`<span>&#x23f4;</span>`;
+const rightKeyArrow = html`<span>&#x23f5;</span>`;
+
+const playSymbol = html`<span>&#x23f5;</span>`;
+const pauseSymbol = html`<span>&#x23f8;</span>`;
 
 // toggle between on and off
 const toggleOnOff = (onOff) => ({ on: 'off', off: 'on' }[onOff]);
@@ -125,9 +132,9 @@ export class KeyerJs extends LitElement {
       inputMidi: { type: String },
       swapped: { type: String },
       straightKey: { type: String },
-      straightMidi: { type: String },
       leftPaddleKey: { type: String },
       rightPaddleKey: { type: String },
+      straightMidi: { type: String },
       leftPaddleMidi: { type: String },
       rightPaddleMidi: { type: String },
       // properties read only from this.keyer.context
@@ -225,6 +232,8 @@ export class KeyerJs extends LitElement {
 
   get inputMidiNames() { return this.keyer.inputMidiNames; }
 
+  get inputMidiNotes() { return this.keyer.inputMidiNotes; }
+
   set inputSource(v) { this.updateControl('inputSource', v); }
 
   get inputSource() { return this.keyer.inputSource; }
@@ -237,7 +246,7 @@ export class KeyerJs extends LitElement {
 
   get leftPaddleMidi() { return this.keyer.leftPaddleMidi; }
 
-  set rightPaddleMidi(v) { this.updateControl('rightPaddleMidi', v); }
+  set rightPaddleMidi(v) { /* console.log(`KeyerJs set rightPaddleMidi ${v}`); */ this.updateControl('rightPaddleMidi', v); }
 
   get rightPaddleMidi() { return this.keyer.rightPaddleMidi; }
 
@@ -263,12 +272,6 @@ export class KeyerJs extends LitElement {
     // using localStorage to persist defaults between sessions
     // defaults set at top of file
     Object.keys(defaults).forEach(control => { this[control] = defaultControl(control, defaults[control]) })
-
-    // this.leftPaddleMidi = defaultControl('leftPaddleMidi', leftPaddleMidiDefault);
-    // this.rightPaddleMidi = defaultControl('rightPaddleMidi', rightPaddleMidiDefault);
-    // this.straightMidi = defaultControl('straightMidi', straightMidiDefault);
-    // this.touchPaddle = defaultControl('touchPaddle', touchPaddleDefault);
-    // this.touchStraight = defaultControl('touchStraight', touchStraightDefault);
 
     this.running = this.keyer.context.state !== 'suspended';
     this.text = [['sent', ''], ['pending', '']];
@@ -300,11 +303,7 @@ export class KeyerJs extends LitElement {
 
   keyup(e) { if (isShiftKey(e.code)) this.keyer.keyup(e); }
 
-  touchKey(e) { this.keyer.touchKey(e); }
-  
-  touchLeftKey(e) { this.keyer.touchLeftKey(e); }
-
-  touchRightKey(e) { this.keyer.touchLeftKey(e); }
+  touchKey(e,type,onOff) { this.keyer.touchKey(e, type, onOff); }
   
   keypress(e) {
     // console.log(`keypress e.key ${e.key}`);
@@ -393,6 +392,15 @@ export class KeyerJs extends LitElement {
     saveControl(control, e.target.value);
   }
   
+  selectSource(e, b) {
+    if (this.inputSource.includes(b))
+      this.inputSource = this.inputSource.filter(x => x !== b);
+    else
+      this.inputSource = this.inputSource.concat(b)
+    // console.log(`selectSource ${e} ${b} '${this.inputSource}'`);
+    // console.log(e);
+  }
+   
   selectInputKeyer(e) { this.selectControl('inputKeyer', e); }
   
   selectInputMidi(e) { this.selectControl('inputMidi', e); }
@@ -403,15 +411,12 @@ export class KeyerJs extends LitElement {
   
   selectRightPaddleKey(e) { this.selectControl('rightPaddleKey', e); }
   
-  selectSource(e,b) {
-    if (this.inputSource.includes(b))
-      this.inputSource = this.inputSource.filter(x => x !== b);
-    else
-      this.inputSource = this.inputSource.concat(b)
-    // console.log(`selectSource ${e} ${b} '${this.inputSource}'`);
-    // console.log(e);
-  }
-   
+  selectStraightMidi(e) { this.selectControl('straightMidi', e); }
+  
+  selectLeftPaddleMidi(e) { this.selectControl('leftPaddleMidi', e); }
+
+  selectRightPaddleMidi(e) { this.selectControl('rightPaddleMidi', e); }
+  
   selectGain(e) { this.selectControl('gain', e); }
 
   selectPitch(e) { this.selectControl('pitch', e); }
@@ -514,12 +519,12 @@ export class KeyerJs extends LitElement {
     switch (this.inputKeyer) {
     case 'straight':
       return html`
-	  <button class="key" @click=${this.touchKey}></button>
+	  <button class="key" @mousedown=${e => this.touchKey(e,'straight',true)} @mouseup=${e => this.touchKey(e,'straight',false)}>${straightKeyArrow}</button>
 	`;
     case 'iambic': 
       return html`
-	  <button class="key" @click=${this.touchLeftKey}></button>
-	  <button class="key" @click=${this.touchRightKey}></button>
+	  <button class="key" @mousedown=${e => this.touchKey(e,'left',true)} @mouseup=${e => this.touchKey(e,'left',false)}>${leftKeyArrow}</button>
+	  <button class="key" @mousedown=${e => this.touchKey(e,'right',true)} @mouseup=${e => this.touchKey(e,'right',false)}>${rightKeyArrow}</button>
 	`;
     default: 
       return html``;
@@ -596,7 +601,6 @@ export class KeyerJs extends LitElement {
 	  </label>
 	</div>`,
       ! (this.inputKeyer === 'straight' && this.inputSource.includes('keyboard')) ? html`` : html`
-	<!-- straight input keyer settings -->
 	<div>
 	  <label>Straight key:
             <select .value=${this.straightKey} @change=${this.selectStraightKey}>
@@ -604,8 +608,15 @@ export class KeyerJs extends LitElement {
 	    </select>
 	  </label>
         </div>`,
+      ! (this.inputKeyer === 'straight' && this.inputSource.includes('midi')) ? html`` : html`
+	<div>
+	  <label>Straight midi:
+            <select .value=${this.straightMidi} @change=${this.selectStraightMidi}>
+	      ${templateOptions(this.inputMidiNotes,this.straightMidi)}
+	    </select>
+	  </label>
+        </div>`,
       this.inputKeyer !== 'iambic' ? html`` : html`
-	<!-- input keyer settings, iambic -->
 	<div>
 	  <label>Swap paddles: 
             <button role="switch" aria-checked=${isOn(this.swapped)} @click=${this.toggleSwapped}>
@@ -626,6 +637,23 @@ export class KeyerJs extends LitElement {
 	  <label>Right paddle key:
             <select .value=${this.rightPaddleKey} @change=${this.selectRightPaddleKey}>
 	      ${shiftKeyOptions(this.rightPaddleKey)}
+	    </select>
+	  </label>
+	</div>
+      </div>`,
+      ! (this.inputKeyer === 'iambic' && this.inputSource.includes('midi')) ? html`` : html`
+	<!-- input keyer settings, iambic, midi selection -->
+	<div>
+	  <label>Left paddle midi:
+            <select .value=${this.leftPaddleMidi} @change=${this.selectLeftPaddleMidi}>
+	      ${templateOptions(this.inputMidiNotes,this.leftPaddleMidi)}
+	    </select>
+	  </label>
+	</div>
+	<div>
+	  <label>Right paddle midi:
+            <select .value=${this.rightPaddleMidi} @change=${this.selectRightPaddleMidi}>
+	      ${templateOptions(this.inputMidiNotes,this.rightPaddleMidi)}
 	    </select>
 	  </label>
 	</div>
@@ -683,7 +711,7 @@ export class KeyerJs extends LitElement {
         <div><h1>keyer.js</h1></div>
         <div>
           <button role="switch" aria-checked=${this.running} @click=${this.playPause}>
-	    <span>${this.running ? 'Pause' : 'Play'}</span>
+	    <span>${this.running ? pauseSymbol : playSymbol}</span>
 	  </button>
 	  <button @click=${this.clear}>
 	    <span>Clear</span>

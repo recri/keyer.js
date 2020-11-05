@@ -61,19 +61,20 @@ export class Keyer extends KeyerEvent {
     this.leftPaddleKey = 'AltRight';
     this.rightPaddleKey = 'ControlRight';
     this.straightKey = 'ControlRight';
-    this.leftPaddleMidi = 'none';
-    this.rightPaddleMidi = 'none';
-    this.straightMidi = 'none';
+    this.leftPaddleMidi = '1:0';
+    this.rightPaddleMidi = '1:1';
+    this.straightMidi = '1:1';
 
     this.qrq = 'off';
   }
 
   // keyboard handlers
-  /* eslint class-methods-use-this: ["error", { "exceptMethods": ["keydown","keyup","keypress"] }] */
-  keydown(e) { this.input.keydown(e); }
+  keydown(e) { this.input.kbdKey(e, true); }
 
-  keyup(e) { this.input.keyup(e); }
+  keyup(e) { this.input.kbdKey(e, false); }
 
+  touchKey(e,type,onOff) { this.input.touchKey(e, type, onOff); }
+  
   keypress(e) { this.outputSend(e.key); }
 
   // useful actions
@@ -161,6 +162,8 @@ export class Keyer extends KeyerEvent {
   
   get inputMidiNames() { return this.input.midiNames; }
   
+  get inputMidiNotes() { return this.input.midiNotes; }
+  
   set leftPaddleKey(v) { this.input.leftPaddleKey = v; }
 
   get leftPaddleKey() { return this.input.leftPaddleKey; }
@@ -169,9 +172,21 @@ export class Keyer extends KeyerEvent {
 
   get rightPaddleKey() { return this.input.rightPaddleKey; }
 
+  set leftPaddleMidi(v) { this.input.leftPaddleMidi = v; }
+
+  get leftPaddleMidi() { return this.input.leftPaddleMidi; }
+
+  set rightPaddleMidi(v) { /* console.log(`Keyer set rightPaddleMidi ${v}`); */ this.input.rightPaddleMidi = v; }
+
+  get rightPaddleMidi() { return this.input.rightPaddleMidi; }
+
   set straightKey(v) { this.input.straightKey = v; }
 
   get straightKey() { return this.input.straightKey; }
+
+  set straightMidi(v) { this.input.straightMidi = v; }
+
+  get straightMidi() { return this.input.straightMidi; }
 
   static async createAudioProcessor(context, source, name) {
     try {
