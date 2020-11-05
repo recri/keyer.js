@@ -36,7 +36,12 @@ export class KeyerStraightInput extends KeyerInputDelegate {
     }
   }
 
-  keyEvent(type, onOff) { if (type === 'straight' && this.active) this.keyset(onOff); }
+  keyEvent(type, onOff) {
+    if (type === 'straight' && this.active) {
+      console.log(`straight keyEvent ${type} ${onOff} ${this.currentTime}`);
+      this.keyset(onOff);
+    }
+  }
 
 }
 // Local Variables: 
