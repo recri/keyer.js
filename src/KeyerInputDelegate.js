@@ -1,5 +1,4 @@
 import { KeyerEvent } from './KeyerEvent.js';
-// import { KeyerInput } from './KeyerInput.js';
 
 // delegate to KeyerInput
 export class KeyerInputDelegate extends KeyerEvent {
@@ -7,6 +6,8 @@ export class KeyerInputDelegate extends KeyerEvent {
   constructor(context, input) {
     super(context);
     this.input = input;
+    this.keyMap = [];
+    this.midiMap = [];
   }
 
   get cursor() { return this.input.cursor; }
@@ -19,6 +20,8 @@ export class KeyerInputDelegate extends KeyerEvent {
 
   cancel() { this.input.cancel(); }
   
+  get perRawDit() { return this.input.perRawDit; }
+  
   get perDit() { return this.input.perDit; }
 
   get perDah() { return this.input.perDah; }
@@ -28,6 +31,8 @@ export class KeyerInputDelegate extends KeyerEvent {
   get perIls() { return this.input.perIls; }
 
   get perIws() { return this.input.perIws; }
+
+  
 }
 // Local Variables: 
 // mode: JavaScript
