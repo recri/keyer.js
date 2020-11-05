@@ -32,6 +32,10 @@ export class KeyerInputDelegate extends KeyerEvent {
 
   get perIws() { return this.input.perIws; }
 
+  get rise() { return this.input.rise; }
+
+  get fall() { return this.input.fall; }
+  
   
 }
 // Local Variables: 

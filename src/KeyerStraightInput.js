@@ -7,7 +7,8 @@ export class KeyerStraightInput extends KeyerInputDelegate {
     this.active = false;
     this.rawKeyOn = false;
     this.keyOn = false;
-    this.rampEnd = this.currentTime
+    this.bounceEnd = this.cur
+    this.rampEnd = this.currentTime;
     this.on('end:ramp', () => this.keyset(this.rawKeyOn));
   }
 
@@ -17,31 +18,23 @@ export class KeyerStraightInput extends KeyerInputDelegate {
 
   keyset(on) {
     this.rawKeyOn = on;
-    if (this.rawKeyOn !== this.keyOn) {
-      if (this.cursor < this.rampEnd) {
-	// We received a new keystate before the previous keystate got started.
-	// When we reach the end of the ramp on or off we will receive the event
-	// in the handler set in the constructor, and apply the new rawKeyOn
-	// value at that time.
+    if (this.cursor < this.rampEnd) {
+      // If we receive a new keystate while the previous keystate is
+      // ramping up or down, we simply set the rawKeyOn and handle it
+      // when the end:ramp event is received.
+    } else if (this.rawKeyOn !== this.keyOn) {
+      this.keyOn = this.rawKeyOn;
+      if (this.keyOn) {
+	this.rampEnd = this.cursor + 2*this.rise/1000.0;
+	this.keyOnAt(this.cursor);
       } else {
-	this.keyOn = this.rawKeyOn;
-	if (this.keyOn) {
-	  this.rampEnd = this.cursor + this.rise/1000.0;
-	  this.keyOnAt(this.cursor);
-	} else {
-	  this.rampEnd = this.cursor + this.fall/1000.0;
-	  this.keyOffAt(this.cursor);
-	}
+	this.rampEnd = this.cursor + 2*this.fall/1000.0;
+	this.keyOffAt(this.cursor);
       }
     }
   }
 
-  keyEvent(type, onOff) {
-    if (type === 'straight' && this.active) {
-      console.log(`straight keyEvent ${type} ${onOff} ${this.currentTime}`);
-      this.keyset(onOff);
-    }
-  }
+  keyEvent(type, onOff) { if (type === 'straight' && this.active) this.keyset(onOff); }
 
 }
 // Local Variables: 
