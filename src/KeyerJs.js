@@ -261,6 +261,10 @@ export class KeyerJs extends LitElement {
   
   constructor() {
     super();
+    this.keyer = null;
+  }
+
+  start() {
     // start the engine
     this.keyer = new Keyer(new AudioContext());
     // this was for debugging the need to twiddle the gain to get iambic or straight keying to work
@@ -282,7 +286,7 @@ export class KeyerJs extends LitElement {
     // this.keyer.inputDecoderOnLetter((ltr, code) => console.log(`input '${ltr}' '${code}'`));
     // this.keyer.output.on('sent', ltr => console.log(`sent '${ltr}'`));
   }
-
+  
   validate() {
     shiftKeys.forEach(x => isShiftKey(x) || console.log(`shiftKey ${x} failed isShiftKey`));
     inputKeyers.forEach(x => isInputKeyer(x) || console.log(`inputKeyer ${x} failed isInputKeyer`));
@@ -704,11 +708,8 @@ export class KeyerJs extends LitElement {
     `;
   }
 
-  render() {
+  renderMain() {
     return html`
-      <main>
-        <div class="logo">${keyerLogo}</div>
-        <div><h1>keyer.js</h1></div>
         <div>
           <button role="switch" aria-checked=${this.running} @click=${this.playPause}>
 	    <span>${this.running ? pauseSymbol : playSymbol}</span>
@@ -740,7 +741,25 @@ export class KeyerJs extends LitElement {
 	</h2>
 	<div>
 	  ${this.statusRender()}
-	</div>
+	</div>`;
+  }
+  
+  renderStartup() {
+    return html`
+        <div>
+          <button class="start" @click=${this.start}>
+	    <span>${playSymbol}</span>
+	  </button>
+	  <h2>Press play to play.</h2>
+	</div>`;
+  }
+
+  render() {
+    return html`
+      <main>
+        <div class="logo">${keyerLogo}</div>
+        <div><h1>keyer.js</h1></div>
+	${this.keyer === null ? this.renderStartup() : this.renderMain()}
       </main>
 
       <p class="app-footer">
