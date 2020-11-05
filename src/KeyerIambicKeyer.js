@@ -46,9 +46,6 @@ export class KeyerIambicKeyer extends KeyerInputDelegate {
     this.dahPending = false; // memory for dah seen while playing a dit
     this.timer = 0; // seconds counting down to next decision
 
-    // parameters
-    this._swapped = false; // true if paddles are swapped
-
     // timer, 1/4 dit of samples
     this._tick = 0.1;
     this._running = false;
@@ -128,8 +125,8 @@ export class KeyerIambicKeyer extends KeyerInputDelegate {
   }
 
   clock() {
-    const ditOn = this._swapped ? this.rawDahOn : this.rawDitOn;
-    const dahOn = this._swapped ? this.rawDitOn : this.rawDahOn;
+    const ditOn = this.rawDitOn;
+    const dahOn = this.rawDahOn;
 
     // compute time
     const now = this.currentTime;
@@ -143,14 +140,19 @@ export class KeyerIambicKeyer extends KeyerInputDelegate {
 
     // keyer state machine
     if (this.keyerState === IDLE) {
+      // from IDLE start a dit or a dah
       if (ditOn) this.transition(DIT, this.perDit);
       else if (dahOn) this.transition(DAH, this.perDah);
     } else if (this.timer <= this.perIes / 2) {
+      // halfway through the interelement space
+      // decide and schedule the next element
       if (this.keyerState === DIT) {
+	// finishing a DIT, then do a DAH, or another DIT, or IDLE
         if (this.dahPending || dahOn) this.transition(DAH, this.perDah);
         else if (this.ditOn) this.transition(DIT, this.perDit);
         else this.keyerState = IDLE;
       } else if (this.keyerState === DAH) {
+	// finishing a DAH, then do a DIT, or another DAH, or IDLE
         if (this.ditPending || ditOn) this.transition(DIT, this.perDit);
         else if (this.dahOn) this.transition(DAH, this.perDah);
         else this.keyerState = IDLE;
@@ -171,11 +173,6 @@ export class KeyerIambicKeyer extends KeyerInputDelegate {
         this.keyerState === DIT &&
         this.timer < this.perDit / 2 + this.perIes;
   }
-
-  // swap the dit and dah paddles
-  set swapped(swapped) { this._swapped = swapped; }
-
-  get swapped() { return this._swapped; }
 
 }
 // Local Variables: 
