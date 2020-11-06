@@ -1,4 +1,4 @@
-/* eslint class-methods-use-this: ["error", { "exceptMethods": ["divBeforeInput","divChange","touchKeyRender"] }] */
+/* eslint class-methods-use-this: ["error", { "exceptMethods": ["divBeforeInput","touchKeyRender"] }] */
 /* eslint no-param-reassign: ["error", { "props": false }] */
 
 import { LitElement, html, css } from 'lit-element';
@@ -262,6 +262,8 @@ export class KeyerJs extends LitElement {
   constructor() {
     super();
     this.keyer = null;
+    this.sent = [];
+    this.pending = [];
   }
 
   start() {
@@ -284,7 +286,8 @@ export class KeyerJs extends LitElement {
     
     // this.keyer.outputDecoderOnLetter((ltr, code) => console.log(`output '${ltr}' '${code}'`));
     // this.keyer.inputDecoderOnLetter((ltr, code) => console.log(`input '${ltr}' '${code}'`));
-    // this.keyer.output.on('sent', ltr => console.log(`sent '${ltr}'`));
+    this.keyer.on('sent', ltr => this.onsent(ltr));
+    this.keyer.on('unsent', ltr => this.onunsent(ltr));
   }
   
   validate() {
@@ -300,58 +303,106 @@ export class KeyerJs extends LitElement {
     this.inputSource.forEach(x => isInputSource(x) || console.log(`property 'inputSource' failed isInputSource: '${x}'`));
   }
 	       
+  // input key events
   // e.key -> Control | Alt | Shift
   // e.location -> 1 for Left, 2 for Right
   // e.code -> (Control | Alt | Shift) (Left | Right)
-  keydown(e) {  if (isShiftKey(e.code)) this.keyer.keydown(e); }
+  keydown(e) { this.keyer.keydown(e); }
 
-  keyup(e) { if (isShiftKey(e.code)) this.keyer.keyup(e); }
+  keyup(e) { this.keyer.keyup(e); }
 
   touchKey(e,type,onOff) { this.keyer.touchKey(e, type, onOff); }
   
-  keypress(e) {
-    // console.log(`keypress e.key ${e.key}`);
-    this.text = this.text.concat([['pending', e.key]]);
-    this.keyer.keypress(e);
-  }
-
+  //
+  // teletype window
+  //
   divBeforeInput(e) {
+    this.before = this.shadowRoot.querySelector(".keyboard").innerHTML;
     switch (e.inputType) {
-    case 'insertText': break;
-    case 'deleteContentBackward': break;
-    case 'insertFromPaste': break;
-    case 'insertParagraph': break;
+    case 'insertText': 
+      break;
+    case 'deleteContentBackward':
+      break;
+    case 'insertFromPaste':
+      // console.log(`divBeforeInput ${e.inputType}`);
+      break;
+    case 'insertParagraph':
+      // console.log(`divBeforeInput ${e.inputType}`);
+      break;
     default:
-      console.log('divBeforeInput:');
+      console.log(`divBeforeInput new case ${e.inputType}`);
       console.log(e);
       break;
     }
   }
 
   divInput(e) {
+    this.after = this.shadowRoot.querySelector(".keyboard").innerHTML;
     switch (e.inputType) {
     case 'insertText':
-      this.keyer.outputSend(e.data); break; // e.data inserted
+      // console.log(`  insertText ${e.data}`);
+      this.pending.push(e.data); // e.data inserted
+      this.keyer.outputSend(e.data);
+      break;
     case 'insertParagraph':
+      // console.log(`divInput ${e.inputType}`);
+      // browser inserts <br><br> for first newline
+      // because single <br> at end of element does not display
+      this.pending.push('\n');
+      this.keyer.outputSend('\n');
       break;
     case 'deleteContentBackward':
+      // console.log(`divInput ${e.inputType} '${e.data}'`);
       this.keyer.outputUnsend(e.data); break; // e.data deleted
     case 'deleteByCut':
-      this.keyer.outputUnsend(e.data); break; // e.data is null
+      console.log(`divInput ${e.inputType}`);
+      break; // e.data is null
     case 'insertFromPaste':
+      console.log(`divInput ${e.inputType}`);
       break; // e.data is null
     case 'insertFromDrop':
+      console.log(`divInput ${e.inputType}`);
       break; // e.data is null
     default:
-      console.log('divInput:');
+      console.log(`divInput: new type ${e.inputType}`);
       console.log(e);
       break;
     }
   }
 
-  divChange(e) {
-    console.log("divChange:");
-    console.log(e);
+  onsent(ltr) {
+    const chr = this.pending[0];
+    if (ltr === chr) {
+      this.pending.shift()
+    }
+    this.sent.push(chr);
+    this.updateKeyboard()
+  }
+
+  onunsent(ltr) {
+    const chr = this.pending[this.pending.length-1]
+    if (ltr === chr) this.pending.pop();
+  }
+
+  updateKeyboard() {
+    const keyboard = this.shadowRoot.querySelector(".keyboard");
+    keyboard.innerHTML = `<span class="sent" contenteditable="false">${this.sent.join('')}</span><span class="pending">${this.pending.join('')}</span>`;
+    const range = document.createRange();
+    range.selectNodeContents(keyboard);
+    range.collapse(false);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+  
+  clear() { 
+    this.sent = [];
+    this.pending = [];
+    this.updateKeyboard();
+  }
+
+  cancel() {
+    this.keyer.outputCancel();
   }
 
   playPause() {
@@ -368,10 +419,6 @@ export class KeyerJs extends LitElement {
       this.running = false;
     }
   }
-
-  clear() { this.text = [['sent',''],['pending','']]; }
-
-  cancel() { this.keyer.outputCancel(); }
 
   toggleControl(control) { 
     this[control] = toggleOnOff(this[control]);
@@ -708,7 +755,7 @@ export class KeyerJs extends LitElement {
     `;
   }
 
-  renderMain() {
+  mainRender() {
     return html`
         <div>
           <button role="switch" aria-checked=${this.running} @click=${this.playPause}>
@@ -720,8 +767,8 @@ export class KeyerJs extends LitElement {
 	  <button @click=${this.cancel}>
 	    <span>Cancel</span>
 	  </button>
-	  <div class="keyboard" contenteditable="true" @input=${this.divInput} @beforeinput=${this.divBeforeInput} @keydown=${this.keydown} @keyup=${this.keyup}>
-	    <span class="sent">Sent text <span class="skip"> Skipped text </span><br>More sent text </span> and text to be sent<br> and more to send
+	  <div class="keyboard" contenteditable @input=${this.divInput} @beforeinput=${this.divBeforeInput} @keydown=${this.keydown} @keyup=${this.keyup}>
+	    <span class="sent" contenteditable="false"></span><span class="pending"></span>
 	  </div>
 	</div>
 	<div>
@@ -744,7 +791,7 @@ export class KeyerJs extends LitElement {
 	</div>`;
   }
   
-  renderStartup() {
+  startupRender() {
     return html`
         <div>
           <button class="start" @click=${this.start}>
@@ -759,7 +806,7 @@ export class KeyerJs extends LitElement {
       <main>
         <div class="logo">${keyerLogo}</div>
         <div><h1>keyer.js</h1></div>
-	${this.keyer === null ? this.renderStartup() : this.renderMain()}
+	${this.keyer === null ? this.startupRender() : this.mainRender()}
       </main>
 
       <p class="app-footer">

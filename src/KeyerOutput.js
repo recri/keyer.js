@@ -15,7 +15,7 @@ export class KeyerOutput extends KeyerPlayer {
     this.lastch = null;
   }
 
-  unsend(ch) { if (ch !== this.pending.pop()) console.log(`lost unsend ${ch}`); }
+  unsend() { const chr = this.pending.pop(); this.emit('unsent', chr); }
 
   send(ch) {
     // console.log(`output send '${ch}' idle ${this.idle} pending.length ${this.pending.length}`);

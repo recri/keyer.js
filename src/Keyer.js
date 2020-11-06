@@ -75,12 +75,12 @@ export class Keyer extends KeyerEvent {
 
   touchKey(e,type,onOff) { this.input.touchKey(e, type, onOff); }
   
-  keypress(e) { this.outputSend(e.key); }
+  // keypress(e) { this.outputSend(e.key); }
 
   // useful actions
   outputSend(text) { this.output.send(text); }
 
-  outputUnsend(text) { this.output.unsend(text); }
+  outputUnsend() { this.output.unsend(); }
 
   outputCancel() { this.output.cancelPending(); }
 
