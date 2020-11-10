@@ -569,7 +569,7 @@ export class KeyerJs extends LitElement {
         display: inline-block;
         padding: 10px;
         text-align: left;
-	white-space: pre;
+	white-space: pre-wrap;
         margin-top: 16px;
         width: 90%;
         margin-left: 5%;
