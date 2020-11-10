@@ -369,7 +369,7 @@ export class KeyerJs extends LitElement {
   }
 
   updateContent() {
-    this.content = html`${this.processFinished()}<span class="pending">${this.pending.join('')}</span>`;
+    this.content = html`${this.processFinished()}<span class="pending">${this.pending.join('')}</span><span class="blinker">|</span>`;
   }
   
   appendFinished(tag, text) {
@@ -592,6 +592,61 @@ export class KeyerJs extends LitElement {
 
       .hidden {
         display: none;
+      }
+
+      .blinker {
+	font-weight: 100;
+	color: #2E3D48;
+	-webkit-animation: 1s blink step-end infinite;
+	-moz-animation: 1s blink step-end infinite;
+	-ms-animation: 1s blink step-end infinite;
+	-o-animation: 1s blink step-end infinite;
+	animation: 1s blink step-end infinite;
+      }
+
+      @keyframes "blink" {
+	from, to {
+	  color: transparent;
+	}
+	50% {
+	  color: black;
+	}
+      }
+
+      @-moz-keyframes blink {
+	from, to {
+	  color: transparent;
+	}
+	50% {
+	  color: black;
+	}
+      }
+
+      @-webkit-keyframes "blink" {
+        from, to {
+          color: transparent;
+        }
+        50% {
+          color: black;
+        }
+      }
+
+      @-ms-keyframes "blink" {
+        from, to {
+          color: transparent;
+        }
+        50% {
+          color: black;
+        }
+      }
+
+      @-o-keyframes "blink" {
+        from, to {
+          color: transparent;
+        }
+        50% {
+          color: black;
+        }
       }
 
       .app-footer {
