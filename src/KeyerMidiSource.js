@@ -1,5 +1,6 @@
 /* eslint no-param-reassign: ["error", { "props": false }] */
 /* eslint no-bitwise: ["error", { "allow": ["&","|","<<"] }] */
+/* eslint class-methods-use-this: ["error", { "exceptMethods": ["shorten","lengthen"] }] */
 import { KeyerEvent } from './KeyerEvent.js';
 /*
  ** The MIDI interface may need to be enabled in chrome://flags,
@@ -15,7 +16,6 @@ export class KeyerMidiSource extends KeyerEvent {
     this.midi = 'none';	    // selected midi device
     this.notesCache = [];   // notes received on each device
     this.refresh();
-    this.shortname = { none: 'none', 'LCMidiKey MIDI 1': 'MidiKey', 'Midi Through Port-0': 'MidiThrough' }
   }
 
   onmidimessage(name, e) { 
@@ -33,28 +33,20 @@ export class KeyerMidiSource extends KeyerEvent {
       default:
         return;
       }
-      this.notesCache[name][note] += 1;
+      if (this.notesCache[name][note] === undefined) {
+	// console.log(`adding midi:note ${name} ${note} to notesCache`);
+	this.notesCache[name][note] = true;
+	this.emit('midi:notes');
+      }
       if (name === this.midi && name !== 'none')
-	this.emit('midi', event, note);
+	this.emit('midi:event', event, note);
     }
   }
   
-  shorten(name) {
-    if ( ! this.shortname[name]) {
-      console.log(`need shortname for '${name}'`);
-      this.shortname[name] = name;
-    }
-    return this.shortname[name];
-  }
+  // shortened names would be nice.
+  shorten(name) { return name; }
 
-  lengthen(name) {
-    for (const n of Object.keys(this.shortname))
-      if (name === this.shortname[n])
-	return n;
-    console.log(`need longname for '${name}'`);
-    this.shortname[name] = name;
-    return name;
-  }
+  lengthen(name) { return name; }
 
   get names() { return this.rawnames.map(name => this.shorten(name)); }
   
@@ -78,20 +70,20 @@ export class KeyerMidiSource extends KeyerEvent {
   }
 
   onStateChange() { 
-    this.emit('midi', 'refresh', this.names);
+    this.emit('midi:names', this.names);
     this.rebind()
   }
   
   onMIDISuccess(midiAccess) {
     this.midiAccess = midiAccess;
     this.midiAccess.onstatechange = (event) => this.onStateChange(event);
-    this.emit('midi', 'refresh', this.names);
+    this.emit('midi:names', this.names);
     this.rebind();
   }
 
   onMIDIFailure() {
     this.midiAccess = null;
-    this.emit('midi', 'refresh', this.names);
+    this.emit('midi:names', this.names);
   }
 
   refresh() {

@@ -12,6 +12,7 @@ export class KeyerOutput extends KeyerPlayer {
     // initialize the pending queue
     this.idle = true;
     this.pending = [];
+    this.skipped = [];
     this.lastch = null;
   }
 
@@ -29,6 +30,11 @@ export class KeyerOutput extends KeyerPlayer {
     if (this.lastch !== null) 
       this.emit('sent', this.lastch);
     if (this.pending.length === 0) {
+      if (this.skipped.length > 0) {
+	// console.log(`cancelPending skipping ${skipped.length} characters`);
+	this.skipped.forEach(ch => this.emit('skipped', ch));
+	this.skipped = [];
+      }
       this.idle = true;
       this.lastch = null;
       return;
@@ -83,12 +89,8 @@ export class KeyerOutput extends KeyerPlayer {
 
   cancelPending() {
     // this will probably make a crunch
-    const skipped = this.pending
+    this.skipped = this.pending
     this.pending = [];
-    this.cancel();
-    this.keyOffAt(this.context.currentTime+Math.max(this.rise, this.fall)/1000.0);
-    // console.log(`cancelPending skipping ${skipped.length} characters`);
-    skipped.forEach(ch => this.emit('skipped', ch));
   }
 
 }

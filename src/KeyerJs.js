@@ -77,7 +77,7 @@ const defaultControl = (control, defaultValue) => {
 const saveControl = (control, newValue) => { localStorage[control] = newValue; }
 
 // generate a list of <option>name</option> html templates
-const templateOptions = (names, selected) => names.map(x => html`<option value=${x} ?selected=${x === selected}>${x}</option>`);
+const templateOptions = (names, selected) => names ? names.map(x => html`<option value=${x} ?selected=${x === selected}>${x}</option>`) : html``;
 
 // generate a list of <input type="checkbox"></input> html templates
 const templateAlternates = (names, selected, handler) => names.map(x => {
@@ -150,6 +150,13 @@ export class KeyerJs extends LitElement {
       displayInputKeys: { type: String },
       // property computed
       running: { type: Boolean },
+      // properties refreshed on notification
+      inputMidiNames: { type: Array },
+      inputMidiNotes: { type: Array },
+      // display widget
+      content: { type: Object },
+      finished: { type: Array },
+      pending: { type: Array },
     };
   }
 
@@ -230,9 +237,9 @@ export class KeyerJs extends LitElement {
 
   get inputMidi() { return this.keyer.inputMidi; }
 
-  get inputMidiNames() { return this.keyer.inputMidiNames; }
+  // get inputMidiNames() { return this.keyer.inputMidiNames; }
 
-  get inputMidiNotes() { return this.keyer.inputMidiNotes; }
+  // get inputMidiNotes() { return this.keyer.inputMidiNotes; }
 
   set inputSource(v) { this.updateControl('inputSource', v); }
 
@@ -262,7 +269,8 @@ export class KeyerJs extends LitElement {
   constructor() {
     super();
     this.keyer = null;
-    this.sent = [];
+    this.content = html``;
+    this.finished = [['sent', '']];
     this.pending = [];
   }
 
@@ -288,6 +296,9 @@ export class KeyerJs extends LitElement {
     // this.keyer.inputDecoderOnLetter((ltr, code) => console.log(`input '${ltr}' '${code}'`));
     this.keyer.on('sent', ltr => this.onsent(ltr));
     this.keyer.on('unsent', ltr => this.onunsent(ltr));
+    this.keyer.on('skipped', ltr => this.onskipped(ltr));
+    this.keyer.on('midi:names', () => this.onmidinames());
+    this.keyer.on('midi:notes', () => this.onmidinotes());
   }
   
   validate() {
@@ -307,104 +318,131 @@ export class KeyerJs extends LitElement {
   // e.key -> Control | Alt | Shift
   // e.location -> 1 for Left, 2 for Right
   // e.code -> (Control | Alt | Shift) (Left | Right)
-  keydown(e) { this.keyer.keydown(e); }
+  keydown(e) { this.keyer.keydown(e); this.ttyKeydown(e); }
 
   keyup(e) { this.keyer.keyup(e); }
 
   touchKey(e,type,onOff) { this.keyer.touchKey(e, type, onOff); }
   
+  // midi information events
+  onmidinames() { this.inputMidiNames = this.keyer.inputMidiNames; }
+
+  onmidinotes() { this.inputMidiNotes = this.keyer.inputMidiNotes; }
+  
   //
   // teletype window
   //
-  divBeforeInput(e) {
-    this.before = this.shadowRoot.querySelector(".keyboard").innerHTML;
-    switch (e.inputType) {
-    case 'insertText': 
-      break;
-    case 'deleteContentBackward':
-      break;
-    case 'insertFromPaste':
-      // console.log(`divBeforeInput ${e.inputType}`);
-      break;
-    case 'insertParagraph':
-      // console.log(`divBeforeInput ${e.inputType}`);
-      break;
-    default:
-      console.log(`divBeforeInput new case ${e.inputType}`);
-      console.log(e);
-      break;
+  onfocus() {
+    // console.log("keyboard focus");
+    this.keyboardFocused = true;
+  }
+
+  onblur() { 
+    // console.log("keyboard blur");
+    this.keyboardFocused = false;
+  }
+
+  updateCursor() {
+    if (this.keyboardFocused) {
+      // this is being called but it isn't doing anything
+      // console.log("updating cursor");
+      const keyboard = this.shadowRoot.querySelector(".keyboard");
+      const range = document.createRange();
+      range.selectNodeContents(keyboard);
+      range.collapse(false);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
     }
   }
 
-  divInput(e) {
-    this.after = this.shadowRoot.querySelector(".keyboard").innerHTML;
-    switch (e.inputType) {
-    case 'insertText':
-      // console.log(`  insertText ${e.data}`);
-      this.pending.push(e.data); // e.data inserted
-      this.keyer.outputSend(e.data);
-      break;
-    case 'insertParagraph':
-      // console.log(`divInput ${e.inputType}`);
-      // browser inserts <br><br> for first newline
-      // because single <br> at end of element does not display
-      this.pending.push('\n');
-      this.keyer.outputSend('\n');
-      break;
-    case 'deleteContentBackward':
-      // console.log(`divInput ${e.inputType} '${e.data}'`);
-      this.keyer.outputUnsend(e.data); break; // e.data deleted
-    case 'deleteByCut':
-      console.log(`divInput ${e.inputType}`);
-      break; // e.data is null
-    case 'insertFromPaste':
-      console.log(`divInput ${e.inputType}`);
-      break; // e.data is null
-    case 'insertFromDrop':
-      console.log(`divInput ${e.inputType}`);
-      break; // e.data is null
-    default:
-      console.log(`divInput: new type ${e.inputType}`);
-      console.log(e);
-      break;
+  updated(/* propertiesChanged */) { this.updateCursor(); }
+  
+  validateFinished() {
+    for (const e of this.finished) {
+      console.log(`finished ${e}`);
     }
-  }
-
-  onsent(ltr) {
-    const chr = this.pending[0];
-    if (ltr === chr) {
-      this.pending.shift()
-    }
-    this.sent.push(chr);
-    this.updateKeyboard()
-  }
-
-  onunsent(ltr) {
-    const chr = this.pending[this.pending.length-1]
-    if (ltr === chr) this.pending.pop();
-  }
-
-  updateKeyboard() {
-    const keyboard = this.shadowRoot.querySelector(".keyboard");
-    keyboard.innerHTML = `<span class="sent" contenteditable="false">${this.sent.join('')}</span><span class="pending">${this.pending.join('')}</span>`;
-    const range = document.createRange();
-    range.selectNodeContents(keyboard);
-    range.collapse(false);
-    const sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
   }
   
+  processFinished() {
+    return this.finished.map(tagText => { const [tag,text] = tagText; return html`<span class="${tag}">${text}</span>`; });
+  }
+
+  updateContent() {
+    this.content = html`${this.processFinished()}<span class="pending">${this.pending.join('')}</span>`;
+  }
+  
+  appendFinished(tag, text) {
+    // this.validateFinished();
+    if (this.finished.length === 0)
+      this.finished.push([tag, text]);
+    else {
+      const [ltag, ltext] = this.finished[this.finished.length-1];
+      if (tag === ltag)
+	this.finished[this.finished.length-1] = [tag, `${ltext}${text}`];
+      else
+	this.finished.push([tag, text]);
+    }
+    // this.validateFinished();
+  }
+  
+  ttyKeydown(e) { 
+    // may need to handle ctrl-V for paste
+    // may need to preventDefault on Space to avoid autoscroll
+    // may need to catch Escape as cancel key
+    // console.log(`ttyKeydown '${e.key}'`);
+    if (e.isComposing || e.altKey || e.metaKey || e.ctrlKey) {
+      // log.textContent = `keydown code ${e.code} key ${e.key} CAMS ${e.ctrlKey} ${e.altKey} ${e.metaKey} ${e.shiftKey}`;
+    } else if (e.key.length === 1 && /^[A-Za-z0-9.,?/*+!@$&()-=+"':; ]$/.test(e.key)) {
+      this.pending.push(e.key);
+      this.keyer.outputSend(e.key);
+      this.updateContent();
+      if (e.key === ' ') e.preventDefault();
+    } else if (e.key === 'Backspace') {
+      this.keyer.outputUnsend(e.data);
+      // this.pending.pop(); the pop happens when the unsent confirmation comes back
+      this.updateContent();
+    } else if (e.key === 'Enter') {
+      this.pending.push('\n');
+      this.keyer.outputSend('\n');
+      this.updateContent();
+    } else if (e.key === 'Escape') {
+      this.cancel();
+    }
+  }
+
   clear() { 
-    this.sent = [];
+    this.finished = [['sent','']];
     this.pending = [];
-    this.updateKeyboard();
+    this.updateContent();
   }
 
   cancel() {
     this.keyer.outputCancel();
+    this.updateContent();
   }
 
+  onsent(ltr) {
+    const chr = this.pending.shift();
+    if (ltr !== chr) { console.log(`onsent ${ltr} not first in pending ${chr}`); }
+    this.appendFinished('sent', ltr);
+    this.updateContent()
+  }
+
+  onunsent(ltr) {
+    const chr = this.pending.pop()
+    if (ltr !== chr) { console.log(`onunsent ${ltr} not last in pending ${chr}`); }
+    this.updateContent();
+  }
+
+  onskipped(ltr) {
+    const chr = this.pending.shift();
+    if (ltr !== chr) { console.log(`onskipped ${ltr} not first in pending ${chr}`); }
+    this.appendFinished('skipped', chr);
+    this.updateContent()
+  }
+  
+  // play / pause button
   playPause() {
     // console.log("play/pause clicked");
     if (this.keyer.context.state === 'suspended') {
@@ -531,6 +569,7 @@ export class KeyerJs extends LitElement {
         display: inline-block;
         padding: 10px;
         text-align: left;
+	white-space: pre;
         margin-top: 16px;
         width: 90%;
         margin-left: 5%;
@@ -545,7 +584,8 @@ export class KeyerJs extends LitElement {
       .sent {
         color: #888;
       }
-      .skip {
+      .skipped {
+        color: #888;
         text-decoration: line-through;
       }
 
@@ -767,9 +807,8 @@ export class KeyerJs extends LitElement {
 	  <button @click=${this.cancel}>
 	    <span>Cancel</span>
 	  </button>
-	  <div class="keyboard" contenteditable @input=${this.divInput} @beforeinput=${this.divBeforeInput} @keydown=${this.keydown} @keyup=${this.keyup}>
-	    <span class="sent" contenteditable="false"></span><span class="pending"></span>
-	  </div>
+	  <div class="keyboard" tabindex="0" @keydown=${this.keydown} @keyup=${this.keyup}
+		 @focus=${this.onfocus} @blur=${this.onblur}>${this.content}</div>
 	</div>
 	<div>
 	  ${this.touchKeyRender()}

@@ -20,7 +20,7 @@ export class KeyerInput extends KeyerPlayer {
     this._keyer = 'none';
     this.keyer = 'none';
     this.midi = 'none';
-    this.on('midi', (type, note) => this.onmidi(type, note));
+    this.on('midi:event', (type, note) => this.onmidi(type, note));
 
     this._straightKey = 'ControlRight';
     this._leftPaddleKey = 'AltRight';
