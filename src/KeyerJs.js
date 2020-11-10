@@ -333,11 +333,13 @@ export class KeyerJs extends LitElement {
   onfocus() {
     // console.log("keyboard focus");
     this.keyboardFocused = true;
+    this.updateContent();	// show cursor
   }
 
   onblur() { 
     // console.log("keyboard blur");
     this.keyboardFocused = false;
+    this.updateContent();	// hide cursor
   }
 
   updated(/* propertiesChanged */) { 
@@ -350,7 +352,7 @@ export class KeyerJs extends LitElement {
   }
 
   blinkenCursen() {
-    return this.keyboardFocused ? html`<span class="blinker">|</span>` : html``;
+    return this.keyboardFocused ? html`<span class="blinker">|</span>` : html`<span class="blinker"></span>`;
   }
   
   updateContent() {
@@ -552,17 +554,17 @@ export class KeyerJs extends LitElement {
         display: inline-block;
         padding: 10px;
         text-align: left;
-	word-break: break-all;
 	white-space: pre-wrap;
         margin-top: 16px;
         width: 90%;
         margin-left: 5%;
         margin-right: 5%;
         height: 300px;
+	overflow-wrap: break-word;
         overflow-y: auto;
         border: inset;
         border-color: #9e9e9e;
-        border-width: 5px;
+        border-width: 1px;
         color: #000000;
       }
       .sent {
@@ -884,6 +886,7 @@ export class KeyerJs extends LitElement {
       <main>
         <div class="logo">${keyerLogo}</div>
         <div><h1>keyer.js</h1></div>
+	<hr>
 	${this.keyer === null ? this.startupRender() : this.mainRender()}
       </main>
 
