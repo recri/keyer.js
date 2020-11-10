@@ -269,9 +269,6 @@ export class KeyerJs extends LitElement {
   constructor() {
     super();
     this.keyer = null;
-    this.content = html``;
-    this.finished = [['sent', '']];
-    this.pending = [];
   }
 
   start() {
@@ -288,7 +285,8 @@ export class KeyerJs extends LitElement {
     Object.keys(defaults).forEach(control => { this[control] = defaultControl(control, defaults[control]) })
 
     this.running = this.keyer.context.state !== 'suspended';
-    this.text = [['sent', ''], ['pending', '']];
+
+    this.clear();
 
     this.validate();
     
@@ -342,38 +340,24 @@ export class KeyerJs extends LitElement {
     this.keyboardFocused = false;
   }
 
-  updateCursor() {
-    if (this.keyboardFocused) {
-      // this is being called but it isn't doing anything
-      // console.log("updating cursor");
-      const keyboard = this.shadowRoot.querySelector(".keyboard");
-      const range = document.createRange();
-      range.selectNodeContents(keyboard);
-      range.collapse(false);
-      const sel = window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(range);
-    }
-  }
-
-  updated(/* propertiesChanged */) { this.updateCursor(); }
-  
-  validateFinished() {
-    for (const e of this.finished) {
-      console.log(`finished ${e}`);
-    }
+  updated(/* propertiesChanged */) { 
+    const cursor = this.shadowRoot.querySelector('.blinker');
+    if (cursor) cursor.scrollIntoView(false);
   }
   
   processFinished() {
     return this.finished.map(tagText => { const [tag,text] = tagText; return html`<span class="${tag}">${text}</span>`; });
   }
 
+  blinkenCursen() {
+    return this.keyboardFocused ? html`<span class="blinker">|</span>` : html``;
+  }
+  
   updateContent() {
-    this.content = html`${this.processFinished()}<span class="pending">${this.pending.join('')}</span><span class="blinker">|</span>`;
+    this.content = html`${this.processFinished()}<span class="pending">${this.pending.join('')}</span>${this.blinkenCursen()}`;
   }
   
   appendFinished(tag, text) {
-    // this.validateFinished();
     if (this.finished.length === 0)
       this.finished.push([tag, text]);
     else {
@@ -383,7 +367,6 @@ export class KeyerJs extends LitElement {
       else
 	this.finished.push([tag, text]);
     }
-    // this.validateFinished();
   }
   
   ttyKeydown(e) { 
