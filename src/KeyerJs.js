@@ -273,7 +273,7 @@ export class KeyerJs extends LitElement {
 
   start() {
     // start the engine
-    this.keyer = new Keyer(new AudioContext());
+    this.keyer = new Keyer(new AudioContext({ sampleRate: 48000 }));
     // this was for debugging the need to twiddle the gain to get iambic or straight keying to work
     // this.keyer.input.straight.on('change:gain', g => console.log(`straight change:gain ${g}`), window);
     // this.keyer.input.iambic.on('change:gain', g => console.log(`iambic change:gain ${g}`), window);
