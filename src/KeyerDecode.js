@@ -8,7 +8,7 @@ export class KeyerDecode extends KeyerDetime {
     this.elements = [];
     this.elementTimeout = null;
 
-    this.on('element', this.onelement, this);
+    this.on('element', (elt, timeEnded) => this.onelement(elt, timeEnded));
   }
 
   elementTimeoutFun() {

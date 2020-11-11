@@ -20,7 +20,7 @@ export class KeyerDetime extends KeyerDetone {
     this.nIls = 1; /* unsigned number of inter-letter spaces estimated */
     this.nIws = 1; /* unsigned number of inter-word spaces estimated */
 
-    this.on('transition', this.ontransition, this);
+    this.on('transition', (onoff, time) => this.ontransition(onoff, time));
     this.configure(15, 50); // this is part suggestion (15 wpm) and part routine (50 dits/word is PARIS)
   }
 
