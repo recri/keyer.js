@@ -23,10 +23,10 @@ export class KeyerIambicInput extends KeyerIambicKeyer {
     // console.log(`iambic ${key}, ${on}`);
     if (key) {
       this.rawDitOn = on;
-      this.emit('key:dit', on, this.currentTime);
+      this.input.emit('key:dit', on, this.currentTime);
     } else {
       this.rawDahOn = on;
-      this.emit('key:dah', on, this.currentTime);
+      this.input.emit('key:dah', on, this.currentTime);
     }
     this.clock();
   }
