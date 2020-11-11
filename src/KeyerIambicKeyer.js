@@ -54,7 +54,7 @@ export class KeyerIambicKeyer extends KeyerInputDelegate {
     this.rawDahOn = false;
     this.lastTick = this.currentTime;
 
-    this.on('updateTiming', this.updateTimerTick, this)
+    this.input.on('updateTiming', () => this.updateTimerTick());
   }
 
   // update the clock timer
@@ -92,23 +92,23 @@ export class KeyerIambicKeyer extends KeyerInputDelegate {
     if (this.keyerState === IDLE) {
       if (this.timer > -((this.perIes + this.perIls) / 2 - this.perIes)) {
         // the timer has not reached the boundary between ies and ils
-        this.emit('element', '', this.cursor);
+        this.input.emit('element', '', this.cursor);
       } else if (
         this.timer > -((this.perIls + this.perIws) / 2 - this.perIes)
       ) {
         // the timer has not reached the boundary between ils and iws
-        this.emit('element', ' ', this.cursor);
+        this.input.emit('element', ' ', this.cursor);
       } else {
         // the timer has reached the iws boundary
-        this.emit('element', '\t', this.cursor);
+        this.input.emit('element', '\t', this.cursor);
       }
       this.restartClock();
     } else {
-      this.emit('element', '', this.cursor);
+      this.input.emit('element', '', this.cursor);
     }
 
     // emit the element itself
-    this.emit('element', state === DIT ? '.' : '-', this.cursor + len);
+    this.input.emit('element', state === DIT ? '.' : '-', this.cursor + len);
 
     // mark the new state
     this.keyerState = state;
