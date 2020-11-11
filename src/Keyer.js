@@ -22,23 +22,22 @@ export class Keyer extends KeyerEvent {
     // decode from elements, except for decoding straight key
     // output decoder wiring
     this.output.connect(this.context.destination);
-    this.output.on('element', this.outputDecoder.onelement, this.outputDecoder);
+    this.output.on('element', (elt, timeEnded) => this.outputDecoder.onelement(elt, timeEnded));
 
     // input decoder wiring
     if (USE_DETONER) {
-      this.input.straight.on('change:pitch', pitch => this.inputDecoder.onchangepitch(pitch));
-      this.input.iambic.on('change:pitch', pitch => this.inputDecoder.onchangepitch(pitch));
+      this.input.on('change:pitch', pitch => this.inputDecoder.onchangepitch(pitch));
       this.inputDecoder.onchangepitch(this.input.pitch);
       this.input.connect(this.inputDecoder.target);
       this.inputDecoder.connect(this.context.destination);
     } else if (USE_DETIMER) {
       this.input.connect(this.context.destination);
-      this.input.straight.on('transition', this.inputDecoder.ontransition, this.inputDecoder);
-      this.input.iambic.on('transition', this.inputDecoder.ontransition, this.inputDecoder);
+      this.input.on('transition', (onoff, time) => this.inputDecoder.ontransition(onoff, time));
+      this.input.iambic.on('transition', (onoff, time) => this.inputDecoder.ontransition(onoff, time));
     } else {
       this.input.connect(this.context.destination);
-      this.input.straight.on('transition', this.inputDecoder.ontransition, this.inputDecoder);
-      this.input.iambic.on('element', this.inputDecoder.onelement, this.inputDecoder);
+      this.input.straight.on('transition', (onoff, time) => this.inputDecoder.ontransition(onoff, time));
+      this.input.iambic.on('element', (elt, timeEnded) => this.inputDecoder.onelement(elt, timeEnded));
     }
 
     this.table = this.output.table;
@@ -83,26 +82,6 @@ export class Keyer extends KeyerEvent {
   outputUnsend() { this.output.unsend(); }
 
   outputCancel() { this.output.cancelPending(); }
-
-  outputDecoderOnLetter(callback, context) { this.outputDecoder.on('letter', callback, context); }
-
-  outputDecoderOffLetter(callback, context) { this.outputDecoder.off('letter', callback, context); }
-
-  inputMidiOnRefresh(callback, context) { this.input.midiOnRefresh(callback, context); }
-
-  inputMidiRefresh() { this.input.midiRefresh(); }
-
-  inputDecoderOnLetter(callback, context) { this.inputDecoder.on('letter', callback, context); }
-
-  inputDecoderOffLetter(callback, context) { this.inputDecoder.off('letter', callback, context); }
-
-  inputKeydown(isleft) { this.input.keydown(isleft); }
-
-  inputKeyup(isleft) { this.input.keyup(isleft); }
-
-  inputFocus() { this.input.onfocus(); }
-
-  inputBlur() { this.input.onblur(); }
 
   // direct getters and setters on properties
   // setting input and output the same
