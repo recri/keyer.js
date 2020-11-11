@@ -343,8 +343,10 @@ export class KeyerJs extends LitElement {
   }
 
   updated(/* propertiesChanged */) { 
-    const cursor = this.shadowRoot.querySelector('.blinker');
-    if (cursor) cursor.scrollIntoView(false);
+    if (this.keyboardFocused) {
+      const cursor = this.shadowRoot.querySelector('.blinker');
+      if (cursor) cursor.scrollIntoView(false);
+    }
   }
   
   processFinished() {
