@@ -10,7 +10,7 @@ export class KeyerInput extends KeyerPlayer {
     super(context);
 
     this.midiSource = new KeyerMidiSource(context);
-    this.midiSource.on('refresh', this.midiOnRefresh, this);
+    this.midiSource.on('midi:event', (type, note) => this.onmidi(type, note));
 
     this.none = new KeyerNoneInput(context, this);
     this.straight = new KeyerStraightInput(context, this);
@@ -20,7 +20,6 @@ export class KeyerInput extends KeyerPlayer {
     this._keyer = 'none';
     this.keyer = 'none';
     this.midi = 'none';
-    this.on('midi:event', (type, note) => this.onmidi(type, note));
 
     this._straightKey = 'ControlRight';
     this._leftPaddleKey = 'AltRight';
@@ -32,21 +31,15 @@ export class KeyerInput extends KeyerPlayer {
     this.swapped = false;
   }
 
-  set straightKey(v) { 
-    this._straightKey = v; 
-  }
+  set straightKey(v) { this._straightKey = v; }
 
   get straightKey() { return this._straightKey; }
 
-  set leftPaddleKey(v) { 
-    this._leftPaddleKey = v;
-  }
+  set leftPaddleKey(v) { this._leftPaddleKey = v; }
 
   get leftPaddleKey() { return this._leftPaddleKey; }
 
-  set rightPaddleKey(v) { 
-    this._rightPaddleKey = v;
-  }
+  set rightPaddleKey(v) { this._rightPaddleKey = v; }
 
   get rightPaddleKey() { return this._rightPaddleKey; }
 
