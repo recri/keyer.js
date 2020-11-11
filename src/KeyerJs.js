@@ -275,10 +275,8 @@ export class KeyerJs extends LitElement {
     // start the engine
     this.keyer = new Keyer(new AudioContext({ sampleRate: 48000 }));
     // this was for debugging the need to twiddle the gain to get iambic or straight keying to work
-    // this.keyer.input.straight.on('change:gain', g => console.log(`straight change:gain ${g}`), window);
-    // this.keyer.input.iambic.on('change:gain', g => console.log(`iambic change:gain ${g}`), window);
+    // this.keyer.input.on('change:gain', g => console.log(`straight change:gain ${g}`), window);
     // this.keyer.output.on('change:gain', g => console.log(`output change:gain ${g}`), window);
-
     // default property values
     // using localStorage to persist defaults between sessions
     // defaults set at top of file
@@ -290,13 +288,13 @@ export class KeyerJs extends LitElement {
 
     this.validate();
     
-    // this.keyer.outputDecoderOnLetter((ltr, code) => console.log(`output '${ltr}' '${code}'`));
-    // this.keyer.inputDecoderOnLetter((ltr, code) => console.log(`input '${ltr}' '${code}'`));
-    this.keyer.on('sent', ltr => this.onsent(ltr));
-    this.keyer.on('unsent', ltr => this.onunsent(ltr));
-    this.keyer.on('skipped', ltr => this.onskipped(ltr));
-    this.keyer.on('midi:names', () => this.onmidinames());
-    this.keyer.on('midi:notes', () => this.onmidinotes());
+    // this.keyer.outputDecoder.on('letter', (ltr, code) => console.log(`output '${ltr}' '${code}'`));
+    // this.keyer.inputDecoder.on('letter', (ltr, code) => console.log(`input '${ltr}' '${code}'`));
+    this.keyer.output.on('sent', ltr => this.onsent(ltr));
+    this.keyer.output.on('unsent', ltr => this.onunsent(ltr));
+    this.keyer.output.on('skipped', ltr => this.onskipped(ltr));
+    this.keyer.input.midiSource.on('midi:names', () => this.onmidinames());
+    this.keyer.input.midiSource.on('midi:notes', () => this.onmidinotes());
   }
   
   validate() {
