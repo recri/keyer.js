@@ -129,9 +129,7 @@ export class KeyerPlayer extends KeyerEvent {
     this.emit('updateTiming');
   }
 
-  rampEnded(e, riseFall) {
-    this.emit('end:ramp', riseFall);
-  }
+  rampEnded(e, riseFall) { this.emit('end:ramp', riseFall); }
   
   riseEnded(e) {
     this._state = 'on';

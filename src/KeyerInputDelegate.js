@@ -6,8 +6,6 @@ export class KeyerInputDelegate extends KeyerEvent {
   constructor(context, input) {
     super(context);
     this.input = input;
-    this.keyMap = [];
-    this.midiMap = [];
   }
 
   get cursor() { return this.input.cursor; }

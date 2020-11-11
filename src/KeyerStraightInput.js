@@ -9,7 +9,7 @@ export class KeyerStraightInput extends KeyerInputDelegate {
     this.keyOn = false;
     this.bounceEnd = this.cur
     this.rampEnd = this.currentTime;
-    this.on('end:ramp', () => this.keyset(this.rawKeyOn));
+    this.input.on('end:ramp', () => this.keyset(this.rawKeyOn));
   }
 
   onfocus() { this.active = true; }
