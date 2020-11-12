@@ -1,3 +1,75 @@
+//
+// keyer.js - a progressive web app for morse code
+// Copyright (c) 2020 Roger E Critchlow Jr, Charlestown, MA, USA
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+// 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+// 
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// 
+
+/** 
+* @file window.c
+* @brief Functions to allow windowing on the signal 
+* @author Frank Brickle, AB2KT and Bob McGwier, N4HY 
+
+This file is part of a program that implements a Software-Defined Radio.
+
+Copyright (C) 2004, 2005, 2006,2007 by Frank Brickle, AB2KT and Bob McGwier, N4HY
+Implemented from code by Bill Schottstaedt of Snd Editor at CCRMA
+Doxygen comments added by Dave Larsen, KV0S
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 7 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+The authors can be reached by email at
+
+ab2kt@arrl.net
+or
+rwmcgwier@gmail.com
+
+or by paper mail at
+
+The DTTS Microwave Society
+6 Kathleen Place
+Bridgewater, NJ 08807
+*/
+
+/** shamelessly stolen from Bill Schottstaedt's clm.c 
+* made worse in the process, but enough for our purposes here 
+*/
+
+
+/** mostly taken from
+ *    Fredric J. Harris, "On the Use of Windows for Harmonic Analysis with the
+ *    Discrete Fourier Transform," Proceedings of the IEEE, Vol. 66, No. 1,
+ *    January 1978.
+ *    Albert H. Nuttall, "Some Windows with Very Good Sidelobe Behaviour", 
+ *    IEEE Transactions of Acoustics, Speech, and Signal Processing, Vol. ASSP-29,
+ *    No. 1, February 1981, pp 84-91
+ *
+ * JOS had slightly different numbers for the Blackman-Harris windows.
+ */
+
 const pi = Math.PI;
 const twoPi = 2*pi;
 const {cos, sin, exp, floor} = Math;
