@@ -1,10 +1,29 @@
 * To do list for keyer.js
-** [ ] rewrite the event handler to eliminate ctx
-** [ ] rewrite the event handler to be instance again
+** [ ] oh, localStorage only works for string values.
+   so that's why my Boolean values failed
+   and that's why my Array value is failing.
+** [ ] changing sample rate is wonky
+** [ ] resetting to defaults is wonky
+** [ ] pops in straight keying
+** [ ] additional ramp functions   
+** [x] add sampleRate selector
+** [x] rearrange Settings
+** [ ] make input Settings optionally copy output Settings
+** [ ] merge keyed input into window
+** [ ] edit color of input text classes
+** [ ] use material design color set
+** [ ] use css variables to setup color set
+** [ ] Separate Key and Keyer.  Key can be 'straight' or 'dual-lever' or 'single-lever'
+** [ ] A Key which is a 'paddle' can have a Keyer which could be
+   'iambic-a', 'iambic-b', 'bug', 'ultimatic', or 'swiper'.
+** [ ] slant touch keys 
+** [x] rewrite the event handler to eliminate ctx
+** [x] rewrite the event handler to be instance again
 	requires rewriting the KeyerEvent class back the way it was
 	and requires making sure that every event listener attaches
 	to the correct event source.
 	or should they bubble?
+** [x] rewrite events to attach to the correct targets.
 ** [x] fix the straight key glitch with Midi input
 ** [x] refresh the Midi names and Midi notes while displayed
 ** [?] rewrite Midi handling to simply number the devices
@@ -14,7 +33,7 @@
    same number to preserve the binding
 ** [?] then again, if you only get two notes, just assign them
    and be done.
-** [?] color input text according to sent/skipped/pending status
+** [x] color input text according to sent/skipped/pending status
 *** It turns out that I cannot use contenteditable and lit-html
     in the same node, so I need to rewrite the contents of the
     div in the dom myself.
@@ -39,19 +58,16 @@
     inside one <span class="sent" contenteditable="false">
     by enclosing the <span class="skip">text</span> spans
     inside of it, along with text nodes and <br>'s.
-** [ ] merge keyed input into window
 ** [x] cancel button
-** [ ] edit color of input text classes
 ** [?] write a <pre> component for viewing the text windows
    contents.
-** [ ] use material design color set
-** [ ] use css variables to setup color set
 ** [ ] make a bug keyer
 ** [ ] make an ultimatic keyer
 ** [ ] make an iambic A keyer
 ** [ ] fix KeyerDetone
-** [ ] fix KeyerDetime
-   straight key wants detime for decoder
+** [x] fix KeyerDetime
+   straight key wants detime for decoder, it works, both straight key, iambic,
+   and output keyer are decoded from transitions
 ** [ ] decode microphone tone source
 ** [ ] decode microphone sung source
 ** [ ] webrtc tone sink
@@ -62,10 +78,8 @@
    or I need to rewrite them all to take implement a set context().
    Or place a KeyerStub between KeyerJs and Keyer, or just defer making anything
    until the user starts the program.
-** [ ] Separate Key and Keyer.  Key can be 'straight' or 'dual-lever' or 'single-lever'
-** [ ] A Key which is a 'paddle' can have a Keyer which could be
-   'iambic-a', 'iambic-b', 'bug', 'ultimatic', or 'swiper'.
 ** [ ] No idea how to avoid the nasty message from web midi.
+   but it isn't so nasty, Lighthouse ignores it.
 ** [ ] Discovered chrome.socket.udp today, so an HL2 PWA is going to happen.
 ** [ ] Write a scope web-component.
 ** [x] keyboard source to morse and text

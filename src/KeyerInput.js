@@ -14,12 +14,13 @@ export class KeyerInput extends KeyerPlayer {
 
     this.none = new KeyerNoneInput(context, this);
     this.straight = new KeyerStraightInput(context, this);
-    this.iambic = new KeyerIambicInput(context, this);
+    this.paddle = new KeyerIambicInput(context, this);
 
-    this.inputs = ['none', 'straight', 'iambic'];
-    this._keyer = 'none';
-    this.keyer = 'none';
+    this.sources = [];
+    this._key = 'none';
+    this.key = 'none';
     this.midi = 'none';
+    this.touched = false;	// prefer touch over mouse event
 
     this._straightKey = 'ControlRight';
     this._leftPaddleKey = 'AltRight';
@@ -78,28 +79,30 @@ export class KeyerInput extends KeyerPlayer {
     if (e.code === this._rightPaddleKey) this.keyEvent('right', onOff);
   }
 
-  touchKey(e, type, onOff) { this.keyEvent(type, onOff); }
+  touchKey(e, type, onOff) { this.touched = true; this.keyEvent(type, onOff); }
+  
+  mouseKey(e, type, onOff) { if ( ! this.touched) this.keyEvent(type, onOff); }
   
   midiRefresh() { this.midiSource.refresh(); }
 
-  // handlers defer to selected input type in 'iambic', 'straight', and more to come
-  get keyer() { return this._keyer; }
+  // handlers defer to selected input type in 'paddle', 'straight', and more to come
+  get key() { return this._key; }
 
-  set keyer(keyer) {
+  set key(key) {
     this.onblur();
-    this._keyer = keyer;
+    this._key = key;
     this.onfocus();
   }
 
-  onblur() { this[this._keyer].onblur(); }
+  onblur() { this[this._key].onblur(); }
 
-  onfocus() { this[this._keyer].onfocus(); }
+  onfocus() { this[this._key].onfocus(); }
 
   keyEvent(type, onOff) { 
     if (this.swapped) 
-      this[this._keyer].keyEvent({ left: 'right', right: 'right', straight: 'straight' }[type], onOff)
+      this[this._key].keyEvent({ left: 'right', right: 'left', straight: 'straight' }[type], onOff)
     else
-      this[this._keyer].keyEvent(type, onOff);
+      this[this._key].keyEvent(type, onOff);
   }
   
   // properties of midiSource

@@ -18,7 +18,8 @@ export class KeyerPlayer extends KeyerEvent {
 
     // initialize parameters
     this.state = 'off';
-    this._envelope = 'raised-cosine';
+    this._envelope = 'hann';
+    this._envelope2 = 'rectangular';
     this._rise = 4;
     this._fall = 4;
     this.updateRise();
@@ -71,6 +72,10 @@ export class KeyerPlayer extends KeyerEvent {
   set envelope(env) { this._envelope = env; this.updateRise(); this.updateFall(); }
 
   get envelope() { return this._envelope; }
+
+  set envelope2(env) { this._envelope2 = env; this.updateRise(); this.updateFall(); }
+
+  get envelope2() { return this._envelope2; }
 
   static get envelopes() { return KeyerRamp.ramps; }
 
@@ -126,7 +131,7 @@ export class KeyerPlayer extends KeyerEvent {
     this.perIes = dit*(1  -w-c);
     this.perIls = dit*(3  -w-c); 
     this.perIws = dit*(7  -w-c);
-    this.emit('updateTiming');
+    this.emit('change:timing');
   }
 
   rampEnded(e, riseFall) { this.emit('end:ramp', riseFall); }

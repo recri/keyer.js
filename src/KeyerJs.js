@@ -15,11 +15,13 @@ const defaults = {
   compensation: 0,
   rise: 4,
   fall: 4,
-  envelope: 'raised-cosine',
+  envelope: 'hann',
+  envelope2: 'rectangular',
   speed: 20,
   qrq: 'off',
-  inputKeyer: 'iambic',
-  inputSource: ['keyboard'],
+  inputKey: 'paddle',
+  paddleKeyer: 'iambic',
+  inputSources: ['keyboard'],
   inputMidi: 'none',
   straightKey: 'ControlRight',
   straightMidi: '1:1',
@@ -28,11 +30,14 @@ const defaults = {
   rightPaddleKey: 'ControlRight',
   leftPaddleMidi: '1:0',
   rightPaddleMidi: '1:1',
+  requestedSampleRate: '48000',
   // properties that are local
   displayTouchKey: 'off',
   displaySettings: 'on',
+  displayOutput: 'on',
   displayAdvanced: 'off',
-  displayInputKeys: 'off',
+  displayInputKey: 'off',
+  displayMisc: 'off',
   displayStatus: 'on',
 }
 
@@ -63,18 +68,17 @@ const isOn = (onOff) => onOff === 'on';
 const isOff = (onOff) => onOff === 'off';
 const isOnOff = (onOff) => isOn(onOff) || isOff(onOff);
 
-// force default values
-const forceDefault = true;
-
 // grab a value from localStorage or return the default value
 // had fits trying to use Booleans here, which is why they're all 'on'||'off' instead
-const defaultControl = (control, defaultValue) => {
-  const value = localStorage[control] === undefined || typeof(localStorage[control]) === 'undefined' || forceDefault ?
-	defaultValue : localStorage[control];
-  localStorage[control] = value;
+const alwaysForceDefault = true;
+
+const defaultControl = (control, defaultValue, forceDefault) => {
+  const value = localStorage[control] === undefined || typeof(localStorage[control]) === 'undefined' || forceDefault || alwaysForceDefault ?
+	defaultValue : JSON.parse(localStorage[control]);
+  localStorage[control] = JSON.stringify(value);
   return value;
 }
-const saveControl = (control, newValue) => { localStorage[control] = newValue; }
+const saveControl = (control, newValue) => { localStorage[control] = JSON.stringify(newValue); }
 
 // generate a list of <option>name</option> html templates
 const templateOptions = (names, selected) => names ? names.map(x => html`<option value=${x} ?selected=${x === selected}>${x}</option>`) : html``;
@@ -83,7 +87,7 @@ const templateOptions = (names, selected) => names ? names.map(x => html`<option
 const templateAlternates = (names, selected, handler) => names.map(x => {
   const isSelected = selected.includes(x);
   const checkBox = isSelected ? checkedCheckBox : uncheckedCheckBox;
-  return html`<button role="switch" aria-checked=${isSelected} @click=${e => handler(e,x)}>${checkBox} ${x}</button>`;
+  return html`<label><button role="switch" aria-checked=${isSelected} @click=${e => handler(e,x)}>${checkBox}</button>  ${x} </label>`;
 });
 
 // list of left/right qualified shift keys
@@ -94,12 +98,20 @@ const shiftKeyOptions = (selected) => templateOptions(shiftKeys, selected);
 const isShiftKey = (value) => shiftKeys.includes(value);
 
 // list of valid inputKeys
-const inputKeyers = [ 'none', 'straight', 'iambic' ];
-const isInputKeyer = (value) => inputKeyers.includes(value);
+const inputKeys = [ 'none', 'straight', 'paddle' ];
+const isInputKey = (value) => inputKeys.includes(value);
+
+// list of valid paddle input keyers
+const paddleKeyers = [ 'iambic' ];
+const isPaddleKeyer = (value) => paddleKeyers.includes(value);
 
 // list of valid inputSources
 const inputSources = [ 'touch', 'keyboard', 'midi' ];
 const isInputSource = (value) => inputSources.includes(value);
+
+// list of sampleRates
+const sampleRates = ['8000', '32000', '44100', '48000', '96000', '192000' ]
+const isSampleRate = (value) => sampleRates.includes(value);
 
 // application color scheme, from material design color tool
 // const colorPrimary = css`#1d62a7`;
@@ -127,8 +139,9 @@ export class KeyerJs extends LitElement {
       rise: { type: Number },
       fall: { type: Number },
       envelope: { type: String },
-      inputKeyer: { type: String },
-      inputSource: { type: Array },
+      envelope2: { type: String },
+      inputKey: { type: String },
+      inputSources: { type: Array },
       inputMidi: { type: String },
       swapped: { type: String },
       straightKey: { type: String },
@@ -137,6 +150,7 @@ export class KeyerJs extends LitElement {
       straightMidi: { type: String },
       leftPaddleMidi: { type: String },
       rightPaddleMidi: { type: String },
+      requestedSampleRate: { type: String },
       // properties read only from this.keyer.context
       state: { type: String },
       sampleRate: { type: Number },
@@ -146,8 +160,10 @@ export class KeyerJs extends LitElement {
       displayTouchKey: { type: String },
       displaySettings: { type: String },
       displayStatus: { type: String },
+      displayOutput: { type: String },
       displayAdvanced: { type: String },
-      displayInputKeys: { type: String },
+      displayInputKey: { type: String },
+      displayMisc: { type: String },
       // property computed
       running: { type: Boolean },
       // properties refreshed on notification
@@ -211,15 +227,23 @@ export class KeyerJs extends LitElement {
 
   get envelope() { return this.keyer.envelope; }
 
+  set envelope2(v) { this.updateControl('envelope2', v); }
+
+  get envelope2() { return this.keyer.envelope2; }
+
   static get envelopes() { return Keyer.envelopes; }
   
   set swapped(v) {  this.updateControl('swapped', v); }
 
   get swapped() { return this.keyer.swapped; }
 
-  set inputKeyer(v) { this.updateControl('inputKeyer', v); }
+  set inputKey(v) { this.updateControl('inputKey', v); }
 
-  get inputKeyer() { return this.keyer.inputKeyer; }
+  get inputKey() { return this.keyer.inputKey; }
+
+  set paddleKeyer(v) { this.updateControl('paddleKeyer', v); }
+
+  get paddleKeyer() { return this.keyer.paddleKeyer; }
 
   set straightKey(v) { this.updateControl('straightKey', v); }
 
@@ -241,9 +265,9 @@ export class KeyerJs extends LitElement {
 
   // get inputMidiNotes() { return this.keyer.inputMidiNotes; }
 
-  set inputSource(v) { this.updateControl('inputSource', v); }
+  set inputSources(v) { this.updateControl('inputSources', v); }
 
-  get inputSource() { return this.keyer.inputSource; }
+  get inputSources() { return this.keyer.inputSources; }
 
   set straightMidi(v) { this.updateControl('straightMidi', v); }
 
@@ -271,17 +295,31 @@ export class KeyerJs extends LitElement {
     this.keyer = null;
   }
 
+  setDefaultValue(control, forceDefault) {
+    this[control] = defaultControl(control, defaults[control], forceDefault);
+  }
+
+  setDefaultValues(forceDefault) {
+    Object.keys(defaults).forEach(control => this.setDefaultValue(control, forceDefault));
+  }
+
   start() {
     // start the engine
-    this.keyer = new Keyer(new AudioContext({ sampleRate: 48000 }));
+
+    // retrieve the preferred sample rate
+    this.setDefaultValue('requestedSampleRate', false);
+
+    // console.log(`start this.requestedSampleRate === ${this.requestedSampleRate}`);
+    this.keyer = new Keyer(new AudioContext({ sampleRate: parseInt(this.requestedSampleRate, 10) }));
+
     // this was for debugging the need to twiddle the gain to get iambic or straight keying to work
     // this.keyer.input.on('change:gain', g => console.log(`straight change:gain ${g}`), window);
     // this.keyer.output.on('change:gain', g => console.log(`output change:gain ${g}`), window);
     // default property values
     // using localStorage to persist defaults between sessions
     // defaults set at top of file
-    Object.keys(defaults).forEach(control => { this[control] = defaultControl(control, defaults[control]) })
-
+    this.setDefaultValues(false);
+    
     this.running = this.keyer.context.state !== 'suspended';
 
     this.clear();
@@ -289,7 +327,7 @@ export class KeyerJs extends LitElement {
     this.validate();
     
     // this.keyer.outputDecoder.on('letter', (ltr, code) => console.log(`output '${ltr}' '${code}'`));
-    // this.keyer.inputDecoder.on('letter', (ltr, code) => console.log(`input '${ltr}' '${code}'`));
+    this.keyer.inputDecoder.on('letter', (ltr) =>  this.onkeyed(ltr));
     this.keyer.output.on('sent', ltr => this.onsent(ltr));
     this.keyer.output.on('unsent', ltr => this.onunsent(ltr));
     this.keyer.output.on('skipped', ltr => this.onskipped(ltr));
@@ -297,17 +335,25 @@ export class KeyerJs extends LitElement {
     this.keyer.input.midiSource.on('midi:notes', () => this.onmidinotes());
   }
   
+  // validate that our lists of options are actual options
+  // and that default values are chosen from the same lists
+  // also use the functions we define for this purpose
   validate() {
     shiftKeys.forEach(x => isShiftKey(x) || console.log(`shiftKey ${x} failed isShiftKey`));
-    inputKeyers.forEach(x => isInputKeyer(x) || console.log(`inputKeyer ${x} failed isInputKeyer`));
+    inputKeys.forEach(x => isInputKey(x) || console.log(`inputKey ${x} failed isInputKey`));
+    paddleKeyers.forEach(x => isPaddleKeyer(x) || console.log(`paddleKeyer ${x} failed isPaddleKeyer`));
     inputSources.forEach(x => isInputSource(x) || console.log(`inputSource ${x} failed isInputSource`));
-    ['qrq','swapped','displayTouchKey', 'displaySettings', 'displayAdvanced', 'displayInputKeys', 'displayStatus'].
+    sampleRates.forEach(x => isSampleRate(x) || console.log(`sampleRate ${x} failed isSampleRate`));
+    ['qrq','swapped','displayTouchKey', 'displaySettings', 'displayOutput', 'displayAdvanced', 'displayInputKey', 'displayStatus'].
       forEach(x => isOnOff(this[x]) || console.log(`property '${x}' failed isOnOff: ${this[x]}`));
     ['straightKey', 'leftPaddleKey', 'rightPaddleKey'].
       forEach(x => isShiftKey(this[x]) || console.log(`property '${x}' failed isShiftKey: ${this[x]}`));
-    ['inputKeyer'].
-      forEach(x => isInputKeyer(this[x]) || console.log(`property '${x}' failed isInputKeyer: ${this[x]}`));
-    this.inputSource.forEach(x => isInputSource(x) || console.log(`property 'inputSource' failed isInputSource: '${x}'`));
+    ['inputKey'].
+      forEach(x => isInputKey(this[x]) || console.log(`property '${x}' failed isInputKey: ${this[x]}`));
+    ['paddleKeyer'].
+      forEach(x => isPaddleKeyer(this[x]) || console.log(`property '${x}' failed isPaddleKeyer: ${this[x]}`));
+    this.inputSources.forEach(x => isInputSource(x) || console.log(`property 'inputSources' failed isInputSource: '${x}'`));
+    ['requestedSampleRate'].forEach(x => isSampleRate(this[x]) || console.log(`property '${x}' failed isSampleRate '${this[x]}'`));
   }
 	       
   // input key events
@@ -319,6 +365,8 @@ export class KeyerJs extends LitElement {
   keyup(e) { this.keyer.keyup(e); }
 
   touchKey(e,type,onOff) { this.keyer.touchKey(e, type, onOff); }
+  
+  mouseKey(e,type,onOff) { this.keyer.mouseKey(e, type, onOff); }
   
   // midi information events
   onmidinames() { this.inputMidiNames = this.keyer.inputMidiNames; }
@@ -369,6 +417,13 @@ export class KeyerJs extends LitElement {
       else
 	this.finished.push([tag, text]);
     }
+  }
+  
+  // this is for input keyed manually as opposed to typed on the keyboard
+  // it has the same presentation as sent by default
+  onkeyed(ltr) {
+    this.appendFinished('sent', ltr.toLowerCase());
+    this.updateContent();
   }
   
   ttyKeydown(e) { 
@@ -467,17 +522,20 @@ export class KeyerJs extends LitElement {
   }
   
   selectSource(e, b) {
-    if (this.inputSource.includes(b))
-      this.inputSource = this.inputSource.filter(x => x !== b);
+    // console.log(`selectSource e ${e} b ${b} sources '${this.inputSources}'`);
+    if (this.inputSources.includes(b))
+      this.inputSources = this.inputSources.filter(x => x !== b);
     else
-      this.inputSource = this.inputSource.concat(b)
-    // console.log(`selectSource ${e} ${b} '${this.inputSource}'`);
+      this.inputSources = this.inputSources.concat(b)
+    // console.log(`selectSource e ${e} b ${b} sources '${this.inputSources}'`);
     // console.log(e);
   }
    
-  selectInputKeyer(e) { this.selectControl('inputKeyer', e); }
+  selectInputKey(e) { this.selectControl('inputKey', e); }
   
-  selectInputMidi(e) { this.selectControl('inputMidi', e); }
+  selectPaddleKeyer(e) { this.selectControl('paddleKeyer', e); }
+  
+  selectInputMidi(e) { this.selectControl('inputMidi', e); this.requestUpdate('inputMidiNotes', this.inputMidiNotes); }
   
   selectStraightKey(e) { this.selectControl('straightKey', e); }
   
@@ -509,17 +567,30 @@ export class KeyerJs extends LitElement {
     
   selectEnvelope(e) { this.selectControl('envelope', e); }
   
+  selectEnvelope2(e) { this.selectControl('envelope2', e); }
+  
+  selectRequestedSampleRate(e) { 
+    this.selectControl('requestedSampleRate', e);
+    this.start();
+  }
+  
   // display panel selectors
   toggleTouchKey() { this.displayTouchKey = toggleOnOff(this.displayTouchKey); }
 
   toggleSettings() { this.displaySettings = toggleOnOff(this.displaySettings); }
 
+  toggleOutput() { this.displayOutput = toggleOnOff(this.displayOutput); }
+
   toggleAdvanced() { this.displayAdvanced = toggleOnOff(this.displayAdvanced); }
 
-  toggleInputKeys() { this.displayInputKeys = toggleOnOff(this.displayInputKeys); }
+  toggleInputKey() { this.displayInputKey = toggleOnOff(this.displayInputKey); }
 
+  toggleMisc() {  this.displayMisc = toggleOnOff(this.displayMisc); }
+  
   toggleStatus() { this.displayStatus = toggleOnOff(this.displayStatus); }
 
+  resetDefaultValues() { this.setDefaultValues(true); }
+  
   // styles
   static get styles() {
     return css`
@@ -569,6 +640,9 @@ export class KeyerJs extends LitElement {
       }
       .sent {
         color: #888;
+      }
+      .keyed {
+	color: #aaaa;
       }
       .skipped {
         color: #888;
@@ -646,27 +720,34 @@ export class KeyerJs extends LitElement {
   }
 
   touchKeyRender() {
-    if ( ! this.inputSource.includes('touch'))
+    if ( ! this.inputSources.includes('touch'))
       return html``;
-    switch (this.inputKeyer) {
-    case 'straight':
+    if (this.inputKey === 'straight')
       return html`
-	  <button class="key" @mousedown=${e => this.touchKey(e,'straight',true)} @mouseup=${e => this.touchKey(e,'straight',false)}>${straightKeyArrow}</button>
+	  <button class="key" @mousedown=${e => this.mouseKey(e,'straight',true)} 
+			      @mouseup=${e => this.mouseKey(e,'straight',false)}
+			      @touchstart=${e => this.touchKey(e,'straight',false)}
+			      @touchend=${e => this.touchKey(e,'straight',false)}
+		>${straightKeyArrow}</button>
 	`;
-    case 'iambic': 
+    if (this.inputKey === 'paddle')
       return html`
-	  <button class="key" @mousedown=${e => this.touchKey(e,'left',true)} @mouseup=${e => this.touchKey(e,'left',false)}>${leftKeyArrow}</button>
-	  <button class="key" @mousedown=${e => this.touchKey(e,'right',true)} @mouseup=${e => this.touchKey(e,'right',false)}>${rightKeyArrow}</button>
+	  <button class="key" @mousedown=${e => this.mouseKey(e,'left',true)}
+			      @mouseup=${e => this.mouseKey(e,'left',false)}
+			      @touchstart=${e => this.touchKey(e,'left',false)}
+			      @touchend=${e => this.touchKey(e,'left',false)}
+		>${leftKeyArrow}</button>
+	  <button class="key" @mousedown=${e => this.mouseKey(e,'right',true)}
+			      @mouseup=${e => this.mouseKey(e,'right',false)}
+			      @touchstart=${e => this.toucheKey(e,'right',false)}
+			      @touchend=${e => this.touchKey(e,'right',false)}
+		>${rightKeyArrow}</button>
 	`;
-    default: 
-      return html``;
-    }
+    return html``;
   }
 
   advancedRender() {
-    if (isOff(this.displayAdvanced))
-      return html``;
-    return html`
+    return isOff(this.displayAdvanced) ? html`` : html`
 	<div>
 	  <input type="range" id="weight" name="weight" min="25" max="75"
 	  .value=${this.weight} step="0.1"
@@ -701,102 +782,17 @@ export class KeyerJs extends LitElement {
 	  <label>Envelope: 
 	    <select .value=${this.envelope} @change=${this.selectEnvelope}>
 	      ${templateOptions(KeyerJs.envelopes, this.envelope)}
+	    </select> * 
+	    <select .value=${this.envelope2} @change=${this.selectEnvelope2}>
+	      ${templateOptions(KeyerJs.envelopes, this.envelope2)}
 	    </select>
 	  </label>
-	</div>`;
+	</div>
+      `;
   }
 
-  inputKeysRender() {
-    return isOff(this.displayInputKeys) ?  html`` : [
-      html`
-	<div>
-	  <label>Input keyer:
-	    <select .value=${this.inputKeyer} @change=${this.selectInputKeyer}>
-	      <option>none</option>
-	      <option>straight</option>
-	      <option>iambic</option>
-	    </select>
-	  </label>
-	</div>`,
-      this.inputKeyer === 'none' ? html`` : html`
-	<div>
-	  <label>Key sources:
-	    ${templateAlternates(inputSources, this.inputSource, (e,s) => this.selectSource(e,s))}
-	  </label>
-	</div>`,
-      ! (this.inputKeyer !== 'none' && this.inputSource.includes('midi')) ? html`` : html`
-	<div>
-	  <label>Midi interface: 
-            <select .value=${this.inputMidi} @change=${this.selectInputMidi}>
-	      ${templateOptions(this.inputMidiNames, this.inputMidi)}
-	    </select>
-	  </label>
-	</div>`,
-      ! (this.inputKeyer === 'straight' && this.inputSource.includes('keyboard')) ? html`` : html`
-	<div>
-	  <label>Straight key:
-            <select .value=${this.straightKey} @change=${this.selectStraightKey}>
-	      ${shiftKeyOptions(this.straightKey)}
-	    </select>
-	  </label>
-        </div>`,
-      ! (this.inputKeyer === 'straight' && this.inputSource.includes('midi')) ? html`` : html`
-	<div>
-	  <label>Straight midi:
-            <select .value=${this.straightMidi} @change=${this.selectStraightMidi}>
-	      ${templateOptions(this.inputMidiNotes,this.straightMidi)}
-	    </select>
-	  </label>
-        </div>`,
-      this.inputKeyer !== 'iambic' ? html`` : html`
-	<div>
-	  <label>Swap paddles: 
-            <button role="switch" aria-checked=${isOn(this.swapped)} @click=${this.toggleSwapped}>
-	      <span>${this.swapped}</span>
-	    </button>
-	  </label>
-	</div>`,
-      ! (this.inputKeyer === 'iambic' && this.inputSource.includes('keyboard')) ? html`` : html`
-	<!-- input keyer settings, iambic, keyboard selection -->
-	<div>
-	  <label>Left paddle key:
-            <select .value=${this.leftPaddleKey} @change=${this.selectLeftPaddleKey}>
-	      ${shiftKeyOptions(this.leftPaddleKey)}
-	    </select>
-	  </label>
-	</div>
-	<div>
-	  <label>Right paddle key:
-            <select .value=${this.rightPaddleKey} @change=${this.selectRightPaddleKey}>
-	      ${shiftKeyOptions(this.rightPaddleKey)}
-	    </select>
-	  </label>
-	</div>
-      </div>`,
-      ! (this.inputKeyer === 'iambic' && this.inputSource.includes('midi')) ? html`` : html`
-	<!-- input keyer settings, iambic, midi selection -->
-	<div>
-	  <label>Left paddle midi:
-            <select .value=${this.leftPaddleMidi} @change=${this.selectLeftPaddleMidi}>
-	      ${templateOptions(this.inputMidiNotes,this.leftPaddleMidi)}
-	    </select>
-	  </label>
-	</div>
-	<div>
-	  <label>Right paddle midi:
-            <select .value=${this.rightPaddleMidi} @change=${this.selectRightPaddleMidi}>
-	      ${templateOptions(this.inputMidiNotes,this.rightPaddleMidi)}
-	    </select>
-	  </label>
-	</div>
-      </div>`
-    ];
-  }
-
-  settingsRender() {
-    return isOff(this.displaySettings) ? html`` : html`
-      <div>
-	<!-- basic keyboard output settings -->
+  outputRender() {
+    return isOff(this.displayOutput) ? html`` : html`
 	<div>
 	  <input type="range" id="speed" name="speed" min=${isOn(this.qrq) ? qrqMin : qrsMin} max=${isOn(this.qrq) ? qrqMax : qrsMax}
 	  .value=${this.speed} step=${isOn(this.qrq) ? qrqStep : qrsStep} @input=${this.selectSpeed}>
@@ -813,16 +809,142 @@ export class KeyerJs extends LitElement {
 	  <input type="range" id="pitch" name="pitch" min="250" max="2000" .value=${this.pitch} step="1" @input=${this.selectPitch}>
 	  <label for="pitch">Pitch ${this.pitch} (Hz)</label>
 	</div>
-	<!-- input keyer selection --->
-	<h3 @click=${this.toggleInputKeys}>
-	  ${isOff(this.displayInputKeys) ? hiddenMenuIndicator : shownMenuIndicator} Input Keys
+      `;
+  }
+
+  inputKeyRender() {
+    return isOff(this.displayInputKey) ?  html`` : [
+      html`
+	<div>
+	  <label>Input key:
+	    <select .value=${this.inputKey} @change=${this.selectInputKey}>
+	      <option>none</option>
+	      <option>straight</option>
+	      <option>paddle</option>
+	    </select>
+	  </label>
+	</div>`,
+      this.inputKey !== 'paddle' ? html`` : html`
+	<div>
+	  <label>Swap paddles: 
+            <button role="switch" aria-checked=${isOn(this.swapped)} @click=${this.toggleSwapped}>
+	      <span>${this.swapped}</span>
+	    </button>
+	  </label>
+	</div>
+	<div>
+	  <label>Paddle keyer:
+            <select .value=${this.paddleKeyer} @change=${this.selectPaddleKeyer}>
+	      ${templateOptions(this.paddleKeyers, this.paddleKeyer)}
+	    </select>
+	  </label>
+	</div>`,
+      this.inputKey === 'none' ? html`` : html`
+	<div>
+	  <label>Key sources:</label>
+	    ${templateAlternates(inputSources, this.inputSources, (e,s) => this.selectSource(e,s))}
+	</div>`,
+      ! (this.inputKey === 'straight' && this.inputSources.includes('keyboard')) ? html`` : html`
+	<div>
+	  <label>Straight keyboard key:
+            <select .value=${this.straightKey} @change=${this.selectStraightKey}>
+	      ${shiftKeyOptions(this.straightKey)}
+	    </select>
+	  </label>
+        </div>`,
+      ! (this.inputKey === 'paddle' && this.inputSources.includes('keyboard')) ? html`` : html`
+	<!-- input keyer settings, paddle, keyboard selection -->
+	<div>
+	  <label>Left paddle keyboard key:
+            <select .value=${this.leftPaddleKey} @change=${this.selectLeftPaddleKey}>
+	      ${shiftKeyOptions(this.leftPaddleKey)}
+	    </select>
+	  </label>
+	</div>
+	<div>
+	  <label>Right paddle keyboard key:
+            <select .value=${this.rightPaddleKey} @change=${this.selectRightPaddleKey}>
+	      ${shiftKeyOptions(this.rightPaddleKey)}
+	    </select>
+	  </label>
+	</div>
+      </div>`,
+      ! (this.inputKey !== 'none' && this.inputSources.includes('midi')) ? html`` : html`
+	<div>
+	  <label>Midi interface: 
+            <select .value=${this.inputMidi} @change=${this.selectInputMidi}>
+	      ${templateOptions(this.inputMidiNames, this.inputMidi)}
+	    </select>
+	  </label>
+	</div>`,
+      ! (this.inputKey === 'straight' && this.inputSources.includes('midi')) ? html`` : html`
+	<div>
+	  <label>Straight midi note:
+            <select .value=${this.straightMidi} @change=${this.selectStraightMidi}>
+	      ${templateOptions(this.inputMidiNotes, this.straightMidi)}
+	    </select>
+	  </label>
+        </div>`,
+      ! (this.inputKey === 'paddle' && this.inputSources.includes('midi')) ? html`` : html`
+	<!-- input keyer settings, paddle, midi selection -->
+	<div>
+	  <label>Left paddle midi note:
+            <select .value=${this.leftPaddleMidi} @change=${this.selectLeftPaddleMidi}>
+	      ${templateOptions(this.inputMidiNotes, this.leftPaddleMidi)}
+	    </select>
+	  </label>
+	</div>
+	<div>
+	  <label>Right paddle midi note:
+            <select .value=${this.rightPaddleMidi} @change=${this.selectRightPaddleMidi}>
+	      ${templateOptions(this.inputMidiNotes, this.rightPaddleMidi)}
+	    </select>
+	  </label>
+	</div>
+      </div>`
+    ];
+  }
+
+  miscRender() {
+    return isOff(this.displayMisc) ? html`` : html`
+	<div>
+	  <label>Requested sample rate:
+            <select .value=${this.requestedSampleRate} @change=${this.selectRequestedSampleRate}>
+	      ${templateOptions(sampleRates, this.requestedSampleRate)}
+	    </select>
+	  </label>
+	  <br/>
+	  <label>Reset default values: 
+	    <button @click=${this.resetDefaultValues}>Reset</button>
+	  </label>
+	</div>
+	`;
+  }
+
+  settingsRender() {
+    return isOff(this.displaySettings) ? html`` : html`
+      <div>
+	<!-- keyer output settings -->
+	<h3 @click=${this.toggleOutput}>
+	  ${isOff(this.displayOutput) ? hiddenMenuIndicator : shownMenuIndicator} Keyer Output
 	</h3>
-	${this.inputKeysRender()}
+	${this.outputRender()}
 	<!-- advanced keyboard output settings -->
 	<h3 @click=${this.toggleAdvanced}>
-	  ${isOff(this.displayAdvanced) ? hiddenMenuIndicator : shownMenuIndicator} Advanced
+	  ${isOff(this.displayAdvanced) ? hiddenMenuIndicator : shownMenuIndicator} More Output
 	</h3>
 	${this.advancedRender()}
+	<!-- input key selection --->
+	<h3 @click=${this.toggleInputKey}>
+	  ${isOff(this.displayInputKey) ? hiddenMenuIndicator : shownMenuIndicator} Key Input
+	</h3>
+	${this.inputKeyRender()}
+	<!-- audio engine parameters --->
+	<h3 @click=${this.toggleMisc}>
+	  ${isOff(this.displayMisc) ? hiddenMenuIndicator : shownMenuIndicator} Misc
+	</h3>
+	${this.miscRender()}
+      </div>
     `;
   }
 

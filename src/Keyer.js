@@ -22,7 +22,8 @@ export class Keyer extends KeyerEvent {
     // decode from elements, except for decoding straight key
     // output decoder wiring
     this.output.connect(this.context.destination);
-    this.output.on('element', (elt, timeEnded) => this.outputDecoder.onelement(elt, timeEnded));
+    // this.output.on('element', (elt, timeEnded) => this.outputDecoder.onelement(elt, timeEnded));
+    this.output.on('transition', (onoff, time) => this.outputDecoder.ontransition(onoff, time));
 
     // input decoder wiring
     if (USE_DETONER) {
@@ -33,11 +34,10 @@ export class Keyer extends KeyerEvent {
     } else if (USE_DETIMER) {
       this.input.connect(this.context.destination);
       this.input.on('transition', (onoff, time) => this.inputDecoder.ontransition(onoff, time));
-      this.input.iambic.on('transition', (onoff, time) => this.inputDecoder.ontransition(onoff, time));
     } else {
       this.input.connect(this.context.destination);
-      this.input.straight.on('transition', (onoff, time) => this.inputDecoder.ontransition(onoff, time));
-      this.input.iambic.on('element', (elt, timeEnded) => this.inputDecoder.onelement(elt, timeEnded));
+      this.input.on('transition', (onoff, time) => this.inputDecoder.ontransition(onoff, time));
+      // this.input.on('element', (elt, timeEnded) => this.inputDecoder.onelement(elt, timeEnded));
     }
 
     this.table = this.output.table;
@@ -52,9 +52,10 @@ export class Keyer extends KeyerEvent {
     this.compensation = 0;
     this.rise = 4;
     this.fall = 4;
-    this.envelope = 'raised-cosine';
+    this.envelope = 'hann';
+    this.envelope2 = 'rectangular';
     this.swapped = false;
-    this.inputKeyer = 'iambic';
+    this.inputKey = 'paddle';
     this.inputSources = ['keyboard'];
     this.inputMidi = 'none';
     this.leftPaddleKey = 'AltRight';
@@ -73,6 +74,8 @@ export class Keyer extends KeyerEvent {
   keyup(e) { this.input.kbdKey(e, false); }
 
   touchKey(e,type,onOff) { this.input.touchKey(e, type, onOff); }
+  
+  mouseKey(e,type,onOff) { this.input.mouseKey(e, type, onOff); }
   
   // keypress(e) { this.outputSend(e.key); }
 
@@ -117,6 +120,10 @@ export class Keyer extends KeyerEvent {
 
   set envelope(v) { this.input.envelope = v; this.output.envelope = v; }
   
+  get envelope2() { return this.output.envelope2; }
+
+  set envelope2(v) { this.input.envelope2 = v; this.output.envelope2 = v; }
+  
   static get envelopes() { return KeyerOutput.envelopes; }
   
   get speed() { return this.output.wpm; }
@@ -127,9 +134,9 @@ export class Keyer extends KeyerEvent {
 
   set swapped(v) { this.input.swapped = v === 'on'; }
 
-  set inputKeyer(v) { this.input.keyer = v; }
+  set inputKey(v) { this.input.key = v; }
 
-  get inputKeyer() { return this.input.keyer; }
+  get inputKey() { return this.input.key; }
 
   set inputSources(v) { this.input.sources = v; }
 
@@ -155,7 +162,7 @@ export class Keyer extends KeyerEvent {
 
   get leftPaddleMidi() { return this.input.leftPaddleMidi; }
 
-  set rightPaddleMidi(v) { /* console.log(`Keyer set rightPaddleMidi ${v}`); */ this.input.rightPaddleMidi = v; }
+  set rightPaddleMidi(v) { this.input.rightPaddleMidi = v; }
 
   get rightPaddleMidi() { return this.input.rightPaddleMidi; }
 
@@ -167,15 +174,6 @@ export class Keyer extends KeyerEvent {
 
   get straightMidi() { return this.input.straightMidi; }
 
-  static async createAudioProcessor(context, source, name) {
-    try {
-      await context.resume();
-      await context.audioWorklet.addModule(source);
-    } catch (e) {
-      return null;
-    }
-    return new AudioWorkletNode(context, name);
-  }
 }
 // Local Variables:
 // mode: JavaScript
