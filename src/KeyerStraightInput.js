@@ -25,7 +25,7 @@ export class KeyerStraightInput extends KeyerInputDelegate {
     this.active = false;
     this.rawKeyOn = false;
     this.keyOn = false;
-    this.bounceEnd = this.cur
+    this.bounceEnd = this.currentTime;
     this.rampEnd = this.currentTime;
     this.input.on('end:ramp', () => this.keyset(this.rawKeyOn));
   }

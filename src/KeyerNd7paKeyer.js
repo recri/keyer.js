@@ -54,56 +54,16 @@ const DIT = 1; // making a dit or the space after
 const DAH = 2; // making a dah or the space after
 
 // translate iambic paddle events into keyup/keydown events
-export class KeyerIambicKeyer extends KeyerInputDelegate {
+export class KeyerNd7paKeyer extends KeyerInputDelegate {
 
-  constructor(context, input) {
+  constructor(context, input, mode) {
     super(context, input);
     // state variables
     this.keyerState = IDLE; // the keyer state
     this.ditPending = false; // memory for dit seen while playing a dah
     this.dahPending = false; // memory for dah seen while playing a dit
     this.timer = 0; // seconds counting down to next decision
-    this.modeB = true;
-
-    // timer, 1/4 dit of samples
-    this._tick = 0.1;
-    this._running = false;
-
-    this.rawDitOn = false;
-    this.rawDahOn = false;
-    this.lastTick = this.currentTime;
-
-    this.input.on('change:timing', () => this.changeTiming());
-  }
-
-  // update the clock timer
-  changeTiming() { this._tick = this.perRawDit/4; }
-
-  startClock() {
-    // console.log("start_clock");
-    this.lastTick = this.currentTime;
-    this._running = true;
-    this.startTick();
-  }
-
-  stopClock() {
-    // console.log("stop_clock");
-    this._running = false;
-  }
-
-  restartClock() {
-    // console.log("restart_clock");
-    this.stopClock();
-    this.startClock();
-  }
-
-  endTick() {
-    this.clock();
-    if (this._running) this.startTick();
-  }
-
-  startTick() { 
-    this.after(this._tick, () => this.endTick());
+    this.mode = mode;
   }
 
   transition(state, len) {
@@ -112,9 +72,7 @@ export class KeyerIambicKeyer extends KeyerInputDelegate {
       if (this.timer > -((this.perIes + this.perIls) / 2 - this.perIes)) {
         // the timer has not reached the boundary between ies and ils
         this.input.emit('element', '', this.cursor);
-      } else if (
-        this.timer > -((this.perIls + this.perIws) / 2 - this.perIes)
-      ) {
+      } else if (this.timer > -((this.perIls + this.perIws) / 2 - this.perIes) ) {
         // the timer has not reached the boundary between ils and iws
         this.input.emit('element', ' ', this.cursor);
       } else {
@@ -143,16 +101,8 @@ export class KeyerIambicKeyer extends KeyerInputDelegate {
     this.keyHoldFor(this.perIes);
   }
 
-  clock() {
-    const ditOn = this.rawDitOn;
-    const dahOn = this.rawDahOn;
-
-    // compute time
-    const now = this.currentTime;
-    const ticks = now - this.lastTick;
-    this.lastTick = now;
-
-    // console.log("clock dit", dit_on, "dah", dah_on, "ticks", ticks);
+  clock(ditOn, dahOn, ticks) {
+    // console.log(`clock dit ${ditOn}, dah ${dahOn}, ticks ${ticks}`);
 
     // update timer
     this.timer -= ticks;
@@ -178,7 +128,7 @@ export class KeyerIambicKeyer extends KeyerInputDelegate {
       }
     }
 
-    if (this.modeB) {
+    if (this.mode === 'B') {
       // *****************  dit pending state machine   *********************
       this.ditPending = this.ditPending
 	? this.keyerState !== DIT
@@ -194,7 +144,6 @@ export class KeyerIambicKeyer extends KeyerInputDelegate {
         this.timer < this.perDit / 2 + this.perIes;
     }
   }
-
 }
 // Local Variables: 
 // mode: JavaScript
