@@ -29,14 +29,13 @@ export class Keyer extends KeyerEvent {
 
   constructor(context) {
     super(context);
-    this.enabled = false;
     this.output = new KeyerOutput(this.context);
     this.outputDecoder = new KeyerDecode(this.context);
     this.input = new KeyerInput(this.context);
     this.inputDecoder = new KeyerDecode(this.context);
     this.microphone = new KeyerMicrophone(this.context);
 
-    // decode from elements, except for decoding straight key
+    // decode from transitions
     // output decoder wiring
     this.output.connect(this.context.destination);
     // this.output.on('element', (elt, timeEnded) => this.outputDecoder.onelement(elt, timeEnded));
@@ -60,41 +59,8 @@ export class Keyer extends KeyerEvent {
     this.table = this.output.table;
     this.outputDecoder.table = this.table;
     this.inputDecoder.table = this.table;
-
-    this.pitch = 700;
-    this.gain = -26;
-    this.speed = 15;
-    this.weight = 50;
-    this.ratio = 50;
-    this.compensation = 0;
-    this.rise = 4;
-    this.fall = 4;
-    this.envelope = 'hann';
-    this.envelope2 = 'rectangular';
-    this.swapped = false;
-    this.inputKey = 'paddle';
-    this.inputSources = ['keyboard'];
-    this.inputMidi = 'none';
-    this.leftPaddleKey = 'AltRight';
-    this.rightPaddleKey = 'ControlRight';
-    this.straightKey = 'ControlRight';
-    this.leftPaddleMidi = '1:0';
-    this.rightPaddleMidi = '1:1';
-    this.straightMidi = '1:1';
-
-    this.qrq = 'off';
   }
 
-  // keyboard handlers
-  keydown(e) { this.input.kbdKey(e, true); }
-
-  keyup(e) { this.input.kbdKey(e, false); }
-
-  touchKey(e,type,onOff) { this.input.touchKey(e, type, onOff); }
-  
-  mouseKey(e,type,onOff) { this.input.mouseKey(e, type, onOff); }
-  
-  // keypress(e) { this.outputSend(e.key); }
 
   // useful actions
   outputSend(text) { this.output.send(text); }
@@ -159,14 +125,16 @@ export class Keyer extends KeyerEvent {
 
   get inputSources() { return this.input.sources; }
 
-  set inputMidi(v) { this.input.midi = v; }
-
-  get inputMidi() { return this.input.midi; }
-  
   get inputMidiNames() { return this.input.midiNames; }
   
   get inputMidiNotes() { return this.input.midiNotes; }
   
+  get paddleKeyers() { return this.input.keyers; }
+
+  set paddleKeyer(v) { this.input.keyer = v; }
+
+  get paddleKeyer() { return this.input.keyer; }
+
   set leftPaddleKey(v) { this.input.leftPaddleKey = v; }
 
   get leftPaddleKey() { return this.input.leftPaddleKey; }

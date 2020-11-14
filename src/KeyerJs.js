@@ -38,16 +38,15 @@ const defaults = {
   speed: 20,
   qrq: 'off',
   inputKey: 'paddle',
-  paddleKeyer: 'iambic',
-  inputSources: ['keyboard'],
-  inputMidi: 'none',
-  straightKey: 'ControlRight',
-  straightMidi: '1:1',
+  paddleKeyer: 'nd7pa-b',
+  inputSources: ['keyboard','midi'],
+  straightKey: 'ControlLeft',
+  straightMidi: 'None',
   swapped: 'off',
   leftPaddleKey: 'AltRight',
   rightPaddleKey: 'ControlRight',
-  leftPaddleMidi: '1:0',
-  rightPaddleMidi: '1:1',
+  leftPaddleMidi: 'None',
+  rightPaddleMidi: 'None',
   requestedSampleRate: '48000',
   // properties that are local
   displayTouchKey: 'off',
@@ -120,8 +119,8 @@ const inputKeys = [ 'none', 'straight', 'paddle' ];
 const isInputKey = (value) => inputKeys.includes(value);
 
 // list of valid paddle input keyers
-const paddleKeyers = [ 'iambic' ];
-const isPaddleKeyer = (value) => paddleKeyers.includes(value);
+// const paddleKeyers = [ 'iambic' ];
+// const isPaddleKeyer = (value) => paddleKeyers.includes(value);
 
 // list of valid inputSources
 const inputSources = [ 'touch', 'keyboard', 'midi' ];
@@ -160,8 +159,8 @@ export class KeyerJs extends LitElement {
       envelope2: { type: String },
       inputKey: { type: String },
       inputSources: { type: Array },
-      inputMidi: { type: String },
       swapped: { type: String },
+      paddleKeyer: { type: String },
       straightKey: { type: String },
       leftPaddleKey: { type: String },
       rightPaddleKey: { type: String },
@@ -187,6 +186,7 @@ export class KeyerJs extends LitElement {
       // properties refreshed on notification
       inputMidiNames: { type: Array },
       inputMidiNotes: { type: Array },
+      paddleKeyers: { type: Array },
       // display widget
       content: { type: Object },
       finished: { type: Array },
@@ -259,6 +259,8 @@ export class KeyerJs extends LitElement {
 
   get inputKey() { return this.keyer.inputKey; }
 
+  get paddleKeyers() { return this.keyer.paddleKeyers; }
+
   set paddleKeyer(v) { this.updateControl('paddleKeyer', v); }
 
   get paddleKeyer() { return this.keyer.paddleKeyer; }
@@ -274,14 +276,6 @@ export class KeyerJs extends LitElement {
   set rightPaddleKey(v) { this.updateControl('rightPaddleKey', v); }
 
   get rightPaddleKey() { return this.keyer.rightPaddleKey; }
-
-  set inputMidi(v) { this.updateControl('inputMidi', v); }
-
-  get inputMidi() { return this.keyer.inputMidi; }
-
-  // get inputMidiNames() { return this.keyer.inputMidiNames; }
-
-  // get inputMidiNotes() { return this.keyer.inputMidiNotes; }
 
   set inputSources(v) { this.updateControl('inputSources', v); }
 
@@ -351,6 +345,9 @@ export class KeyerJs extends LitElement {
     this.keyer.output.on('skipped', ltr => this.onskipped(ltr));
     this.keyer.input.midiSource.on('midi:names', () => this.onmidinames());
     this.keyer.input.midiSource.on('midi:notes', () => this.onmidinotes());
+    
+    document.addEventListener('keydown', (e) => this.keyer.input.keyboardKey(e, true));
+    document.addEventListener('keyup', (e) => this.keyer.input.keyboardKey(e, false));
   }
   
   // validate that our lists of options are actual options
@@ -359,7 +356,7 @@ export class KeyerJs extends LitElement {
   validate() {
     shiftKeys.forEach(x => isShiftKey(x) || console.log(`shiftKey ${x} failed isShiftKey`));
     inputKeys.forEach(x => isInputKey(x) || console.log(`inputKey ${x} failed isInputKey`));
-    paddleKeyers.forEach(x => isPaddleKeyer(x) || console.log(`paddleKeyer ${x} failed isPaddleKeyer`));
+    // paddleKeyers.forEach(x => isPaddleKeyer(x) || console.log(`paddleKeyer ${x} failed isPaddleKeyer`));
     inputSources.forEach(x => isInputSource(x) || console.log(`inputSource ${x} failed isInputSource`));
     sampleRates.forEach(x => isSampleRate(x) || console.log(`sampleRate ${x} failed isSampleRate`));
     ['qrq','swapped','displayTouchKey', 'displaySettings', 'displayOutput', 'displayAdvanced', 'displayInputKey', 'displayStatus'].
@@ -368,24 +365,12 @@ export class KeyerJs extends LitElement {
       forEach(x => isShiftKey(this[x]) || console.log(`property '${x}' failed isShiftKey: ${this[x]}`));
     ['inputKey'].
       forEach(x => isInputKey(this[x]) || console.log(`property '${x}' failed isInputKey: ${this[x]}`));
-    ['paddleKeyer'].
-      forEach(x => isPaddleKeyer(this[x]) || console.log(`property '${x}' failed isPaddleKeyer: ${this[x]}`));
+    // ['paddleKeyer'].
+    // forEach(x => isPaddleKeyer(this[x]) || console.log(`property '${x}' failed isPaddleKeyer: ${this[x]}`));
     this.inputSources.forEach(x => isInputSource(x) || console.log(`property 'inputSources' failed isInputSource: '${x}'`));
     ['requestedSampleRate'].forEach(x => isSampleRate(this[x]) || console.log(`property '${x}' failed isSampleRate '${this[x]}'`));
   }
 	       
-  // input key events
-  // e.key -> Control | Alt | Shift
-  // e.location -> 1 for Left, 2 for Right
-  // e.code -> (Control | Alt | Shift) (Left | Right)
-  keydown(e) { this.keyer.keydown(e); this.ttyKeydown(e); }
-
-  keyup(e) { this.keyer.keyup(e); }
-
-  touchKey(e,type,onOff) { this.keyer.touchKey(e, type, onOff); }
-  
-  mouseKey(e,type,onOff) { this.keyer.mouseKey(e, type, onOff); }
-  
   // midi information events
   onmidinames() { this.inputMidiNames = this.keyer.inputMidiNames; }
 
@@ -552,8 +537,6 @@ export class KeyerJs extends LitElement {
   selectInputKey(e) { this.selectControl('inputKey', e); }
   
   selectPaddleKeyer(e) { this.selectControl('paddleKeyer', e); }
-  
-  selectInputMidi(e) { this.selectControl('inputMidi', e); this.requestUpdate('inputMidiNotes', this.inputMidiNotes); }
   
   selectStraightKey(e) { this.selectControl('straightKey', e); }
   
@@ -742,23 +725,23 @@ export class KeyerJs extends LitElement {
       return html``;
     if (this.inputKey === 'straight')
       return html`
-	  <button class="key" @mousedown=${e => this.mouseKey(e,'straight',true)} 
-			      @mouseup=${e => this.mouseKey(e,'straight',false)}
-			      @touchstart=${e => this.touchKey(e,'straight',false)}
-			      @touchend=${e => this.touchKey(e,'straight',false)}
+	  <button class="key" @mousedown=${e => this.keyer.input.mouseKey(e,'straight',true)} 
+			      @mouseup=${e => this.keyer.input.mouseKey(e,'straight',false)}
+			      @touchstart=${e => this.keyer.input.touchKey(e,'straight',false)}
+			      @touchend=${e => this.keyer.input.touchKey(e,'straight',false)}
 		>${straightKeyArrow}</button>
 	`;
     if (this.inputKey === 'paddle')
       return html`
-	  <button class="key" @mousedown=${e => this.mouseKey(e,'left',true)}
-			      @mouseup=${e => this.mouseKey(e,'left',false)}
-			      @touchstart=${e => this.touchKey(e,'left',false)}
-			      @touchend=${e => this.touchKey(e,'left',false)}
+	  <button class="key" @mousedown=${e => this.keyer.input.mouseKey(e,'left',true)}
+			      @mouseup=${e => this.keyer.input.mouseKey(e,'left',false)}
+			      @touchstart=${e => this.keyer.input.touchKey(e,'left',false)}
+			      @touchend=${e => this.keyer.input.touchKey(e,'left',false)}
 		>${leftKeyArrow}</button>
-	  <button class="key" @mousedown=${e => this.mouseKey(e,'right',true)}
-			      @mouseup=${e => this.mouseKey(e,'right',false)}
-			      @touchstart=${e => this.toucheKey(e,'right',false)}
-			      @touchend=${e => this.touchKey(e,'right',false)}
+	  <button class="key" @mousedown=${e => this.keyer.input.mouseKey(e,'right',true)}
+			      @mouseup=${e => this.keyer.input.mouseKey(e,'right',false)}
+			      @touchstart=${e => this.keyer.input.toucheKey(e,'right',false)}
+			      @touchend=${e => this.keyer.input.touchKey(e,'right',false)}
 		>${rightKeyArrow}</button>
 	`;
     return html``;
@@ -887,14 +870,6 @@ export class KeyerJs extends LitElement {
 	  </label>
 	</div>
       </div>`,
-      ! (this.inputKey !== 'none' && this.inputSources.includes('midi')) ? html`` : html`
-	<div>
-	  <label>Midi interface: 
-            <select .value=${this.inputMidi} @change=${this.selectInputMidi}>
-	      ${templateOptions(this.inputMidiNames, this.inputMidi)}
-	    </select>
-	  </label>
-	</div>`,
       ! (this.inputKey === 'straight' && this.inputSources.includes('midi')) ? html`` : html`
 	<div>
 	  <label>Straight midi note:
@@ -970,8 +945,8 @@ export class KeyerJs extends LitElement {
     return isOff(this.displayStatus) ?  html`` : html`
       <div>
 	Sample rate: ${this.sampleRate}<br/>
-	Current time: ${this.currentTime}<br/>
-	Base latency: ${this.baseLatency}<br/>
+	Current time: ${this.currentTime.toFixed(3)}<br/>
+	Base latency: ${this.baseLatency.toFixed(3)}<br/>
       </div>
     `;
   }
@@ -988,7 +963,7 @@ export class KeyerJs extends LitElement {
 	  <button @click=${this.cancel}>
 	    <span>Cancel</span>
 	  </button>
-	  <div class="keyboard" tabindex="0" @keydown=${this.keydown} @keyup=${this.keyup}
+	  <div class="keyboard" tabindex="0" @keydown=${this.ttyKeydown}
 		 @focus=${this.onfocus} @blur=${this.onblur}>${this.content}</div>
 	</div>
 	<div>
@@ -1031,6 +1006,23 @@ export class KeyerJs extends LitElement {
       </main>
 
       <p class="app-footer">
+	keyer.js - a progressive web app for morse code
+      </p><p class="app-footer">
+	Copyright (c) 2020 Roger E Critchlow Jr, Charlestown, MA, USA
+      </p><p class="app-footer">
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+      </p><p class="app-footer">
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+      </p><p class="app-footer">
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <a href="https://www.gnu.org/licenses/">gnu.org/licenses</a>.
+      </p><p class="app-footer">
         🚽 Made with love by
         <a target="_blank" rel="noopener noreferrer"
            href="https://github.com/open-wc" >open-wc</a>.

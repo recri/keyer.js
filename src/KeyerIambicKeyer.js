@@ -137,10 +137,9 @@ export class KeyerIambicKeyer extends KeyerInputDelegate {
     this.timer += len + this.perIes;
 
     // schedule the element and the inter-element space
-    const time = this.cursor;
-    this.keyOnAt(time);
-    this.keyOffAt(time + len);
-    this.keyHoldFor(this.perIes);
+    // this could simply be keyOn,holdFor,keyOff,holdFor
+    // all at the cursor
+    this.keyElement(len, this.perIes);
   }
 
   clock() {

@@ -27,6 +27,16 @@ const gainDecibel = (linear) => Math.log10(linear) * 20;
 // this layer handles keying the oscillator
 // so it knows the frequency, the volume,
 // the keying envelope, rise time, and fall time
+//
+// we cannot start another ramp while a ramp is playing,
+// it would sound awful, and the audio engine throws an
+// exception if we even try.
+// hence every keying event should specify the time and
+// extent of the event, and the cursor is advanced from
+// the time by the extent.  and every keying event should
+// check to see that it's requested time does not encroach
+// on the previous event, by checking that time >= cursor.
+
 export class KeyerPlayer extends KeyerEvent {
   constructor(context) {
     super(context);
@@ -35,7 +45,8 @@ export class KeyerPlayer extends KeyerEvent {
     this.cursor = this.currentTime;
 
     // initialize parameters
-    this.state = 'off';
+    this.keySounds = false;
+    this.keySlews = false;
     this._envelope = 'hann';
     this._envelope2 = 'rectangular';
     this._rise = 4;
@@ -152,48 +163,79 @@ export class KeyerPlayer extends KeyerEvent {
     this.emit('change:timing');
   }
 
-  rampEnded(e, riseFall) { this.emit('end:ramp', riseFall); }
+  rampEnded(e, riseFall) { this.keySlews = false; this.emit('end:ramp', riseFall); }
   
-  riseEnded(e) {
-    this._state = 'on';
-    this.rampEnded(e, 'rise');
+  riseEnded(e) { this.rampEnded(e, 'rise'); }
+
+  fallEnded(e) { this.rampEnded(e, 'fall'); }
+
+  // straight key something on or off
+  keyStraight(onOff) {
+    if (this.cursor > this.currentTime) {
+      this.straightMem = onOff;
+      this.when(this.cursor, () => this.rekeyStraight());
+    } else if (this.straightKey !== onOff) {
+      this.straightKey = onOff;
+      if (onOff) {
+	this.keyOnAt(this.cursor);
+	this.keyHoldFor(2*this.rise/1000.0); // maybe better this.perDit?
+      } else {
+	this.keyOffAt(this.cursor);
+	this.keyHoldFor(2*this.fall/1000.0); // maybe better this.Ies?
+      }
+      this.when(this.cursor, () => this.rekeyStraight());
+    }
   }
 
-  fallEnded(e) {
-    this._state = 'off';
-    this.rampEnded(e, 'fall');
+  // revisit the straight key state
+  rekeyStraight() { this.keyStraight(this.straightMem); }
+  
+  // play a dit or dah at the cursor
+  // and the trailing inter-element space
+  // return the cursor value at the end of the space
+  keyElement(elen, slen) {
+    this.keyOnAt(this.cursor);
+    this.keyHoldFor(elen);
+    this.keyOffAt(this.cursor);
+    return this.keyHoldFor(slen);
   }
-
+  
   // schedule the key on at time
   keyOnAt(time) {
+    if (time < this.cursor) return false;
     const t = Math.max(time, this.currentTime);
     // console.log(`keyOnAt now+${t-this.currentTime} seconds ${this._riseCurve.length} sample ramp`);
     // console.log(`keyOnAt now+${(t-this.currentTime)*this.sampleRate} samples`);
     // console.log(this._riseCurve);
     const dtime = this._riseCurve.length / this.sampleRate;
-    this._state = 'rise';
+    this.keySounds = true;
+    this.keySlews = true;
     this.ramp.gain.setValueCurveAtTime(this._riseCurve, t, dtime);
     this.when(t+dtime, e => this.riseEnded(e))
     this.cursor = t;
     this.emit('transition', 1, t);
+    return true;
   }
 
-  // schedule the key off at time
+  // schedule the key off at the cursor
   keyOffAt(time) {
+    if (time < this.cursor) return false;
     const t = Math.max(time, this.currentTime);
     // console.log(`keyOffAt now+${t-this.currentTime} seconds`);
     // console.log(`keyOffAt now+${(t-this.currentTime)*this.sampleRate} samples`);
     const dtime = this._fallCurve.length / this.sampleRate;
-    this._state = 'fall'
+    this.keySounds = false;
+    this.keySlews = true;
     this.ramp.gain.setValueCurveAtTime(this._fallCurve, t, dtime);
     this.when(t+dtime, e => this.fallEnded(e))
     this.cursor = t;
     this.emit('transition', 0, t);
+    return true
   }
 
-  // hold the last scheduled key state for seconds
+  // advance the cursor by seconds, effectively holdin the last scheduled key state for seconds
   keyHoldFor(seconds) {
-    // console.log(`state ${this.state} keyHoldFor ${seconds} sec at cursor ${this.cursor} sec at time ${this.currentTime} sec`);
+    // console.log(`state ${this.keySounds} keyHoldFor ${seconds} sec at cursor ${this.cursor} sec at time ${this.currentTime} sec`);
     // console.log(`keyHoldFor until ${(this.cursor+seconds)/this.sampleRate} samples at ${this.currentTime/$this.sampleRate} samples`);
     this.cursor += seconds;
     return this.cursor;

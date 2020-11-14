@@ -59,41 +59,33 @@ export class KeyerOutput extends KeyerPlayer {
     // not apparently idle, 
     // but probably a race here
     this.idle = false;
-    let time = this.cursor;
     const ch = this.pending.shift();
     if (ch === ' ' || ch === '\t' || ch === "\n") {
       // inter-word space
       if (this.lastch === ' ' || this.lastch === '\t' || this.lastch === "\n") {
 	// repeated inter-word space
-	time = this.keyHoldFor(this.perIws);
-	this.emit('element', '\t', time);
+	this.emit('element', '\t', this.keyHoldFor(this.perIws));
       } else {
 	// inter-word space after character
 	// reduce by inter-letter space already queued
-	time = this.keyHoldFor(this.perIws-this.perIls); 
-	this.emit('element', '\t', time);
+	this.emit('element', '\t', this.keyHoldFor(this.perIws-this.perIls));
       }
     } else {
       // translate character to dits and dahs and trailing inter-letter space
+      // time starts at cursor could all be cursor
       for (const c of this.table.encode(ch).split('')) {
 	if (c === '.') { 	// send a dit
-	  this.keyOnAt(time);
-	  time = this.keyHoldFor(this.perDit);
-	  this.keyOffAt(time);
-	  this.emit('element', '.', time);
-	  time = this.keyHoldFor(this.perIes);
-	  this.emit('element', '', time);
+	  const t = this.keyElement(this.perDit, this.perIes);
+	  this.emit('element', '.', t-this.perIes)
+	  this.emit('element', '', t);
 	} else if (c === '-') {	// send a dah
-	  this.keyOnAt(time);
-	  time = this.keyHoldFor(this.perDah);
-	  this.keyOffAt(time);
-	  this.emit('element', '-', time);
-	  time = this.keyHoldFor(this.perIes);
-	  this.emit('element', '', time);
+	  const t = this.keyElement(this.perDah, this.perIes);
+	  this.emit('element', '-', t-this.perIes)
+	  this.emit('element', '', t);
 	} else if (c === ' ') {
 	  // reduce by inter-element space already queued
-	  time = this.keyHoldFor(this.perIls-this.perIes);
-	  this.emit('element', ' ', time);
+	  const t = this.keyHoldFor(this.perIls-this.perIes);
+	  this.emit('element', ' ', t);
 	} else {
 	  console.log(`why is {$c} in the code table for ${ch}?`);
 	}
@@ -101,7 +93,7 @@ export class KeyerOutput extends KeyerPlayer {
     }
     this.lastch = ch
     this.emit('sending', ch);
-    this.when(time-this.perDah, () => this.sendPending());
+    this.when(this.cursor-this.perDah, () => this.sendPending());
   }
 
   cancelPending() {

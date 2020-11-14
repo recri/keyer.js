@@ -32,15 +32,14 @@ export class KeyerMidiSource extends KeyerEvent {
   constructor(context) {
     super(context);
     this.midiAccess = null; // global MIDIAccess object
-    this.midi = 'none';	    // selected midi device
-    this.notesCache = [];   // notes received on each device
+    this.notesCache = [];   // device:notes received
     this.refresh();
   }
 
   onmidimessage(name, e) { 
     // accumulate the NoteOn/NoteOff events seen channel:note
     if (e.data.length === 3) {
-      const note = `${1+(e.data[0]&0x0F)}:${e.data[1]}`; // channel:note 
+      const note = `${name}:${1+(e.data[0]&0x0F)}:${e.data[1]}`; // device:channel:note 
       let event = null;
       switch (e.data[0] & 0xf0) {
       case 0x90:		// note on
@@ -52,13 +51,12 @@ export class KeyerMidiSource extends KeyerEvent {
       default:
         return;
       }
-      if (this.notesCache[name][note] === undefined) {
-	// console.log(`adding midi:note ${name} ${note} to notesCache`);
-	this.notesCache[name][note] = true;
+      if (this.notesCache[note] === undefined) {
+	// console.log(`adding midi:note ${note} to notesCache`);
+	this.notesCache[note] = true;
 	this.emit('midi:notes');
       }
-      if (name === this.midi && name !== 'none')
-	this.emit('midi:event', event, note);
+      this.emit('midi:event', event, note);
     }
   }
   
@@ -75,17 +73,19 @@ export class KeyerMidiSource extends KeyerEvent {
 
   get outputs() { return this.midiAccess ? Array.from(this.midiAccess.outputs.values()) : []; }
 
-  get notes() { return this.midi && this.notesCache[this.midi] ? Array.from(Object.keys(this.notesCache[this.midi])) : []; }
+  get notes() { return ['None'].concat(Array.from(Object.keys(this.notesCache)).sort()); }
 
+  // filter the notesCache for loss/gain of devices
   rebind() {
     const { notesCache } = this;
     this.notesCache = []
     this.inputs.forEach(input => {
       const name = this.shorten(input.name);
       // console.log(`rebind ${name}`);
-      this.notesCache[name] = notesCache[name] || [];
+      notesCache.forEach(note => { if (note.startsWith(name)) this.notesCache[note] = true; });
       input.onmidimessage = e => this.onmidimessage(name, e)
     });
+    this.emit('midi:notes');
   }
 
   onStateChange() { 

@@ -120,7 +120,7 @@ const KEYER_STRAIGHT = 'S';
 const KEYER_MODE_A = 'A';
 // const KEYER_MODE_B = 'B';
 
-export class KeyerVk6phKeyer extends KeyerInputDelegate {
+export class KeyerPaddleVk6phKeyer extends KeyerInputDelegate {
 
   constructor(context, input, mode) {
     super(context, input);
@@ -131,64 +131,59 @@ export class KeyerVk6phKeyer extends KeyerInputDelegate {
     this.cwKeyerMode = mode;
     this.cwKeyerSpacing = true;
     this.keyerOut = false;
-    this.changeTiming()
-    this.input.on('change:timing', () => this.changeTiming());
   }
-  
-  get dotDelay() { return this.perDit; }
-
-  get dashDelay() { return this.perDah; }
   
   clock(ditOn, dahOn, ticks) {
     
     this.kdelay += ticks;
 
     while (this.kdelay >= 0) {
+
       switch(this.keyState) {
-      case CHECK:		// check for key press
+
+      // check for key press
+      case CHECK:
 	if (this.cwKeyerMode === KEYER_STRAIGHT) { // Straight/External key or bug
-	  if (dahOn) {	// send manual dashes
+	  if (dahOn) {		// send manual dashes
 	    if ( ! this.keyerOut) {
 	      this.keyerOut = true;
-	      // keyOn, holdFor
-	      // this.keyState = CHECK;
+	      this.keyStraight(dahOn);
 	    }
-	  } else if (ditOn) {	// and automatic dots
+	    return;
+	  }
+	  if (ditOn) {		// and automatic dots
 	    this.keyState = PREDOT;
 	    continue;
-	  } else {
-	    if (this.keyerOut) {
-	      this.keyerOut = false; 
-	      // keyOff, holdFor ies
-	      this.keyState = DOTDELAY;
-	      this.kdelay = 0;
-	      continue;
-	    }
-	    this.keyState = CHECK;
+	  }
+	  if (this.keyerOut) {	// turn off a dash
+	    this.keyerOut = false; 
+	    this.keyStraight(dahOn);
+	    this.keyState = DOTDELAY;
+	    this.kdelay = 0;
+	    continue;
 	  }
 	} else {
 	  if (ditOn) {
 	    this.keyState = PREDOT;
 	    continue;
-	  } else if (dahOn) {
+	  }
+	  if (dahOn) {
 	    this.keyState = PREDASH;
 	    continue;
-	  } else {
-	    this.keyerOut = false;
-	    this.keyState = CHECK;
 	  }
+	  this.keyerOut = false;
 	}
 	return;
       case PREDOT:	   // need to clear any pending dots or dashes
 	this.keyState = SENDDOT;
 	this.dotMemory = this.dashMemory = false;
-	this.element(this.perDit);
+	this.keyElement(this.perDit, this.perIes);
 	this.kdelay = 0;
 	continue;
       case PREDASH:
 	this.keyState = SENDDASH;
 	this.dotMemory = this.dashMemory = false;
-	this.element(this.perDah);
+	this.keyElement(this.perDah, this.perIes);
 	this.kdelay = 0;
 	continue;
 	// dot paddle  pressed so set keyer_out high for time dependant on speed
@@ -208,8 +203,9 @@ export class KeyerVk6phKeyer extends KeyerInputDelegate {
 	} else
 	  this.dashMemory ||= dahOn;	// set dash memory
 	return;
-	// dash paddle pressed so set keyer_out high for time dependant on 3 x dot delay and weight
-	// also check if dot paddle is pressed during this time
+
+      // dash paddle pressed so set keyer_out high for time dependant on 3 x dot delay and weight
+      // also check if dot paddle is pressed during this time
       case SENDDASH:
 	this.keyerOut = true;
 	if (this.kdelay >= this.perDah) {
@@ -225,7 +221,8 @@ export class KeyerVk6phKeyer extends KeyerInputDelegate {
 	} else
 	  this.dotMemory ||= ditOn;	// set dot memory
 	return;
-	// add dot delay at end of the dot and check for dash memory, then check if paddle still held
+
+      // add dot delay at end of the dot and check for dash memory, then check if paddle still held
       case DOTDELAY:
 	if (this.kdelay >= this.perIes) {
 	  this.kdelay -= this.perIes;
@@ -239,6 +236,7 @@ export class KeyerVk6phKeyer extends KeyerInputDelegate {
 	}
 	this.dashMemory = dahOn;	// set dash memory
 	return;
+
       case DASHDELAY: // add dot delay at end of the dash and check for dot memory, then check if paddle still held
 	if (this.kdelay >= this.perIes) {
 	  this.kdelay -= this.perIes
@@ -250,6 +248,7 @@ export class KeyerVk6phKeyer extends KeyerInputDelegate {
 	}
 	this.dotMemory = ditOn;	// set dot memory 
 	return;
+
       case DOTHELD: // check if dot paddle is still held, if so repeat the dot. Else check if Letter space is required
 	if (ditOn)  // dot has been set during the dash so service
 	  this.keyState = PREDOT;
@@ -261,6 +260,7 @@ export class KeyerVk6phKeyer extends KeyerInputDelegate {
 	} else
 	  this.keyState = CHECK;
 	continue;
+
       case DASHHELD: // check if dash paddle is still held, if so repeat the dash. Else check if Letter space is required
 	if (dahOn)   // dash has been set during the dot so service
 	  this.keyState = PREDASH;
@@ -272,6 +272,7 @@ export class KeyerVk6phKeyer extends KeyerInputDelegate {
 	} else
 	  this.keyState = CHECK;
 	continue;
+
       case LETTERSPACE: // Add remainder of letter space (3 x dot delay) to end of character and check if a paddle is pressed during this time.
 	if (this.kdelay >= this.perIls-this.perIes) {
 	  if (this.dotMemory) // check if a dot or dash paddle was pressed during the delay.
@@ -286,18 +287,12 @@ export class KeyerVk6phKeyer extends KeyerInputDelegate {
 	this.dotMemory ||= ditOn;
 	this.dashMemory ||= dahOn;
 	return;
+
       default:
 	this.keyState = CHECK;
 	return;
       }
     }
-  }
-
-  element(len) {
-    const time = this.cursor;
-    this.keyOnAt(time);
-    this.keyOffAt(time + len);
-    this.keyHoldFor(this.perIes);
   }
 
 }

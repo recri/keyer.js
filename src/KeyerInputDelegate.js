@@ -25,8 +25,16 @@ export class KeyerInputDelegate extends KeyerEvent {
     this.input = input;
   }
 
+  get keySounds() { return this.input.keySounds; }
+
+  get keySlews() { return this.input.keySlews; }
+  
   get cursor() { return this.input.cursor; }
 
+  keyStraight(onoff) { return this.input.keyStraight(onoff); }
+			    
+  keyElement(elen, slen) { return this.input.keyElement(elen, slen); }
+  
   keyOnAt(time) { this.input.keyOnAt(time); }
 
   keyOffAt(time) { this.input.keyOffAt(time); }

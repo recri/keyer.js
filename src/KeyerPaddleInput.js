@@ -16,21 +16,15 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 // 
 import { KeyerInputDelegate } from './KeyerInputDelegate.js';
-import { KeyerNd7paKeyer } from './KeyerNd7paKeyer.js';
-import { KeyerVk6phKeyer } from './KeyerVk6phKeyer.js';
+import { KeyerPaddleNoneKeyer } from './KeyerPaddleNoneKeyer.js';
+import { KeyerPaddleNd7paKeyer } from './KeyerPaddleNd7paKeyer.js';
+import { KeyerPaddleVk6phKeyer } from './KeyerPaddleVk6phKeyer.js';
 
-export class KeyerIambicInput extends KeyerInputDelegate {
+export class KeyerPaddleInput extends KeyerInputDelegate {
 
   constructor(context, input, keyer) {
     super(context, input);
-    switch (keyer) {
-    case 'nd7pa-a': this.keyer = new KeyerNd7paKeyer(context, input, 'A'); break;
-    case 'nd7pa-b': this.keyer = new KeyerNd7paKeyer(context, input, 'B'); break;
-    case 'vk5ph-a': this.keyer = new KeyerVk6phKeyer(context, input, 'A'); break;
-    case 'vk6ph-b': this.keyer = new KeyerVk6phKeyer(context, input, 'B'); break;
-    case 'vk6ph-s': this.keyer = new KeyerVk6phKeyer(context, input, 'S'); break;
-    default:	    this.keyer = new KeyerNd7paKeyer(context, input, 'B'); break;
-    }
+    this.keyer = keyer;
     this.input.on('change:timing', () => this.changeTiming());
     this.ditOn = false;
     this.dahOn = false;
@@ -38,18 +32,28 @@ export class KeyerIambicInput extends KeyerInputDelegate {
     this.running = false;
     this.lastTick = this.currentTime;
     this.changeTiming();
+    this.keyerList = [ 'none', 'nd7pa-a', 'nd7pa-b', 'vk6ph-a', 'vk6ph-b', 'vk6ph-s' ]
   }
+
+  get keyers() { console.log(`keyers returns ${this.keyerList}`); return this.keyerList; }
+  
+  set keyer(keyer) {
+    switch (keyer) {
+    case 'none':    this._keyer = new KeyerPaddleNoneKeyer(this.context, this.input); break;
+    case 'nd7pa-a': this._keyer = new KeyerPaddleNd7paKeyer(this.context, this.input, 'A'); break;
+    case 'nd7pa-b': this._keyer = new KeyerPaddleNd7paKeyer(this.context, this.input, 'B'); break;
+    case 'vk6ph-a': this._keyer = new KeyerPaddleVk6phKeyer(this.context, this.input, 'A'); break;
+    case 'vk6ph-b': this._keyer = new KeyerPaddleVk6phKeyer(this.context, this.input, 'B'); break;
+    case 'vk6ph-s': this._keyer = new KeyerPaddleVk6phKeyer(this.context, this.input, 'S'); break;
+    default:	    console.log(`invalid keyer ${keyer}`); return;
+    }
+    this._keyerName = keyer;
+  }
+  
+  get keyer() { return this._keyerName; }
   
   // change timing, update the clock timer
   changeTiming() { this.tick = this.perRawDit/16; }
-
-  startClock() {
-    this.lastTick = this.currentTime;
-    this.running = true;
-    this.startTick();
-  }
-
-  stopClock() { this.running = false; }
 
   endTick() {
     this.clock();
@@ -68,7 +72,6 @@ export class KeyerIambicInput extends KeyerInputDelegate {
     if (type === 'right') this.keyset(false, onOff);
   }
 
-  // common handlers
   keyset(key, on) {
     // console.log(`iambic ${key}, ${on}`);
     if (key) {
@@ -84,18 +87,22 @@ export class KeyerIambicInput extends KeyerInputDelegate {
   clock() {
     const time = this.currentTime;
     const tick = time-this.lastTick;
-    this.keyer.clock(this.ditOn, this.dahOn, tick);
+    this._keyer.clock(this.ditOn, this.dahOn, tick);
     this.lastTick = time;
   }
   
-  start() { this.startClock(); }
+  start() {
+    this.lastTick = this.currentTime;
+    this.running = true;
+    this.startTick();
+  }
 
   stop() {
     this.rawDitOn = false;
     this.rawDahOn = false;
     this.clock();
     this.cancel();
-    this.stopClock();
+    this.running = false;
   }
 
 }

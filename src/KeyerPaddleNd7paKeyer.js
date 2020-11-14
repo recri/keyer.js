@@ -54,7 +54,7 @@ const DIT = 1; // making a dit or the space after
 const DAH = 2; // making a dah or the space after
 
 // translate iambic paddle events into keyup/keydown events
-export class KeyerNd7paKeyer extends KeyerInputDelegate {
+export class KeyerPaddleNd7paKeyer extends KeyerInputDelegate {
 
   constructor(context, input, mode) {
     super(context, input);
@@ -79,7 +79,7 @@ export class KeyerNd7paKeyer extends KeyerInputDelegate {
         // the timer has reached the iws boundary
         this.input.emit('element', '\t', this.cursor);
       }
-      this.restartClock();
+      // this.restartClock();
     } else {
       this.input.emit('element', '', this.cursor);
     }
@@ -95,10 +95,9 @@ export class KeyerNd7paKeyer extends KeyerInputDelegate {
     this.timer += len + this.perIes;
 
     // schedule the element and the inter-element space
-    const time = this.cursor;
-    this.keyOnAt(time);
-    this.keyOffAt(time + len);
-    this.keyHoldFor(this.perIes);
+    // this could simply be keyOn,holdFor,keyOff,holdFor
+    // all at the cursor
+    this.keyElement(len, this.perIes);
   }
 
   clock(ditOn, dahOn, ticks) {
