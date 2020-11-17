@@ -173,9 +173,9 @@ export class KeyerPlayer extends KeyerEvent {
   keyStraight(onOff) {
     if (this.cursor > this.currentTime) {
       this.straightMem = onOff;
-      this.when(this.cursor, () => this.rekeyStraight());
     } else if (this.straightKey !== onOff) {
       this.straightKey = onOff;
+      this.straightMem = onOff;
       if (onOff) {
 	this.keyOnAt(this.cursor);
 	this.keyHoldFor(2*this.rise/1000.0); // maybe better this.perDit?

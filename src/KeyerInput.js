@@ -18,8 +18,6 @@
 import { KeyerPlayer } from './KeyerPlayer.js';
 import { KeyerNoneInput } from './KeyerNoneInput.js';
 import { KeyerStraightInput } from './KeyerStraightInput.js';
-import { KeyerIambicInput } from './KeyerIambicInput.js';
-import { KeyerMidiSource } from './KeyerMidiSource.js';
 import { KeyerPaddleInput } from './KeyerPaddleInput.js';
 
 // translate keyup/keydown into keyed oscillator sidetone
@@ -27,13 +25,9 @@ export class KeyerInput extends KeyerPlayer {
   constructor(context) {
     super(context);
 
-    this.midiSource = new KeyerMidiSource(context);
-    this.midiSource.on('midi:event', (type, note) => this.onmidi(type, note));
-
     this.none = new KeyerNoneInput(context, this);
     this.straight = new KeyerStraightInput(context, this);
-    this.paddle1 = new KeyerIambicInput(context, this);
-    this.paddle = new KeyerPaddleInput(context, this, 'nd7pa-a');
+    this.paddle = new KeyerPaddleInput(context, this, 'none');
 
     this.sources = [];
     this._key = 'none';
@@ -91,12 +85,6 @@ export class KeyerInput extends KeyerPlayer {
     else
       this[this._key].keyEvent(type, onOff);
   }
-  
-  // properties of midiSource
-  get midiNames() { return this.midiSource.names; }
-
-  get midiNotes() { return this.midiSource.notes; }
-  
 }
 // Local Variables:
 // mode: JavaScript

@@ -36,26 +36,33 @@ const defaults = {
   envelope: 'hann',
   envelope2: 'rectangular',
   speed: 20,
-  qrq: 'off',
+  qrq: false,
   inputKey: 'paddle',
   paddleKeyer: 'nd7pa-b',
   inputSources: ['keyboard','midi'],
   straightKey: 'ControlLeft',
   straightMidi: 'None',
-  swapped: 'off',
+  swapped: false,
   leftPaddleKey: 'AltRight',
   rightPaddleKey: 'ControlRight',
   leftPaddleMidi: 'None',
   rightPaddleMidi: 'None',
   requestedSampleRate: '48000',
+  scopeTimeScale: '10ms/div',
+  scopeVerticalScale: '200mFS/div',
+  scopeTimeOffset: 0,
+  scopeLength: 1,
   // properties that are local
-  displayTouchKey: 'off',
-  displaySettings: 'on',
-  displayOutput: 'on',
-  displayAdvanced: 'off',
-  displayInputKey: 'off',
-  displayMisc: 'off',
-  displayStatus: 'on',
+  mirrorOutputParams: true, 
+  displayTouchKey: false,
+  displaySettings: true,
+  displayOutput: true,
+  displayAdvanced: false,
+  displayInputKey: false,
+  displayMisc: false,
+  displayStatus: true,
+  displayLicense: false,
+  displayScope: false,
 }
 
 // wpm speed limits
@@ -80,15 +87,15 @@ const playSymbol = html`<span>&#x23f5;</span>`;
 const pauseSymbol = html`<span>&#x23f8;</span>`;
 
 // toggle between on and off
-const toggleOnOff = (onOff) => ({ on: 'off', off: 'on' }[onOff]);
-const isOn = (onOff) => onOff === 'on';
-const isOff = (onOff) => onOff === 'off';
+const isOn = (onOff) => onOff === true;
+const isOff = (onOff) => onOff === false;
 const isOnOff = (onOff) => isOn(onOff) || isOff(onOff);
+const toggleOnOff = (onOff) => isOnOff(onOff) ? ! onOff : console.log(`toggleOnOff '${onOff}' `);
+
+// always force default values, because I don't trust what's stored, yet
+const alwaysForceDefault = false;
 
 // grab a value from localStorage or return the default value
-// had fits trying to use Booleans here, which is why they're all 'on'||'off' instead
-const alwaysForceDefault = true;
-
 const defaultControl = (control, defaultValue, forceDefault) => {
   const value = localStorage[control] === undefined || typeof(localStorage[control]) === 'undefined' || forceDefault || alwaysForceDefault ?
 	defaultValue : JSON.parse(localStorage[control]);
@@ -104,7 +111,7 @@ const templateOptions = (names, selected) => names ? names.map(x => html`<option
 const templateAlternates = (names, selected, handler) => names.map(x => {
   const isSelected = selected.includes(x);
   const checkBox = isSelected ? checkedCheckBox : uncheckedCheckBox;
-  return html`<label><button role="switch" aria-checked=${isSelected} @click=${e => handler(e,x)}>${checkBox}</button>  ${x} </label>`;
+  return html`<button role="switch" aria-checked=${isSelected} @click=${e => handler(e,x)}>${checkBox} ${x}</button>`;
 });
 
 // list of left/right qualified shift keys
@@ -149,7 +156,6 @@ export class KeyerJs extends LitElement {
       pitch: { type: Number },
       gain: { type: Number },
       speed: { type: Number },
-      qrq: { type: String },
       weight: { type: Number },
       ratio: { type: Number },
       compensation: { type: Number },
@@ -159,7 +165,7 @@ export class KeyerJs extends LitElement {
       envelope2: { type: String },
       inputKey: { type: String },
       inputSources: { type: Array },
-      swapped: { type: String },
+      swapped: { type: Boolean },
       paddleKeyer: { type: String },
       straightKey: { type: String },
       leftPaddleKey: { type: String },
@@ -167,25 +173,33 @@ export class KeyerJs extends LitElement {
       straightMidi: { type: String },
       leftPaddleMidi: { type: String },
       rightPaddleMidi: { type: String },
-      requestedSampleRate: { type: String },
+      requestedSampleRate: { type: Number },
+      scopeTimeScale: { type: String },
+      scopeVerticalScale: { type: String },
+      scopeTimeOffset: { type: Number },
+      scopeLength: { type: Number },
       // properties read only from this.keyer.context
       state: { type: String },
       sampleRate: { type: Number },
       currentTime: { type: Number },
       baseLatency: { type: Number },
       // properties that are local
-      displayTouchKey: { type: String },
-      displaySettings: { type: String },
-      displayStatus: { type: String },
-      displayOutput: { type: String },
-      displayAdvanced: { type: String },
-      displayInputKey: { type: String },
-      displayMisc: { type: String },
+      qrq: { type: Boolean },
+      mirrorOutputParams: { type: Boolean },
+      displayTouchKey: { type: Boolean },
+      displaySettings: { type: Boolean },
+      displayStatus: { type: Boolean },
+      displayOutput: { type: Boolean },
+      displayAdvanced: { type: Boolean },
+      displayInputKey: { type: Boolean },
+      displayMisc: { type: Boolean },
+      displayLicense: { type: Boolean },
+      displayScope: { type: Boolean },
       // property computed
       running: { type: Boolean },
       // properties refreshed on notification
-      inputMidiNames: { type: Array },
-      inputMidiNotes: { type: Array },
+      midiNames: { type: Array },
+      midiNotes: { type: Array },
       paddleKeyers: { type: Array },
       // display widget
       content: { type: Object },
@@ -194,105 +208,120 @@ export class KeyerJs extends LitElement {
     };
   }
 
-  // setter with updateRequest
-  // all of these controls are delegated to this.keyer
-  updateControl(control, newv) {
-    // console.log(`updateControl ${control} ${newv}`);
-    const oldv = this.keyer[control];
-    this.keyer[control] = newv;
-    saveControl(control, newv);
-    this.requestUpdate(control, oldv);
+  // mirror output params to input params or not
+  mirrorParam(control, v) {
+    this.keyer.output[control] = v;
+    if (this.mirrorOutputParams) this.keyer.input[control] = v;
   }
-
-  // set and get properties, delegate to keyer
-  set pitch(v) { this.updateControl('pitch', v); }
-
-  get pitch() { return this.keyer.pitch; }
-
-  set gain(v) { this.updateControl('gain', v); }
   
-  get gain() { return Math.round(this.keyer.gain); }
+  // set and get properties delegated to keyer.output
+  // or to keyer.output and keyer.input
+  set pitch(v) { this.mirrorParam('pitch', v); }
 
-  set speed(v) { this.updateControl('speed', v); }
+  get pitch() { return this.keyer.output.pitch; }
 
-  get speed() { return this.keyer.speed; }
-
-  set qrq(v) { this.updateControl('qrq', v); }
-
-  get qrq() { return this.keyer.qrq; }
+  set gain(v) { this.mirrorParam('gain', v); }
   
-  set weight(v) { this.updateControl('weight', v); }
+  get gain() { return Math.round(this.keyer.output.gain); }
 
-  get weight() { return this.keyer.weight; }
+  set speed(v) { this.mirrorParam('speed', v); }
 
-  set ratio(v) { this.updateControl('ratio', v); }
+  get speed() { return this.keyer.output.speed; }
 
-  get ratio() { return this.keyer.ratio; }
+  set weight(v) { this.mirrorParam('weight', v); }
 
-  set compensation(v) { this.updateControl('compensation', v); }
+  get weight() { return this.keyer.output.weight; }
+
+  set ratio(v) { this.mirrorParam('ratio', v); }
+
+  get ratio() { return this.keyer.output.ratio; }
+
+  set compensation(v) { this.mirrorParam('compensation', v); }
 
   get compensation() { return this.keyer.compensation; }
 
-  set rise(v) { this.updateControl('rise', v); }
+  set rise(v) { this.mirrorParam('rise', v); }
 
-  get rise() { return this.keyer.rise; }
+  get rise() { return this.keyer.output.rise; }
 
-  set fall(v) {  this.updateControl('fall', v); }
+  set fall(v) {  this.mirrorParam('fall', v); }
 
-  get fall() { return this.keyer.fall; }
+  get fall() { return this.keyer.output.fall; }
 
-  set envelope(v) { this.updateControl('envelope', v); }
+  set envelope(v) { this.mirrorParam('envelope', v); }
 
-  get envelope() { return this.keyer.envelope; }
+  get envelope() { return this.keyer.output.envelope; }
 
-  set envelope2(v) { this.updateControl('envelope2', v); }
+  set envelope2(v) { this.mirrorParam('envelope2', v); }
 
-  get envelope2() { return this.keyer.envelope2; }
+  get envelope2() { return this.keyer.output.envelope2; }
 
   static get envelopes() { return Keyer.envelopes; }
   
-  set swapped(v) {  this.updateControl('swapped', v); }
+  set swapped(v) {  this.keyer.input.swapped = v; }
 
-  get swapped() { return this.keyer.swapped; }
+  get swapped() { return this.keyer.input.swapped; }
 
-  set inputKey(v) { this.updateControl('inputKey', v); }
+  set inputKey(v) { this.keyer.input.key = v; }
 
-  get inputKey() { return this.keyer.inputKey; }
+  get inputKey() { return this.keyer.input.key; }
 
-  get paddleKeyers() { return this.keyer.paddleKeyers; }
+  get paddleKeyers() { return this.keyer.input.keyers; }
 
-  set paddleKeyer(v) { this.updateControl('paddleKeyer', v); }
+  set paddleKeyer(v) { this.keyer.input.keyer = v; }
 
-  get paddleKeyer() { return this.keyer.paddleKeyer; }
+  get paddleKeyer() { return this.keyer.input.keyer; }
 
-  set straightKey(v) { this.updateControl('straightKey', v); }
+  set straightKey(v) { this.keyer.input.straightKey = v; }
 
-  get straightKey() { return this.keyer.straightKey; }
+  get straightKey() { return this.keyer.input.straightKey; }
 
-  set leftPaddleKey(v) { this.updateControl('leftPaddleKey', v); }
+  set leftPaddleKey(v) { this.keyer.input.leftPaddleKey = v; }
 
-  get leftPaddleKey() { return this.keyer.leftPaddleKey; }
+  get leftPaddleKey() { return this.keyer.input.leftPaddleKey; }
 
-  set rightPaddleKey(v) { this.updateControl('rightPaddleKey', v); }
+  set rightPaddleKey(v) { this.keyer.input.rightPaddleKey = v; }
 
-  get rightPaddleKey() { return this.keyer.rightPaddleKey; }
+  get rightPaddleKey() { return this.keyer.input.rightPaddleKey; }
 
-  set inputSources(v) { this.updateControl('inputSources', v); }
+  set inputSources(v) { this.keyer.inputSources = v; }
 
   get inputSources() { return this.keyer.inputSources; }
 
-  set straightMidi(v) { this.updateControl('straightMidi', v); }
+  set straightMidi(v) { this.keyer.straightMidi = v; }
 
   get straightMidi() { return this.keyer.straightMidi; }
 
-  set leftPaddleMidi(v) { this.updateControl('leftPaddleMidi', v); }
+  set leftPaddleMidi(v) { this.keyer.leftPaddleMidi = v; }
 
   get leftPaddleMidi() { return this.keyer.leftPaddleMidi; }
 
-  set rightPaddleMidi(v) { /* console.log(`KeyerJs set rightPaddleMidi ${v}`); */ this.updateControl('rightPaddleMidi', v); }
+  set rightPaddleMidi(v) { this.keyer.rightPaddleMidi = v; }
 
   get rightPaddleMidi() { return this.keyer.rightPaddleMidi; }
 
+  set scopeTimeScale(v) { this.keyer.scope.timeScale = v; }
+
+  get scopeTimeScale() { return this.keyer.scope.timeScale; }
+
+  get scopeTimeScales() { return this.keyer.scope.timeScales; }
+  
+  set scopeVerticalScale(v) { this.keyer.scope.verticalScale = v; }
+
+  get scopeVerticalScale() { return this.keyer.scope.verticalScale; }
+
+  get scopeVerticalScales() { return this.keyer.scope.verticalScales; }
+  
+  set scopeTimeOffset(v) { this.keyer.scope.timeOffset = v; }
+
+  get scopeTimeOffset() { return this.keyer.scope.timeOffset; }
+
+  set scopeLength(v) { this.keyer.scope.length = v; }
+
+  get scopeLength() { return this.keyer.scope.length; }
+
+  get scopeLengths() { return this.keyer.scope.lengths; }
+  
   // get properties delegated to this.keyer.context
   get currentTime() { return this.keyer.currentTime; }
 
@@ -343,8 +372,8 @@ export class KeyerJs extends LitElement {
     this.keyer.output.on('sent', ltr => this.onsent(ltr));
     this.keyer.output.on('unsent', ltr => this.onunsent(ltr));
     this.keyer.output.on('skipped', ltr => this.onskipped(ltr));
-    this.keyer.input.midiSource.on('midi:names', () => this.onmidinames());
-    this.keyer.input.midiSource.on('midi:notes', () => this.onmidinotes());
+    this.keyer.midiSource.on('midi:names', () => this.onmidinames());
+    this.keyer.midiSource.on('midi:notes', () => this.onmidinotes());
     
     document.addEventListener('keydown', (e) => this.keyer.input.keyboardKey(e, true));
     document.addEventListener('keyup', (e) => this.keyer.input.keyboardKey(e, false));
@@ -359,7 +388,8 @@ export class KeyerJs extends LitElement {
     // paddleKeyers.forEach(x => isPaddleKeyer(x) || console.log(`paddleKeyer ${x} failed isPaddleKeyer`));
     inputSources.forEach(x => isInputSource(x) || console.log(`inputSource ${x} failed isInputSource`));
     sampleRates.forEach(x => isSampleRate(x) || console.log(`sampleRate ${x} failed isSampleRate`));
-    ['qrq','swapped','displayTouchKey', 'displaySettings', 'displayOutput', 'displayAdvanced', 'displayInputKey', 'displayStatus'].
+    ['qrq','swapped','displayTouchKey', 'displaySettings', 'displayOutput', 'displayAdvanced', 'displayInputKey', 'displayStatus',
+     'displayLicense', 'displayScope'].
       forEach(x => isOnOff(this[x]) || console.log(`property '${x}' failed isOnOff: ${this[x]}`));
     ['straightKey', 'leftPaddleKey', 'rightPaddleKey'].
       forEach(x => isShiftKey(this[x]) || console.log(`property '${x}' failed isShiftKey: ${this[x]}`));
@@ -372,9 +402,9 @@ export class KeyerJs extends LitElement {
   }
 	       
   // midi information events
-  onmidinames() { this.inputMidiNames = this.keyer.inputMidiNames; }
+  onmidinames() { this.midiNames = this.keyer.midiSource.names; }
 
-  onmidinotes() { this.inputMidiNotes = this.keyer.inputMidiNotes; }
+  onmidinotes() { this.midiNotes = this.keyer.midiSource.notes; }
   
   //
   // teletype window
@@ -393,8 +423,12 @@ export class KeyerJs extends LitElement {
 
   updated(/* propertiesChanged */) { 
     if (this.keyboardFocused) {
+      // this is too blunt, scrolls entire app inappropriately
       const cursor = this.shadowRoot.querySelector('.blinker');
       if (cursor) cursor.scrollIntoView(false);
+    }
+    if (this.keyer && this.keyer.scope) {
+      this.keyer.scope.enable(isOn(this.displayScope), this.shadowRoot.querySelector("canvas"));
     }
   }
   
@@ -438,16 +472,16 @@ export class KeyerJs extends LitElement {
       // log.textContent = `keydown code ${e.code} key ${e.key} CAMS ${e.ctrlKey} ${e.altKey} ${e.metaKey} ${e.shiftKey}`;
     } else if (e.key.length === 1 && /^[A-Za-z0-9.,?/*+!@$&()-=+"':; ]$/.test(e.key)) {
       this.pending.push(e.key);
-      this.keyer.outputSend(e.key);
+      this.keyer.output.send(e.key);
       this.updateContent();
       if (e.key === ' ') e.preventDefault();
     } else if (e.key === 'Backspace') {
-      this.keyer.outputUnsend(e.data);
+      this.keyer.output.unsend(e.data);
       // this.pending.pop(); the pop happens when the unsent confirmation comes back
       this.updateContent();
     } else if (e.key === 'Enter') {
       this.pending.push('\n');
-      this.keyer.outputSend('\n');
+      this.keyer.output.send('\n');
       this.updateContent();
     } else if (e.key === 'Escape') {
       this.cancel();
@@ -461,7 +495,7 @@ export class KeyerJs extends LitElement {
   }
 
   cancel() {
-    this.keyer.outputCancel();
+    this.keyer.output.cancel();
     this.updateContent();
   }
 
@@ -502,8 +536,10 @@ export class KeyerJs extends LitElement {
   }
 
   toggleControl(control) { 
+    const oldv = this[control];
     this[control] = toggleOnOff(this[control]);
     saveControl(control, this[control]);
+    this.requestUpdate(control, oldv);
   }
 
   toggleQrq() {
@@ -520,8 +556,10 @@ export class KeyerJs extends LitElement {
   
   selectControl(control, e) { 
     // console.log(`selectControl('${control}', ${e.target.value})`);
+    const oldv = this[control];
     this[control] = e.target.value;
     saveControl(control, e.target.value);
+    this.requestUpdate(control, oldv);
   }
   
   selectSource(e, b) {
@@ -575,6 +613,14 @@ export class KeyerJs extends LitElement {
     this.start();
   }
   
+  selectScopeTimeScale(e) { this.selectControl('scopeTimeScale', e); }
+
+  selectScopeVerticalScale(e) { this.selectControl('scopeVerticalScale', e); }
+
+  selectScopeTimeOffset(e) { this.selectControl('scopeTimeOffset', e); }
+
+  selectScopeLength(e) { this.selectControl('scopeLength', e); }
+    
   // display panel selectors
   toggleTouchKey() { this.displayTouchKey = toggleOnOff(this.displayTouchKey); }
 
@@ -589,6 +635,23 @@ export class KeyerJs extends LitElement {
   toggleMisc() {  this.displayMisc = toggleOnOff(this.displayMisc); }
   
   toggleStatus() { this.displayStatus = toggleOnOff(this.displayStatus); }
+
+  toggleLicense() { this.displayLicense = toggleOnOff(this.displayLicense); }
+
+  toggleScope() { 
+    // changing this variable will trigger a render
+    // after which the displayScope value will be true
+    // we disable the scope here, and enable it in updated()
+    this.displayScope = toggleOnOff(this.displayScope);
+    if (isOff(this.displayScope)) this.keyer.scope.enable(false, null);
+  }
+  
+  scopeResize() {
+    if (isOn(this.displayScope)) {
+      this.keyer.scope.enable(false, null, null);
+      this.keyer.scope.enable(true, this.shadowRoot.querySelector("canvas"));
+    }
+  }
 
   resetDefaultValues() { this.setDefaultValues(true); }
   
@@ -628,15 +691,12 @@ export class KeyerJs extends LitElement {
         text-align: left;
 	white-space: pre-wrap;
         margin-top: 16px;
-        width: 90%;
-        margin-left: 5%;
-        margin-right: 5%;
+	margin: auto;
+	width: 90%;
         height: 300px;
 	overflow-wrap: break-word;
         overflow-y: auto;
-        border: inset;
-        border-color: #9e9e9e;
-        border-width: 1px;
+        border: 1px solid #9e9e9e;
         color: #000000;
       }
       .sent {
@@ -650,36 +710,11 @@ export class KeyerJs extends LitElement {
         text-decoration: line-through;
       }
 
-      .hidden {
-        display: none;
-      }
-
       .blinker {
 	font-weight: 100;
 	color: #2E3D48;
 	-webkit-animation: 1s blink step-end infinite;
-	-moz-animation: 1s blink step-end infinite;
-	-ms-animation: 1s blink step-end infinite;
-	-o-animation: 1s blink step-end infinite;
 	animation: 1s blink step-end infinite;
-      }
-
-      @keyframes "blink" {
-	from, to {
-	  color: transparent;
-	}
-	50% {
-	  color: black;
-	}
-      }
-
-      @-moz-keyframes blink {
-	from, to {
-	  color: transparent;
-	}
-	50% {
-	  color: black;
-	}
       }
 
       @-webkit-keyframes "blink" {
@@ -691,22 +726,28 @@ export class KeyerJs extends LitElement {
         }
       }
 
-      @-ms-keyframes "blink" {
-        from, to {
-          color: transparent;
-        }
-        50% {
-          color: black;
-        }
+      @keyframes "blink" {
+	from, to {
+	  color: transparent;
+	}
+	50% {
+	  color: black;
+	}
       }
 
-      @-o-keyframes "blink" {
-        from, to {
-          color: transparent;
-        }
-        50% {
-          color: black;
-        }
+      div.scope {
+	border: 1px;
+      }
+
+      div.scope canvas {
+	width: 90%;
+	height: 400px;
+	border: 1px solid black;
+	background: #fff;
+	background-size: 50px 50px;
+	background-image:
+	    linear-gradient(to right, grey 1px, transparent 1px),
+	    linear-gradient(to bottom, grey 1px, transparent 1px);
       }
 
       .app-footer {
@@ -829,7 +870,7 @@ export class KeyerJs extends LitElement {
 	<div>
 	  <label>Swap paddles: 
             <button role="switch" aria-checked=${isOn(this.swapped)} @click=${this.toggleSwapped}>
-	      <span>${this.swapped}</span>
+	      <span>${html`${this.swapped}`}</span>
 	    </button>
 	  </label>
 	</div>
@@ -874,7 +915,7 @@ export class KeyerJs extends LitElement {
 	<div>
 	  <label>Straight midi note:
             <select .value=${this.straightMidi} @change=${this.selectStraightMidi}>
-	      ${templateOptions(this.inputMidiNotes, this.straightMidi)}
+	      ${templateOptions(this.midiNotes, this.straightMidi)}
 	    </select>
 	  </label>
         </div>`,
@@ -883,14 +924,14 @@ export class KeyerJs extends LitElement {
 	<div>
 	  <label>Left paddle midi note:
             <select .value=${this.leftPaddleMidi} @change=${this.selectLeftPaddleMidi}>
-	      ${templateOptions(this.inputMidiNotes, this.leftPaddleMidi)}
+	      ${templateOptions(this.midiNotes, this.leftPaddleMidi)}
 	    </select>
 	  </label>
 	</div>
 	<div>
 	  <label>Right paddle midi note:
             <select .value=${this.rightPaddleMidi} @change=${this.selectRightPaddleMidi}>
-	      ${templateOptions(this.inputMidiNotes, this.rightPaddleMidi)}
+	      ${templateOptions(this.midiNotes, this.rightPaddleMidi)}
 	    </select>
 	  </label>
 	</div>
@@ -918,26 +959,49 @@ export class KeyerJs extends LitElement {
     return isOff(this.displaySettings) ? html`` : html`
       <div>
 	<!-- keyer output settings -->
-	<h3 @click=${this.toggleOutput}>
+	<h3 tabindex="0" @click=${this.toggleOutput}>
 	  ${isOff(this.displayOutput) ? hiddenMenuIndicator : shownMenuIndicator} Keyer Output
 	</h3>
 	${this.outputRender()}
 	<!-- advanced keyboard output settings -->
-	<h3 @click=${this.toggleAdvanced}>
+	<h3 tabindex="0" @click=${this.toggleAdvanced}>
 	  ${isOff(this.displayAdvanced) ? hiddenMenuIndicator : shownMenuIndicator} More Output
 	</h3>
 	${this.advancedRender()}
 	<!-- input key selection --->
-	<h3 @click=${this.toggleInputKey}>
+	<h3 tabindex="0" @click=${this.toggleInputKey}>
 	  ${isOff(this.displayInputKey) ? hiddenMenuIndicator : shownMenuIndicator} Key Input
 	</h3>
 	${this.inputKeyRender()}
 	<!-- audio engine parameters --->
-	<h3 @click=${this.toggleMisc}>
+	<h3 tabindex="0" @click=${this.toggleMisc}>
 	  ${isOff(this.displayMisc) ? hiddenMenuIndicator : shownMenuIndicator} Misc
 	</h3>
 	${this.miscRender()}
       </div>
+    `;
+  }
+
+  scopeRender() {
+    return isOff(this.displayScope) ?  html`` : html`
+	<div>
+	  <div class="scope"><canvas @resize=${this.scopeResize}></canvas></div>
+	  <label>Time:
+            <select .value=${this.scopeTimeScale} @change=${this.selectScopeTimeScale}>
+	      ${templateOptions(this.scopeTimeScales, this.scopeTimeScale)}
+	    </select>
+	  </label>
+	  <label>Vertical:
+            <select .value=${this.scopeVerticalScale} @change=${this.selectScopeVerticalScale}>
+	      ${templateOptions(this.scopeVerticalScales, this.scopeVerticalScale)}
+	    </select>
+	  </label>
+	  <button @click=${() => this.keyer.scope.capture()}>Capture</button>
+	  <div>
+	    <input type="range" name="scopetimeoffset" min="0" max="100" step="0.1" .value=${this.scopeTimeOffset} @input=${this.selectScopeTimeOffset}>
+	    <label for="scopetimeoffset">Time offset ${this.scopeTimeOffset} (%)</label>
+	  </div>
+	</div>
     `;
   }
 
@@ -947,6 +1011,31 @@ export class KeyerJs extends LitElement {
 	Sample rate: ${this.sampleRate}<br/>
 	Current time: ${this.currentTime.toFixed(3)}<br/>
 	Base latency: ${this.baseLatency.toFixed(3)}<br/>
+      </div>
+    `;
+  }
+
+  licenseRender() {
+    return isOff(this.displayLicense) ?  html`` : html`
+      <div>
+      <p>
+	keyer.js - a progressive web app for morse code
+      </p><p>
+	Copyright (c) 2020 Roger E Critchlow Jr, Charlestown, MA, USA
+      </p><p>
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+      </p><p>
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+      </p><p>
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <a href="https://www.gnu.org/licenses/">gnu.org/licenses</a>.
+      </p>
       </div>
     `;
   }
@@ -963,27 +1052,27 @@ export class KeyerJs extends LitElement {
 	  <button @click=${this.cancel}>
 	    <span>Cancel</span>
 	  </button>
-	  <div class="keyboard" tabindex="0" @keydown=${this.ttyKeydown}
+	</div>
+        <div class="keyboard" tabindex="0" @keydown=${this.ttyKeydown}
 		 @focus=${this.onfocus} @blur=${this.onblur}>${this.content}</div>
-	</div>
-	<div>
-	  ${this.touchKeyRender()}
-	</div>
-	<h2 @click=${this.toggleSettings}>
-	<div>
-	  ${isOff(this.displaySettings) ? hiddenMenuIndicator : shownMenuIndicator} Settings
-	</div>
-	</h2>
-	<div>
-	  <!-- settings block -->
-	  ${this.settingsRender()}
-	</div>
-        <h2 @click=${this.toggleStatus}>
-	  ${isOff(this.displayStatus) ? hiddenMenuIndicator : shownMenuIndicator} Status
-	</h2>
-	<div>
-	  ${this.statusRender()}
-	</div>`;
+
+	<div>${this.touchKeyRender()}</div>
+
+	<h2 tabindex="0" @click=${this.toggleSettings}>
+	  ${isOff(this.displaySettings) ? hiddenMenuIndicator : shownMenuIndicator} Settings</h2>
+	<div>${this.settingsRender()}</div>
+
+        <h2 tabindex="0" @click=${this.toggleScope}>
+	  ${isOff(this.displayScope) ? hiddenMenuIndicator : shownMenuIndicator} Scope</h2>
+	<div>${this.scopeRender()}</div>
+
+        <h2 tabindex="0" @click=${this.toggleStatus}>
+	  ${isOff(this.displayStatus) ? hiddenMenuIndicator : shownMenuIndicator} Status</h2>
+	<div>${this.statusRender()}</div>
+
+        <h2 tabindex="0" @click=${this.toggleLicense}>
+	  ${isOff(this.displayLicense) ? hiddenMenuIndicator : shownMenuIndicator} License</h2>
+	<div>${this.licenseRender()}</div>`;
   }
   
   startupRender() {
@@ -1006,23 +1095,6 @@ export class KeyerJs extends LitElement {
       </main>
 
       <p class="app-footer">
-	keyer.js - a progressive web app for morse code
-      </p><p class="app-footer">
-	Copyright (c) 2020 Roger E Critchlow Jr, Charlestown, MA, USA
-      </p><p class="app-footer">
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
-      </p><p class="app-footer">
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-      </p><p class="app-footer">
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <a href="https://www.gnu.org/licenses/">gnu.org/licenses</a>.
-      </p><p class="app-footer">
         🚽 Made with love by
         <a target="_blank" rel="noopener noreferrer"
            href="https://github.com/open-wc" >open-wc</a>.

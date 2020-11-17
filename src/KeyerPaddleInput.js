@@ -35,7 +35,7 @@ export class KeyerPaddleInput extends KeyerInputDelegate {
     this.keyerList = [ 'none', 'nd7pa-a', 'nd7pa-b', 'vk6ph-a', 'vk6ph-b', 'vk6ph-s' ]
   }
 
-  get keyers() { console.log(`keyers returns ${this.keyerList}`); return this.keyerList; }
+  get keyers() { return this.keyerList; }
   
   set keyer(keyer) {
     switch (keyer) {
