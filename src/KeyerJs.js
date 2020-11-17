@@ -25,7 +25,20 @@ import { Keyer } from './Keyer.js';
 
 // default values for properties
 const defaults = {
-  // properties that delegate to this.keyer
+  // properties that are local to this
+  mirrorOutputParams: true, 
+  requestedSampleRate: '48000',
+  qrq: false,
+  displayTouchKey: false,
+  displaySettings: true,
+  displayOutput: true,
+  displayAdvanced: false,
+  displayInputKey: false,
+  displayMisc: false,
+  displayStatus: true,
+  displayLicense: false,
+  displayScope: false,
+  // properties that delegate to this.keyer.output and this.keyer.input
   pitch: 700,
   gain: -26,
   weight: 50,
@@ -36,7 +49,7 @@ const defaults = {
   envelope: 'hann',
   envelope2: 'rectangular',
   speed: 20,
-  qrq: false,
+  // properties that delegate to this.keyer.input
   inputKey: 'paddle',
   paddleKeyer: 'nd7pa-b',
   inputSources: ['keyboard','midi'],
@@ -47,22 +60,11 @@ const defaults = {
   rightPaddleKey: 'ControlRight',
   leftPaddleMidi: 'None',
   rightPaddleMidi: 'None',
-  requestedSampleRate: '48000',
+  // properties that delegate to this.keyer.scope
   scopeTimeScale: '10ms/div',
   scopeVerticalScale: '200mFS/div',
   scopeTimeOffset: 0,
   scopeLength: 1,
-  // properties that are local
-  mirrorOutputParams: true, 
-  displayTouchKey: false,
-  displaySettings: true,
-  displayOutput: true,
-  displayAdvanced: false,
-  displayInputKey: false,
-  displayMisc: false,
-  displayStatus: true,
-  displayLicense: false,
-  displayScope: false,
 }
 
 // wpm speed limits
@@ -211,7 +213,11 @@ export class KeyerJs extends LitElement {
   // mirror output params to input params or not
   mirrorParam(control, v) {
     this.keyer.output[control] = v;
-    if (this.mirrorOutputParams) this.keyer.input[control] = v;
+    // console.log(`mirror ${control} ${v}`);
+    if (this.mirrorOutputParams) {
+      // console.log(`mirror ${control} ${v} to input`);
+      this.keyer.input[control] = v;
+    }
   }
   
   // set and get properties delegated to keyer.output
@@ -292,13 +298,13 @@ export class KeyerJs extends LitElement {
 
   get straightMidi() { return this.keyer.straightMidi; }
 
-  set leftPaddleMidi(v) { this.keyer.leftPaddleMidi = v; }
+  set leftPaddleMidi(v) { this.keyer.input.leftPaddleMidi = v; }
 
-  get leftPaddleMidi() { return this.keyer.leftPaddleMidi; }
+  get leftPaddleMidi() { return this.keyer.input.leftPaddleMidi; }
 
-  set rightPaddleMidi(v) { this.keyer.rightPaddleMidi = v; }
+  set rightPaddleMidi(v) { this.keyer.input.rightPaddleMidi = v; }
 
-  get rightPaddleMidi() { return this.keyer.rightPaddleMidi; }
+  get rightPaddleMidi() { return this.keyer.input.rightPaddleMidi; }
 
   set scopeTimeScale(v) { this.keyer.scope.timeScale = v; }
 

@@ -50,6 +50,7 @@ export class KeyerInput extends KeyerPlayer {
       console.log(`unexpected midi event ${type} ${note}`);
       return;
     }
+    // console.log(`onmidi ${type} ${note} ${onOff}`);
     if (note === this.straightMidi) this.keyEvent('straight', onOff);
     if (note === this.leftPaddleMidi) this.keyEvent('left', onOff);
     if (note === this.rightPaddleMidi) this.keyEvent('right', onOff);
@@ -80,6 +81,7 @@ export class KeyerInput extends KeyerPlayer {
   onfocus() { this[this._key].onfocus(); }
 
   keyEvent(type, onOff) { 
+    // console.log(`keyEvent(${type}, ${onOff} when swapped ${this.swapped}`);
     if (this.swapped) 
       this[this._key].keyEvent({ left: 'right', right: 'left', straight: 'straight' }[type], onOff)
     else
