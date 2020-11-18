@@ -1,4 +1,16 @@
 * To do list for keyer.js
+** [ ] run keyer logic in the sample stream
+   straightKey changes the value of a constant node between 0 and 1
+   left and right paddle keys change the values of constant nodes between 0 and 1
+   ASK worklet node reads a constant stream and ramps from 0 to 1 or 1 to 0 on transitions
+   Keyer worklet node reads dit and dah streams of 0 and 1 and generate key streams of 0 and 1
+   The key states are translated into streams of samples at the earliest opportunity.
+** [ ] esc key not canceling output, button?
+** [x] no selector for midi device
+** [ ] no straight key choice for midi
+** [ ] no envelope choice.
+** [ ] keyboard output grab scrolls entire screen .
+** [ ] ramp computation only used one envelope.   
 ** [x] must special case requestedSampleRate in start
 ** [x] use 1µs/div text labels for timestep and vertstep
 ** [ ] use < > step buttons for timestep and vertstep   

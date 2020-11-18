@@ -350,14 +350,19 @@ export class KeyerJs extends LitElement {
     Object.keys(defaults).forEach(control => this.setDefaultValue(control, forceDefault));
   }
 
+
   start() {
     // start the engine
 
     // retrieve the preferred sample rate
     this.setDefaultValue('requestedSampleRate', false);
-
     // console.log(`start this.requestedSampleRate === ${this.requestedSampleRate}`);
-    this.keyer = new Keyer(new AudioContext({ sampleRate: parseInt(this.requestedSampleRate, 10) }));
+    const context = new AudioContext({ sampleRate: parseInt(this.requestedSampleRate, 10) });
+    context.audioWorklet.addModule('./KeyerASKProcessor.js').then(() => this.start2(context));
+  }
+
+  start2(context) {
+    this.keyer = new Keyer(context);
 
     // this was for debugging the need to twiddle the gain to get iambic or straight keying to work
     // this.keyer.input.on('change:gain', g => console.log(`straight change:gain ${g}`), window);

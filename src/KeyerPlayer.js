@@ -17,7 +17,6 @@
 // 
 
 import { KeyerEvent } from './KeyerEvent.js';
-import { KeyerRamp } from './KeyerRamp.js';
 
 const gainLinear = (decibel) => 10 ** (decibel / 20);
 
@@ -38,6 +37,7 @@ const gainDecibel = (linear) => Math.log10(linear) * 20;
 // on the previous event, by checking that time >= cursor.
 
 export class KeyerPlayer extends KeyerEvent {
+
   constructor(context) {
     super(context);
 
@@ -47,17 +47,19 @@ export class KeyerPlayer extends KeyerEvent {
     // initialize parameters
     this.keySounds = false;
     this.keySlews = false;
-    this._envelope = 'hann';
-    this._envelope2 = 'rectangular';
-    this._rise = 4;
-    this._fall = 4;
-    this.updateRise();
-    this.updateFall();
     this.weight = 50;
     this.ratio = 50;
     this.compensation = 0;
     this.wpm = 20;
 
+    // initialize the key
+    this.key = this.context.createConstantSource();
+    this.key.offset.value = 0;
+
+    // initialize the audio shift keyer - async
+    // processor code is loaded in KeyerJs.js: start().
+    this.ask = this.createAudioShiftKeyer(context, 'keyer-ask-processor');
+    
     // initialize the oscillator
     this.oscillator = this.context.createOscillator();
     this.oscillator.type = 'sine';
@@ -71,7 +73,9 @@ export class KeyerPlayer extends KeyerEvent {
     this.volume.gain.value = 0;
 
     // connect
+    this.key.connect(this.ask);
     this.oscillator.connect(this.ramp);
+    this.ask.connect(this.ramp.gain);
     this.ramp.connect(this.volume);
 
     // start
@@ -90,23 +94,23 @@ export class KeyerPlayer extends KeyerEvent {
 
   get gain() { return gainDecibel(this.volume.gain.value); }
 
-  set rise(ms) { this._rise = ms; this.updateRise(); }
+  set rise(ms) { this.ask.rise = ms; }
 
-  get rise() { return this._rise; }
+  get rise() { return this.ask.rise; }
 
-  set fall(ms) { this._fall = ms; this.updateFall(); }
+  set fall(ms) { this.ask.fall = ms; }
 
-  get fall() { return this._fall; }
+  get fall() { return this.ask.fall; }
 
-  set envelope(env) { this._envelope = env; this.updateRise(); this.updateFall(); }
+  set envelope(env) { this.ask.envelope = env; }
 
-  get envelope() { return this._envelope; }
+  get envelope() { return this.ask.envelope; }
 
-  set envelope2(env) { this._envelope2 = env; this.updateRise(); this.updateFall(); }
+  set envelope2(env) { this.ask.envelope2 = env; }
 
-  get envelope2() { return this._envelope2; }
+  get envelope2() { return this.ask.envelope2; }
 
-  static get envelopes() { return KeyerRamp.ramps; }
+  get envelopes() { return this.ask.ramps; }
 
   set wpm(v) { this._wpm = v; this.updateTiming(); }
 
@@ -131,22 +135,6 @@ export class KeyerPlayer extends KeyerEvent {
     return this._cursor;
   }
 
-  updateRise() { 
-    const n = Math.round((this.rise / 1000.0) * this.sampleRate);
-    this._riseCurve = new Float32Array(n);
-    for (let i = 0; i < n; i += 1)
-      this._riseCurve[i] = KeyerRamp.rise(this.envelope, n-1, i);
-    // console.log(`updateRise ${this.rise} rise time ${this.sampleRate} samples/sec makes ${n} samples`);
-  }
-
-  updateFall() { 
-    const n = Math.round((this.fall / 1000.0) * this.sampleRate);
-    this._fallCurve = new Float32Array(n);
-    for (let i = 0; i < n; i += 1)
-      this._fallCurve[i] = KeyerRamp.fall(this.envelope, n-1, i);
-    // console.log(`updateFall ${this.rise} rise time ${this.sampleRate} samples/sec makes ${n} samples`);
-  }
-
   updateTiming() {
     const dit = 60.0 / (this.wpm * 50); // seconds/dit
     const microsPerDit = dit * 1e6;
@@ -169,27 +157,9 @@ export class KeyerPlayer extends KeyerEvent {
 
   fallEnded(e) { this.rampEnded(e, 'fall'); }
 
-  // straight key something on or off
-  keyStraight(onOff) {
-    if (this.cursor > this.currentTime) {
-      this.straightMem = onOff;
-    } else if (this.straightKey !== onOff) {
-      this.straightKey = onOff;
-      this.straightMem = onOff;
-      if (onOff) {
-	this.keyOnAt(this.cursor);
-	this.keyHoldFor(2*this.rise/1000.0); // maybe better this.perDit?
-      } else {
-	this.keyOffAt(this.cursor);
-	this.keyHoldFor(2*this.fall/1000.0); // maybe better this.Ies?
-      }
-      this.when(this.cursor, () => this.rekeyStraight());
-    }
-  }
+  // straight key something on or off, right now
+  keyStraight(onOff) { this.key.offset.value = onOff ? 1 : 0; }
 
-  // revisit the straight key state
-  rekeyStraight() { this.keyStraight(this.straightMem); }
-  
   // play a dit or dah at the cursor
   // and the trailing inter-element space
   // return the cursor value at the end of the space
@@ -204,14 +174,7 @@ export class KeyerPlayer extends KeyerEvent {
   keyOnAt(time) {
     if (time < this.cursor) return false;
     const t = Math.max(time, this.currentTime);
-    // console.log(`keyOnAt now+${t-this.currentTime} seconds ${this._riseCurve.length} sample ramp`);
-    // console.log(`keyOnAt now+${(t-this.currentTime)*this.sampleRate} samples`);
-    // console.log(this._riseCurve);
-    const dtime = this._riseCurve.length / this.sampleRate;
-    this.keySounds = true;
-    this.keySlews = true;
-    this.ramp.gain.setValueCurveAtTime(this._riseCurve, t, dtime);
-    this.when(t+dtime, e => this.riseEnded(e))
+    this.key.offset.setValueAtTime(t, 1);
     this.cursor = t;
     this.emit('transition', 1, t);
     return true;
@@ -221,14 +184,7 @@ export class KeyerPlayer extends KeyerEvent {
   keyOffAt(time) {
     if (time < this.cursor) return false;
     const t = Math.max(time, this.currentTime);
-    // console.log(`keyOffAt now+${t-this.currentTime} seconds`);
-    // console.log(`keyOffAt now+${(t-this.currentTime)*this.sampleRate} samples`);
-    const dtime = this._fallCurve.length / this.sampleRate;
-    this.keySounds = false;
-    this.keySlews = true;
-    this.ramp.gain.setValueCurveAtTime(this._fallCurve, t, dtime);
-    this.when(t+dtime, e => this.fallEnded(e))
-    this.cursor = t;
+    this.key.offset.setValueAtTime(t, 0);
     this.emit('transition', 0, t);
     return true
   }
@@ -246,9 +202,7 @@ export class KeyerPlayer extends KeyerEvent {
   // this will cause a click if we were sounding
   cancel() {
     // console.log("cancel at ", this.currentTime);
-    this.ramp.gain.cancelScheduledValues((this.cursor = this.currentTime));
-    // this.ramp.gain.setValueCurveAtTime(this._fallCurve, this.currentTime, this.fall / 1000.0);
-    this.ramp.gain.value = 0;
+    this.key.offset.value = 0;
   }
 }
 // Local Variables:
