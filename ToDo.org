@@ -1,4 +1,5 @@
 * To do list for keyer.js
+** [ ] set up name: label object for keyers
 ** [ ] some controls are not getting defaulted at start
    scope number of buffers, paddle keyer, ...
 ** [ ] pops in straight keying
