@@ -27,6 +27,7 @@ class KeyerASKProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
     this.keyOn = false;		// key off
+    this.keyOut = 0;		// output value for this.keyOn
     this.ramping = false;	// not rising nor falling
     this.holding = false;	// holding key state beyond end of rise/fall
     this.holdCount = 0;		// samples remaining in hold
@@ -73,6 +74,7 @@ class KeyerASKProcessor extends AudioWorkletProcessor {
 	output[i] = this.ramp[this.rampIndex];
 	this.rampIndex += 1;
 	if (this.rampIndex >= this.ramp.length) {
+	  // end of ramp
 	  this.port.postMessage([ this.keyOn ? 'end:rise' : 'end:fall', currentTime+i/sampleRate ]);
 	  this.ramping = false;
 	  this.ramp = null;
@@ -81,41 +83,18 @@ class KeyerASKProcessor extends AudioWorkletProcessor {
 	  this.holding = true;
 	  this.holdCount = this.hold;
 	}
-      } else if (this.keyOn) {
-	// key is on, not ramping
-	output[i] = 1;
-	if (this.holding) {
-	  this.holding = (this.holdCount -= 1) <= 0;
-	} else if (input[i] >= 1) {
-	  // no transition
-	} else if (input[i] === 0) {
-	  // transition off
-	  this.port.postMessage([ 'transition', 0, currentTime+i/sampleRate ]);
-	  this.keyOn = false;
-	  this.ramping = true;
-	  this.ramp = this.fall;
-	  this.rampIndex = 0;
-	} else {
-	  console.log(`KeyerASKProcessor invalid input[${i}] = ${input[i]}`);
-	  return false;
-	}
       } else {
-	// key is off, not ramping
-	output[i] = 0;
+	output[i] = this.keyOut;
 	if (this.holding) {
 	  this.holding = (this.holdCount -= 1) <= 0;
-	} else if (input[i] === 0) {
-	  // no transition
-	} else if (input[i] >= 1) {
-	  // transition on
-	  this.port.postMessage([ 'transition', 1, currentTime+i/sampleRate ]);
-	  this.keyOn = true;
+	} else if (this.keyOn !== (input[i] >= 1)) {
+	  // transition
+	  this.keyOn = ! this.keyOn;
+	  this.keyOut = this.keyOn ? 1 : 0;
+	  this.ramp = this.keyOn ? this.rise : this.fall;
+	  this.port.postMessage([ 'transition', this.keyOut, currentTime+i/sampleRate ]);
 	  this.ramping = true;
-	  this.ramp = this.rise;
 	  this.rampIndex = 0;
-	} else {
-	  console.log(`KeyerASKProcessor invalid input[${i}] = ${input[i]}`);
-	  return false;
 	}
       }
     }

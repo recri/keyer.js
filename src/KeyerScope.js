@@ -30,7 +30,8 @@ export class KeyerScope extends KeyerEvent {
     this.analyser.fftSize = this.size;
     this.holdSteps = {
       '100ms': 0.1, '200ms': 0.2, '500ms': 0.5,
-      '1s': 1, '2s': 2, '5s': 5
+      '1s': 1, '2s': 2, '5s': 5,
+      '10s': 10, '20s': 20, '50s': 50
     };
     this.timeSteps = {
       '1µs/div': 1e-6, '2µs/div': 2e-6, '5µs/div': 5e-6,
@@ -225,6 +226,7 @@ export class KeyerScope extends KeyerEvent {
     this.canvasCtx.stroke();
 
     // console.log(`draw completed ${nd} points in ${(this.currentTime-t0).toFixed(3)} seconds`);
-    this.after(this.holdStep, () => { if (this.running) this.capture(); });
+    if (this.running)
+      this.after(this.holdStep, () => { if (this.running) this.capture(); });
   }
 }

@@ -65,6 +65,7 @@ const defaults = {
   scopeTimeScale: '10ms/div',
   scopeVerticalScale: '200mFS/div',
   scopeTimeOffset: 0,
+  scopeHoldTime: '1s',
   scopeLength: 1,
 }
 
@@ -176,6 +177,7 @@ export class KeyerJs extends LitElement {
       scopeTimeScale: { type: String },
       scopeVerticalScale: { type: String },
       scopeTimeOffset: { type: Number },
+      scopeHoldTime: { type: String },
       scopeLength: { type: Number },
       // properties read only from this.keyer.context
       state: { type: String },
@@ -330,6 +332,12 @@ export class KeyerJs extends LitElement {
   set scopeTimeOffset(v) { this.keyer.scope.timeOffset = v; }
 
   get scopeTimeOffset() { return this.keyer.scope.timeOffset; }
+
+  get scopeHoldTimes() { return this.keyer.scope.holdTimes; }
+
+  set scopeHoldTime(v) { this.keyer.scope.holdTime = v; }
+
+  get scopeHoldTime() { return this.keyer.scope.holdTime; }
 
   set scopeLength(v) { this.keyer.scope.length = v; }
 
@@ -886,20 +894,21 @@ export class KeyerJs extends LitElement {
 	    .value=${this.scopeTimeOffset} @input=${(e) => this.controlSelect('scopeTimeOffset', e)}>
 	  <label for="scopetimeoffset">Time offset ${this.scopeTimeOffset} (%)</label>
 	</div>
-	<div>
-	  <label>Target:
-            <select .value=${this.scopeTarget} @change=${(e) => this.controlSelect('scopeTarget', e)}>
-	      ${templateOptions(this.scopeTargets, this.scopeTarget)}
-	    </select>
-	  </label>
-	</div>
-	<div>
-	  <label>Buffers:
-            <select .value=${this.scopeLength} @change=${(e) => this.controlSelect('scopeLength', e)}>
-	      ${templateOptions(this.scopeLengths, this.scopeLength)}
-	    </select>
-	  </label>
-	</div>
+	<label>Target:
+          <select .value=${this.scopeTarget} @change=${(e) => this.controlSelect('scopeTarget', e)}>
+	    ${templateOptions(this.scopeTargets, this.scopeTarget)}
+	  </select>
+	</label>
+	<label>Buffers:
+          <select .value=${this.scopeLength} @change=${(e) => this.controlSelect('scopeLength', e)}>
+	    ${templateOptions(this.scopeLengths, this.scopeLength)}
+	  </select>
+	</label>
+	<label>Hold time:
+          <select .value=${this.scopeHoldTime} @change=${(e) => this.controlSelect('scopeHoldTime', e)}>
+	    ${templateOptions(this.scopeHoldTimes, this.scopeHoldTime)}
+	  </select>
+	</label>
 	`;
 
     case 'displayStatus':
