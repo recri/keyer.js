@@ -31,15 +31,19 @@ export default merge(baseConfig, {
   // input: './app.js',
     plugins: [
 	copy({
-	    targets: [
-		{ src: './manifest.webmanifest', dest: 'dist' },
-		{ src: './favicon.ico', dest: 'dist' },
-		{ src: './img/icon-512x512.png', dest: 'dist/img' },
-		{ src: './img/icon-192x192.png', dest: 'dist/img' },
-		{ src: './img/icon-180x180.png', dest: 'dist/img' },
-		{ src: './img/icon-167x167.png', dest: 'dist/img' },
-		{ src: './img/icon-152x152.png', dest: 'dist/img' },
-		{ src: './img/icon-144x144.png', dest: 'dist/img' }
-	    ]
+	  targets: [
+	    { src: './manifest.webmanifest', dest: 'dist' },
+	    { src: './favicon.ico', dest: 'dist' },
+	    { src: './img/icon-512x512.png', dest: 'dist/img' },
+	    { src: './img/icon-192x192.png', dest: 'dist/img' },
+	    { src: './img/icon-180x180.png', dest: 'dist/img' },
+	    { src: './img/icon-167x167.png', dest: 'dist/img' },
+	    { src: './img/icon-152x152.png', dest: 'dist/img' },
+	    { src: './img/icon-144x144.png', dest: 'dist/img' },
+	    { src: './src/KeyerASKProcessor.js', dest: 'dist/src' },
+	    { src: './src/KeyerPaddleNoneProcessor.js', dest: 'dist/src' },
+	    { src: './src/KeyerPaddleNd7paProcessor.js', dest: 'dist/src' },
+	    { src: './src/KeyerPaddleVk6phProcessor.js', dest: 'dist/src' }
+	  ]
 	})]
 });
