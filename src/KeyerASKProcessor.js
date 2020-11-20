@@ -77,7 +77,7 @@ class KeyerASKProcessor extends AudioWorkletProcessor {
       } else if (this.keyOn) {
 	// key is on, not ramping
 	output[i] = 1;
-	if (input[i] === 1) {
+	if (input[i] >= 1) {
 	  // no transition
 	} else if (input[i] === 0) {
 	  // transition off
@@ -95,7 +95,7 @@ class KeyerASKProcessor extends AudioWorkletProcessor {
 	output[i] = 0;
 	if (input[i] === 0) {
 	  // no transition
-	} else if (input[i] === 1) {
+	} else if (input[i] >= 1) {
 	  // transition on
 	  this.port.postMessage([ 'transition', 1, currentTime+i/sampleRate ]);
 	  this.keyOn = true;

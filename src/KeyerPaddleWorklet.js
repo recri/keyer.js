@@ -28,11 +28,14 @@ export class KeyerPaddleWorklet extends AudioWorkletNode {
     this.port.onmessage = (e) => this.onmessage(e);
     this.port.onmessageerror = (e) => this.onmessageerror(e);
     this.onprocessorerror = (e) => this.onprocessorerror(e);
-    this.eparent.on('change:timing', () => this.changeTiming());
+    this.eparent.on('change:timing', () => this.setTiming());
+    this.setTiming();
   }
 
-  changeTiming() {
-    this.port.postMessage(['timing', 1/this.eparent.sampleRate, 
+  setTiming() {
+    // console.log("posting timing parameters");
+    this.port.postMessage(['timing',
+			   1/this.eparent.sampleRate, 
 			   this.eparent.perRawDit, this.eparent.perDit, this.eparent.perDah,
 			   this.eparent.perIes, this.eparent.perIls, this.eparent.perIws]);
   }

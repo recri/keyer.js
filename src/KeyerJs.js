@@ -369,6 +369,8 @@ export class KeyerJs extends LitElement {
     // load the worklet processors
     await context.audioWorklet.addModule('src/KeyerASKProcessor.js');
     await context.audioWorklet.addModule('src/KeyerPaddleNoneProcessor.js');
+    await context.audioWorklet.addModule('src/KeyerPaddleNd7paProcessor.js');
+    await context.audioWorklet.addModule('src/KeyerPaddleVk6phProcessor.js');
     
     // build the keyer
     this.keyer = new Keyer(context);
@@ -392,7 +394,7 @@ export class KeyerJs extends LitElement {
     this.keyer.output.on('sent', ltr => this.onsent(ltr));
     this.keyer.output.on('unsent', ltr => this.onunsent(ltr));
     this.keyer.output.on('skipped', ltr => this.onskipped(ltr));
-    this.keyer.midiSource.on('midi:names', () => this.onmidinames());
+    // this.keyer.midiSource.on('midi:names', () => this.onmidinames());
     this.keyer.midiSource.on('midi:notes', () => this.onmidinotes());
     
     document.addEventListener('keydown', (e) => this.keyer.input.keyboardKey(e, true));
@@ -620,7 +622,13 @@ export class KeyerJs extends LitElement {
       }
 
       h2, div.panel {
+	margin: auto;
 	width: 90%;
+      }
+
+      h3, div.subpanel {
+	margin: auto;
+	width: 100%;
       }
 
       div.keyboard {
@@ -726,7 +734,7 @@ export class KeyerJs extends LitElement {
 
   advancedRender() {
     return isOff(this.displayAdvanced) ? html`` : html`
-	<div class="panel">
+	<div class="subpanel">
 	  <input type="range" id="weight" name="weight" min="25" max="75"
 	  .value=${this.weight} step="0.1"
 	  @input=${(e) => this.controlSelect('weight', e)}>
@@ -762,7 +770,7 @@ export class KeyerJs extends LitElement {
 
   outputRender() {
     return isOff(this.displayOutput) ? html`` : html`
-	<div class="panel">
+	<div class="subpanel">
 	  <input type="range" id="speed" name="speed" min=${isOn(this.qrq) ? qrqMin : qrsMin} max=${isOn(this.qrq) ? qrqMax : qrsMax}
 	  .value=${this.speed} step=${isOn(this.qrq) ? qrqStep : qrsStep} @input=${(e) => this.controlSelect('speed', e)}>
 	  <label for="speed">Speed ${this.speed} (WPM)</label>
@@ -779,7 +787,7 @@ export class KeyerJs extends LitElement {
   inputKeyRender() {
     return isOff(this.displayInputKey) ?  html`` : [
       html`
-	<div class="panel">
+	<div class="subpanel">
 	  <label>Swap paddles: 
             <button role="switch" aria-checked=${isOn(this.swapped)} @click=${() => this.controlToggle('swapped')}>
 	      <span>${html`${this.swapped}`}</span>
@@ -838,7 +846,7 @@ export class KeyerJs extends LitElement {
 
   miscRender() {
     return isOff(this.displayMisc) ? html`` : html`
-	<div class="panel">
+	<div class="subpanel">
 	  <label>Requested sample rate:
             <select .value=${this.requestedSampleRate} @change=${this.selectRequestedSampleRate}>
 	      ${templateOptions(sampleRates, this.requestedSampleRate)}
@@ -856,24 +864,24 @@ export class KeyerJs extends LitElement {
     return isOff(this.displaySettings) ? html`` : html`
 	<div class="panel">
 	<!-- keyer output settings -->
+	<hr>
 	<h3 tabindex="0" @click=${() => this.controlToggle('displayOutput')}>
-	  ${isOff(this.displayOutput) ? hiddenMenuIndicator : shownMenuIndicator} Keyer Output
-	</h3>
+	  ${this.controlMenuIndicator('displayOutput')} Keyer Output</h3>
 	${this.outputRender()}
 	<!-- advanced keyboard output settings -->
+	<hr>
 	<h3 tabindex="0" @click=${() => this.controlToggle('displayAdvanced')}>
-	  ${isOff(this.displayAdvanced) ? hiddenMenuIndicator : shownMenuIndicator} More Output
-	</h3>
+	  ${this.controlMenuIndicator('displayAdvanced')} More Output</h3>
 	${this.advancedRender()}
 	<!-- input key selection --->
+	<hr>
 	<h3 tabindex="0" @click=${() => this.controlToggle('displayInputKey')}>
-	  ${isOff(this.displayInputKey) ? hiddenMenuIndicator : shownMenuIndicator} Key Input
-	</h3>
+	  ${this.controlMenuIndicator('displayInputKey')} Key Input</h3>
 	${this.inputKeyRender()}
 	<!-- audio engine parameters --->
+	<hr>
 	<h3 tabindex="0" @click=${() => this.controlToggle('displayMisc')}>
-	  ${isOff(this.displayMisc) ? hiddenMenuIndicator : shownMenuIndicator} Miscellany
-	</h3>
+	  ${this.controlMenuIndicator('displayMisc')} Miscellany</h3>
 	${this.miscRender()}
 	</div>
     `;
@@ -930,24 +938,24 @@ export class KeyerJs extends LitElement {
 
   aboutRender() {
     return isOff(this.displayAbout) ? html`` : html`
-<div class="panel">
-<p>
-<b>Keyer.js</b> implements a morse code keyer in a web page.
-The text window translates typed text into morse code which plays on the browser's audio output.
-Keyboard keys and MIDI notes can be interpreted as switch closures for directly keying morse.
-Directly keyed input is played on the browser's audio output and decoded into the text window.
-</p><p>
-The <b>Settings</b> panel allow full control over the generated morse code.
-</p><p>
-The <b>Status</b> panel shows status information about the web audio system.
-</p><p>
-The <b>Scope</b> panel allows the wave forms of the keyer to be displayed.
-</p><p>
-This <b>About</b> panel gives a brief introduction to the app.
-</p><p>
-The <b>License</b> panel describes the licenscing of the app.
-</p>
-</div>`;
+	<div class="panel">
+	  <p>
+	    <b>Keyer.js</b> implements a morse code keyer in a web page.
+	    The text window translates typed text into morse code which plays on the browser's audio output.
+	    Keyboard keys and MIDI notes can be interpreted as switch closures for directly keying morse.
+	    Directly keyed input is played on the browser's audio output and decoded into the text window.
+	  </p><p>
+	    The <b>Settings</b> panel allow full control over the generated morse code.
+	  </p><p>
+	    The <b>Status</b> panel shows status information about the web audio system.
+	  </p><p>
+	    The <b>Scope</b> panel allows the wave forms of the keyer to be displayed.
+	  </p><p>
+	    This <b>About</b> panel gives a brief introduction to the app.
+	  </p><p>
+	    The <b>License</b> panel describes the licenscing of the app.
+	  </p>
+	</div>`;
   }
 
   licenseRender() {
@@ -994,16 +1002,16 @@ The <b>License</b> panel describes the licenscing of the app.
 	  ${this.controlMenuIndicator('displaySettings')} Settings</h2>
 	${this.settingsRender()}
         <h2 tabindex="0" @click=${() => this.controlToggle('displayScope')}>
-	  ${isOff(this.displayScope) ? hiddenMenuIndicator : shownMenuIndicator} Scope</h2>
+	  ${this.controlMenuIndicator('displayScope')} Scope</h2>
 	${this.scopeRender()}
         <h2 tabindex="0" @click=${() => this.controlToggle('displayStatus')}>
-	  ${isOff(this.displayStatus) ? hiddenMenuIndicator : shownMenuIndicator} Status</h2>
+	  ${this.controlMenuIndicator('displayStatus')} Status</h2>
 	${this.statusRender()}
         <h2 tabindex="0" @click=${() => this.controlToggle('displayAbout')}>
-	  ${isOff(this.displayAbout) ? hiddenMenuIndicator : shownMenuIndicator} About</h2>
+	  ${this.controlMenuIndicator('displayAbout')} About</h2>
 	${this.aboutRender()}
         <h2 tabindex="0" @click=${() => this.controlToggle('displayLicense')}>
-	  ${isOff(this.displayLicense) ? hiddenMenuIndicator : shownMenuIndicator} License</h2>
+	  ${this.controlMenuIndicator('displayLicense')} License</h2>
 	${this.licenseRender()}
 	${this.touchKeyRender()}`;
   }

@@ -69,11 +69,11 @@ export class KeyerInput extends KeyerPlayer {
     }
     switch (keyer) {
     case 'none':    this.paddle = this.createPaddleWorklet('keyer-paddle-none-processor', 'A'); break;
-    case 'nd7pa-a': this.paddle = this.createPaddleWorklet('keyer-paddle-none-processor', 'A'); break;
-    case 'nd7pa-b': this.paddle = this.createPaddleWorklet('keyer-paddle-none-processor', 'B'); break;
-    case 'vk6ph-a': this.paddle = this.createPaddleWorklet('keyer-paddle-none-processor', 'A'); break;
-    case 'vk6ph-b': this.paddle = this.createPaddleWorklet('keyer-paddle-none-processor', 'B'); break;
-    case 'vk6ph-s': this.paddle = this.createPaddleWorklet('keyer-paddle-none-processor', 'S'); break;
+    case 'nd7pa-a': this.paddle = this.createPaddleWorklet('keyer-paddle-nd7pa-processor', 'A'); break;
+    case 'nd7pa-b': this.paddle = this.createPaddleWorklet('keyer-paddle-nd7pa-processor', 'B'); break;
+    case 'vk6ph-a': this.paddle = this.createPaddleWorklet('keyer-paddle-vk6ph-processor', 'A'); break;
+    case 'vk6ph-b': this.paddle = this.createPaddleWorklet('keyer-paddle-vk6ph-processor', 'B'); break;
+    case 'vk6ph-s': this.paddle = this.createPaddleWorklet('keyer-paddle-vk6ph-processor', 'S'); break;
     default:	    console.log(`invalid keyer ${keyer}`); return;
     }
     this._keyerName = keyer;

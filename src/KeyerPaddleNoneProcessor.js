@@ -25,12 +25,14 @@ class KeyerPaddleNoneProcessor extends AudioWorkletProcessor {
 
   constructor() {
     super();
+    this.port.onmessage = (e) => this.onmessage(e);
+    this.port.onmessageerror = (e) => this.onmessageerror(e);
     this.mode = 'B';
     this.zeroes = new Float32Array(128);
   }
   
   onmessage(e) {
-    // console.log(`KeyerASKProcessor message ${e}`);
+    // console.log(`KeyerPaddleNoneProcessor message ${e}`);
     const [message, ...data] = e.data;
     switch (message) {
     case 'timing': [ this.perSample, this.perRawDit, this.perDit, this.perDah, this.perIes, this.perIls, this.perIws ] = data; break;
