@@ -24,9 +24,14 @@ export class KeyerScope extends KeyerEvent {
     this.enabled = false;	// we are not displayed on screen
     this.sampling = false;	// we are not capturing samples
     this.redraw = false;	// we do not require a redraw
+    this.running = false;	// we do not start running
     this.analyser = this.context.createAnalyser();
     this.size = 2**15;
     this.analyser.fftSize = this.size;
+    this.holdSteps = {
+      '100ms': 0.1, '200ms': 0.2, '500ms': 0.5,
+      '1s': 1, '2s': 2, '5s': 5
+    };
     this.timeSteps = {
       '1µs/div': 1e-6, '2µs/div': 2e-6, '5µs/div': 5e-6,
       '10µs/div': 1e-5, '20µs/div': 2e-5, '50µs/div': 5e-5,
@@ -45,6 +50,7 @@ export class KeyerScope extends KeyerEvent {
       '100mFS/div': 1e-1, '200mFS/div': 2e-1, '500mFS/div': 5e-1,
       '1FS/div': 1e+0, '2FS/div': 2e+0, '5FS/div': 5e+0
     };
+    this.holdTime = '1s';
     this.timeOffset = 0;
     this.timeScale = '10ms/div';
     this.verticalScale = '200mFS/div';
@@ -52,6 +58,10 @@ export class KeyerScope extends KeyerEvent {
     this.lengths = [ 1, 2, 3 ];
     this.draw();
   }
+  
+  set running(v) { this._running = v; if (this.running) this.capture(); }
+
+  get running() { return this._running; }
   
   // length determines the number of 32k sample buffers captured
   set length(v) {
@@ -62,6 +72,15 @@ export class KeyerScope extends KeyerEvent {
   
   get length() { return this._length; }
 
+  get holdTimes() { return Array.from(Object.keys(this.holdSteps)); }
+
+  set holdTime(v) {
+    this._holdTime = v;
+    this.holdStep = this.holdSteps[v];
+  }
+
+  get holdTime() { return this._holdTime; }
+  
   // time scale determines the number of samples per pixel
   get timeScales() { return Array.from(Object.keys(this.timeSteps)); }
 
@@ -90,7 +109,7 @@ export class KeyerScope extends KeyerEvent {
 
   get timeOffset() { return this._timeOffset; }
   
-  // enable called when 
+  // enable called when displayed?
   enable(v, canvas) { 
     if (this.enabled !== v) {
       this.enabled = v;
@@ -115,7 +134,7 @@ export class KeyerScope extends KeyerEvent {
   // but the draw step may spoil timing for other audio events.
   // may want some other way to trigger a redraw
   capture() { 
-    // console.log(`capture ${this.length} segments`);
+    console.log(`capture ${this.length} segments`);
     this.sampling = true;
     const dt = this.size/this.sampleRate;
     const t = this.currentTime;
@@ -206,6 +225,8 @@ export class KeyerScope extends KeyerEvent {
     this.canvasCtx.stroke();
 
     // console.log(`draw completed ${nd} points in ${(this.currentTime-t0).toFixed(3)} seconds`);
-
+    if (this.running) {
+      this.after(this.holdStep, () => this.capture());
+    }
   }
 }

@@ -23,8 +23,9 @@ import { KeyerRamp } from './KeyerRamp.js';
 
 export class KeyerASKWorklet extends AudioWorkletNode {
 
-  constructor(context, name) {
-    super(context, name);
+  constructor(context, name, params, eparent) {
+    super(context, name, params);
+    this.eparent = eparent;	// event parent
     this.sampleRate = context.sampleRate;
     this.port.onmessage = (e) => this.onmessage(e);
     this.port.onmessageerror = (e) => this.onmessageerror(e);
@@ -32,22 +33,29 @@ export class KeyerASKWorklet extends AudioWorkletNode {
     this._envelope = 'hann';
     this._envelope2 = 'rectangular';
     this._rise = 4;
-    this._ramps = KeyerRamp.ramps();
+    this._ramps = KeyerRamp.ramps;
     this._update('_fall', 4, true, true);
   }
 
   onmessage(e) {
-    console.log(`KeyerASKWorklet message '${e}'`);
-    this.message = e;
+    const [message, ...data] = e.data;
+    if (message === 'transition' || 
+	message === 'end:rise' || 
+	message === 'end:fall')
+      this.eparent.emit(message, ...data);
+    else {
+      console.log(`KeyerASKWorklet message '${message}, ${data}'`);
+      this.message = e;
+    }
   }
 
   onmessageerror(e) {
-    console.log(`KeyerASKWorklet messageerror '${e}'`);
+    console.log(`KeyerASKWorklet messageerror '${e.data}'`);
     this.messageError = e;
   }
 
   onprocessorerror(e) {
-    console.log(`KeyerASKWorklet processorerror '${e}'`);
+    console.log(`KeyerASKWorklet processorerror '${e.data}'`);
     this.processorError = e;
   }
 
@@ -56,18 +64,16 @@ export class KeyerASKWorklet extends AudioWorkletNode {
     if (riseChanges) {
       const n = Math.floor((this.rise / 1000.0) * this.sampleRate);
       const rise = new Float32Array(n);
-      for (let i = 0; i < n; i += 1)
-	rise[i] = KeyerRamp.rise2(this.envelope, this.envelope2, n-1, i);
-      console.log(`riseChanges ${this.rise} rise time ${this.sampleRate} samples/sec makes ${n} samples, first ${rise[0]}, last ${rise[n-1]}`);
-      this.port.postmessage(['rise', rise]);
+      for (let i = 0; i < n; i += 1) rise[i] = KeyerRamp.rise2(this.envelope, this.envelope2, n, i);
+      // console.log(`riseChanges ${this.rise} rise time, at ${this.sampleRate} samples/sec makes ${n} samples, first ${rise[0]}, last ${rise[n-1]}`);
+      this.port.postMessage(['rise', rise]);
     }
     if (fallChanges) {
       const n = Math.floor((this.fall / 1000.0) * this.sampleRate);
       const fall = new Float32Array(n);
-      for (let i = 0; i < n; i += 1)
-	fall[i] = KeyerRamp.fall(this.envelope, this.envelope2, n-1, i);
-      console.log(`fallChanges ${this.fall} fall time ${this.sampleRate} samples/sec makes ${n} samples, first ${fall[0]}, last ${fall[n-1]}`);
-      this.port.postmessage(['fall', fall]);
+      for (let i = 0; i < n; i += 1) fall[i] = KeyerRamp.fall2(this.envelope, this.envelope2, n, i);
+      // console.log(`fallChanges ${this.fall} fall time ${this.sampleRate} samples/sec makes ${n} samples, first ${fall[0]}, last ${fall[n-1]}`);
+      this.port.postMessage(['fall', fall]);
     }
   }
   

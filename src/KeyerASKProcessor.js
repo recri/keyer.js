@@ -20,6 +20,8 @@
 // convert stream of 0's and 1's on input
 // into gain stream for an oscillator
 // smoothly ramp on, on, ramp off, off
+
+/* global currentTime, sampleRate */
 class KeyerASKProcessor extends AudioWorkletProcessor {
 
   constructor() {
@@ -28,37 +30,46 @@ class KeyerASKProcessor extends AudioWorkletProcessor {
     this.ramping = false;	// not rising nor falling
     this.ramp = null;		// the currently active ramp
     this.rampIndex = 0;		// index into ramp values
-    this.rise = Float32Array.from(0.0, 1.0); // square rise ramp
-    this.fall = Float32Array.from(1.0, 0.0); // square fall ramp
+    this.rise = Float32Array.of(0.0, 1.0); // square rise ramp
+    this.fall = Float32Array.of(1.0, 0.0); // square fall ramp
     this.port.onmessage = (e) => this.onmessage(e);
     this.port.onmessageerror = (e) => this.onmessageerror(e);
+    this.zeroes = new Float32Array(128);
   }
   
   onmessage(e) {
-    console.log(`KeyerASKProcessor message ${e}`);
-    const [message, ramp] = e;
+    // console.log(`KeyerASKProcessor message ${e}`);
+    const [message, ramp] = e.data;
     switch (message) {
     case 'rise': this.rise = ramp; break;
     case 'fall': this.fall = ramp; break;
-    default: console.log(`KeyerASKProcessor message? ${e}`); break;
+    default: console.log(`KeyerASKProcessor message? ${e.data}`); break;
     }
   }
   
   onmessageerror(e) {
-    console.log(`KeyerASKProcessor message error ${e}`);
+    console.log(`KeyerASKProcessor message error ${e.data}`);
     this.messageError = e
   }
 
   process (inputs, outputs) {
-    const input = inputs[0];
-    const output = outputs[0];
-    for (let i = 0; i < input.length; i += 1) {
+    const output = outputs[0][0];
+    const input = inputs[0][0] || this.zeroes;
+    // man, this was really stupid
+    // console.log(`process typeof(inputs[0][0]) = ${typeof(inputs[0][0])}`);
+    // console.log(`process inputs ${inputs}`);
+    // console.log(`process inputs[0] ${inputs[0]}`);
+    // console.log(`process inputs[0][0] ${inputs[0][0]}`);
+    // console.log(`process inputs[0][0][0] ${inputs[0][0][0]}`);
+    // return false;
+    for (let i = 0; i < output.length; i += 1) {
       if (this.ramping) {
 	// slewing gain up or down
 	// continue ramping input according to ramp
 	output[i] = this.ramp[this.rampIndex];
 	this.rampIndex += 1;
 	if (this.rampIndex >= this.ramp.length) {
+	  this.port.postMessage([ this.keyOn ? 'end:rise' : 'end:fall', currentTime+i/sampleRate ]);
 	  this.ramping = false;
 	  this.ramp = null;
 	  this.rampIndex = 0;
@@ -70,12 +81,14 @@ class KeyerASKProcessor extends AudioWorkletProcessor {
 	  // no transition
 	} else if (input[i] === 0) {
 	  // transition off
+	  this.port.postMessage([ 'transition', 0, currentTime+i/sampleRate ]);
 	  this.keyOn = false;
 	  this.ramping = true;
 	  this.ramp = this.fall;
 	  this.rampIndex = 0;
 	} else {
 	  console.log(`KeyerASKProcessor invalid input[${i}] = ${input[i]}`);
+	  return false;
 	}
       } else {
 	// key is off, not ramping
@@ -84,12 +97,14 @@ class KeyerASKProcessor extends AudioWorkletProcessor {
 	  // no transition
 	} else if (input[i] === 1) {
 	  // transition on
+	  this.port.postMessage([ 'transition', 1, currentTime+i/sampleRate ]);
 	  this.keyOn = true;
 	  this.ramping = true;
 	  this.ramp = this.rise;
 	  this.rampIndex = 0;
 	} else {
 	  console.log(`KeyerASKProcessor invalid input[${i}] = ${input[i]}`);
+	  return false;
 	}
       }
     }

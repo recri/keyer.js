@@ -97,7 +97,6 @@ export class KeyerOutput extends KeyerPlayer {
   }
 
   cancelPending() {
-    // this will probably make a crunch
     this.skipped = this.pending
     this.pending = [];
   }

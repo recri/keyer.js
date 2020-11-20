@@ -17,6 +17,7 @@
 // 
 
 import { KeyerEvent } from './KeyerEvent.js';
+import { KeyerASKWorklet } from './KeyerASKWorklet.js';
 
 const gainLinear = (decibel) => 10 ** (decibel / 20);
 
@@ -26,48 +27,36 @@ const gainDecibel = (linear) => Math.log10(linear) * 20;
 // this layer handles keying the oscillator
 // so it knows the frequency, the volume,
 // the keying envelope, rise time, and fall time
-//
-// we cannot start another ramp while a ramp is playing,
-// it would sound awful, and the audio engine throws an
-// exception if we even try.
-// hence every keying event should specify the time and
-// extent of the event, and the cursor is advanced from
-// the time by the extent.  and every keying event should
-// check to see that it's requested time does not encroach
-// on the previous event, by checking that time >= cursor.
 
 export class KeyerPlayer extends KeyerEvent {
-
+  
   constructor(context) {
     super(context);
-
     // where we are in the sample time stream
     this.cursor = this.currentTime;
 
     // initialize parameters
-    this.keySounds = false;
-    this.keySlews = false;
     this.weight = 50;
     this.ratio = 50;
     this.compensation = 0;
     this.wpm = 20;
-
+    
     // initialize the key
     this.key = this.context.createConstantSource();
     this.key.offset.value = 0;
-
-    // initialize the audio shift keyer - async
-    // processor code is loaded in KeyerJs.js: start().
-    this.ask = this.createAudioShiftKeyer(context, 'keyer-ask-processor');
     
+    // initialize the audio shift keyer
+    this.ask = new KeyerASKWorklet(context, 'keyer-ask-processor', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1] }, this);
+    // console.log(`KeyerPlayer typeof this.ask = ${typeof this.ask}`);
+
     // initialize the oscillator
     this.oscillator = this.context.createOscillator();
     this.oscillator.type = 'sine';
-
+    
     // initialize the wave shaper
     this.ramp = this.context.createGain();
     this.ramp.gain.value = 0;
-
+    
     // initialize the output gain
     this.volume = this.context.createGain();
     this.volume.gain.value = 0;
@@ -77,14 +66,17 @@ export class KeyerPlayer extends KeyerEvent {
     this.oscillator.connect(this.ramp);
     this.ask.connect(this.ramp.gain);
     this.ramp.connect(this.volume);
-
+    
     // start
     this.oscillator.start();
+    this.key.start();
   }
 
   // connect our output samples to somewhere
   // this never gets called?
   connect(target) { this.volume.connect(target); }
+
+  disconnect(target) { this.volume.disconnect(target); }
 
   set pitch(hertz) { this.oscillator.frequency.value = hertz; }
 
@@ -130,10 +122,7 @@ export class KeyerPlayer extends KeyerEvent {
 
   set cursor(seconds) { this._cursor = seconds; }
 
-  get cursor() {
-    this._cursor = Math.max(this._cursor, this.currentTime);
-    return this._cursor;
-  }
+  get cursor() { this._cursor = Math.max(this._cursor, this.currentTime); return this._cursor; }
 
   updateTiming() {
     const dit = 60.0 / (this.wpm * 50); // seconds/dit
@@ -151,14 +140,8 @@ export class KeyerPlayer extends KeyerEvent {
     this.emit('change:timing');
   }
 
-  rampEnded(e, riseFall) { this.keySlews = false; this.emit('end:ramp', riseFall); }
-  
-  riseEnded(e) { this.rampEnded(e, 'rise'); }
-
-  fallEnded(e) { this.rampEnded(e, 'fall'); }
-
   // straight key something on or off, right now
-  keyStraight(onOff) { this.key.offset.value = onOff ? 1 : 0; }
+  keyStraight(onOff) { this.key.offset.setValueAtTime(onOff ? 1 : 0, this.currentTime); }
 
   // play a dit or dah at the cursor
   // and the trailing inter-element space
@@ -167,41 +150,22 @@ export class KeyerPlayer extends KeyerEvent {
     this.keyOnAt(this.cursor);
     this.keyHoldFor(elen);
     this.keyOffAt(this.cursor);
-    return this.keyHoldFor(slen);
+    this.keyHoldFor(slen);
   }
   
   // schedule the key on at time
-  keyOnAt(time) {
-    if (time < this.cursor) return false;
-    const t = Math.max(time, this.currentTime);
-    this.key.offset.setValueAtTime(t, 1);
-    this.cursor = t;
-    this.emit('transition', 1, t);
-    return true;
-  }
+  keyOnAt(time) { this.key.offset.setValueAtTime(1, time); }
 
   // schedule the key off at the cursor
-  keyOffAt(time) {
-    if (time < this.cursor) return false;
-    const t = Math.max(time, this.currentTime);
-    this.key.offset.setValueAtTime(t, 0);
-    this.emit('transition', 0, t);
-    return true
-  }
+  keyOffAt(time) { this.key.offset.setValueAtTime(0, time); }
 
   // advance the cursor by seconds, effectively holdin the last scheduled key state for seconds
-  keyHoldFor(seconds) {
-    // console.log(`state ${this.keySounds} keyHoldFor ${seconds} sec at cursor ${this.cursor} sec at time ${this.currentTime} sec`);
-    // console.log(`keyHoldFor until ${(this.cursor+seconds)/this.sampleRate} samples at ${this.currentTime/$this.sampleRate} samples`);
-    this.cursor += seconds;
-    return this.cursor;
-  }
+  keyHoldFor(seconds) { this.cursor += seconds; return this.cursor; }
 
   // cancel all scheduled key transitions
-  // should probably cancel all pending text and transition events, too.
-  // this will cause a click if we were sounding
   cancel() {
     // console.log("cancel at ", this.currentTime);
+    this.key.offset.cancelScheduledValues(this.currentTime);
     this.key.offset.value = 0;
   }
 }

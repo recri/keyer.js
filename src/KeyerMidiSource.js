@@ -46,10 +46,10 @@ export class KeyerMidiSource extends KeyerEvent {
       let event = null;
       switch (e.data[0] & 0xf0) {
       case 0x90:		// note on
-	event = e.data[2] === 0 ? 'off' : 'on';
+	event = e.data[2] !== 0;
 	break;
       case 0x80:		// note off
-	event = 'off';
+	event = false;
         break;
       default:
         return;
@@ -60,7 +60,7 @@ export class KeyerMidiSource extends KeyerEvent {
 	this.notesList = ['None'].concat(Array.from(Object.keys(this.notesCache)).sort())
 	this.emit('midi:notes');
       }
-      this.emit('midi:event', event, note);
+      this.emit('midi:event', note, event);
     }
   }
   

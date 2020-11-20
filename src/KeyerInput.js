@@ -16,77 +16,107 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 // 
 import { KeyerPlayer } from './KeyerPlayer.js';
-import { KeyerNoneInput } from './KeyerNoneInput.js';
-import { KeyerStraightInput } from './KeyerStraightInput.js';
-import { KeyerPaddleInput } from './KeyerPaddleInput.js';
+import { KeyerPaddleWorklet } from './KeyerPaddleWorklet.js';
 
 // translate keyup/keydown into keyed oscillator sidetone
 export class KeyerInput extends KeyerPlayer {
   constructor(context) {
     super(context);
 
-    this.none = new KeyerNoneInput(context, this);
-    this.straight = new KeyerStraightInput(context, this);
-    this.paddle = new KeyerPaddleInput(context, this, 'none');
+    this.left = context.createConstantSource();
+    this.right = context.createConstantSource();
+    this.left.offset.value = 0;
+    this.right.offset.value = 0;
+    this.left.start();
+    this.right.start();
+    
+    this.keyerList = [ 'none', 'nd7pa-a', 'nd7pa-b', 'vk6ph-a', 'vk6ph-b', 'vk6ph-s' ]
+    this.paddle = null;
 
-    this.sources = [];
-    this._key = 'none';
-    this.key = 'none';
+    this.adaptorList = [ 'ultimatic' ];
+    this.adaptor = null;
+
     this.touched = false;	// prefer touch over mouse event
   }
 
-  get keyers() { return this.paddle.keyers; }
-  
-  get keyer() { return this.paddle.keyer; }
+  // paddle keyer management
+  createPaddleWorklet(name, mode) {
+    const paddle = new KeyerPaddleWorklet(this.context, name, { numberOfInputs: 2, numberOfOutputs: 1, outputChannelCount: [1] }, this);
+    paddle.mode = mode;
+    return paddle;
+  }
 
-  set keyer(v) { this.paddle.keyer = v; }
-  
-  onmidi(type, note) { 
-    let onOff;
-    switch (type) {
-    case 'on': onOff = true; break;
-    case 'off': onOff = false; break;
-    default:
-      console.log(`unexpected midi event ${type} ${note}`);
-      return;
+  set swapped(v) {
+    this._swapped = v;
+    if (this.paddle) {
+      this.left.disconnect(this.paddle);
+      this.right.disconnect(this.paddle);
+      this.left.connect(this.paddle, 0, this.swapped ? 1 : 0);
+      this.right.connect(this.paddle, 0, this.swapped ? 0 : 1);
     }
+  }
+
+  get swapped() { return this._swapped; }
+  
+  get keyers() { return this.keyerList; }
+  
+  set keyer(keyer) {
+    if (this.paddle) {
+      this.paddle.disconnect(this.ask);
+      this.left.disconnect(this.paddle);
+      this.right.disconnect(this.paddle);
+      this.paddle = null;
+    }
+    switch (keyer) {
+    case 'none':    this.paddle = this.createPaddleWorklet('keyer-paddle-none-processor', 'A'); break;
+    case 'nd7pa-a': this.paddle = this.createPaddleWorklet('keyer-paddle-none-processor', 'A'); break;
+    case 'nd7pa-b': this.paddle = this.createPaddleWorklet('keyer-paddle-none-processor', 'B'); break;
+    case 'vk6ph-a': this.paddle = this.createPaddleWorklet('keyer-paddle-none-processor', 'A'); break;
+    case 'vk6ph-b': this.paddle = this.createPaddleWorklet('keyer-paddle-none-processor', 'B'); break;
+    case 'vk6ph-s': this.paddle = this.createPaddleWorklet('keyer-paddle-none-processor', 'S'); break;
+    default:	    console.log(`invalid keyer ${keyer}`); return;
+    }
+    this._keyerName = keyer;
+    this.left.connect(this.paddle, 0, this.swapped ? 1 : 0);
+    this.right.connect(this.paddle, 0, this.swapped ? 0 : 1);
+    this.paddle.connect(this.ask);
+  }
+  
+  get keyer() { return this._keyer; }
+  
+  onmidi(note, onOff) { 
     // console.log(`onmidi ${type} ${note} ${onOff}`);
-    if (note === this.straightMidi) this.keyEvent('straight', onOff);
-    if (note === this.leftPaddleMidi) this.keyEvent('left', onOff);
-    if (note === this.rightPaddleMidi) this.keyEvent('right', onOff);
+    if (note === this.straightMidi) this.keyStraight(onOff);
+    if (note === this.leftPaddleMidi) this.keyLeft(onOff);
+    if (note === this.rightPaddleMidi) this.keyRight(onOff);
   }
 
   keyboardKey(e, onOff) {
     // console.log(`keyboardKey(${e.code}, ${onOff})`);
-    if (e.code === this.straightKey) this.keyEvent('straight', onOff);
-    if (e.code === this.leftPaddleKey) this.keyEvent('left', onOff);
-    if (e.code === this.rightPaddleKey) this.keyEvent('right', onOff);
+    if (e.code === this.straightKey) this.keyStraight(onOff);
+    if (e.code === this.leftPaddleKey) this.keyLeft(onOff);
+    if (e.code === this.rightPaddleKey) this.keyRight(onOff);
   }
 
   touchKey(e, type, onOff) { this.touched = true; this.keyEvent(type, onOff); }
   
-  mouseKey(e, type, onOff) { if ( ! this.touched) this.keyEvent(type, onOff); }
+  mouseKey(e, type, onOff) { if ( ! this.touched) { this.keyEvent(type, onOff); } }
   
   // handlers defer to selected input type in 'paddle', 'straight', and more to come
-  get key() { return this._key; }
-
-  set key(key) {
-    this.onblur();
-    this._key = key;
-    this.onfocus();
-  }
-
-  onblur() { this[this._key].onblur(); }
-
-  onfocus() { this[this._key].onfocus(); }
-
   keyEvent(type, onOff) { 
     // console.log(`keyEvent(${type}, ${onOff} when swapped ${this.swapped}`);
-    if (this.swapped) 
-      this[this._key].keyEvent({ left: 'right', right: 'left', straight: 'straight' }[type], onOff)
-    else
-      this[this._key].keyEvent(type, onOff);
+    switch (type) {
+    case 'straight': this.keyStraight(onOff); break;
+    case 'left': this.keyLeft(onOff); break;
+    case 'right': this.keyRight(onOff); break;
+    default: console.log(`keyEvent unknown type ${type}`); break;
+    }
   }
+
+  keyLeft(onOff) { this.left.offset.setValueAtTime(onOff ? 1 : 0, this.currentTime); }
+
+  keyRight(onOff) { this.right.offset.setValueAtTime(onOff ? 1 : 0, this.currentTime); }
+
 }
 // Local Variables:
 // mode: JavaScript
