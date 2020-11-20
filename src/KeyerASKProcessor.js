@@ -28,10 +28,13 @@ class KeyerASKProcessor extends AudioWorkletProcessor {
     super();
     this.keyOn = false;		// key off
     this.ramping = false;	// not rising nor falling
+    this.holding = false;	// holding key state beyond end of rise/fall
+    this.holdCount = 0;		// samples remaining in hold
     this.ramp = null;		// the currently active ramp
     this.rampIndex = 0;		// index into ramp values
     this.rise = Float32Array.of(0.0, 1.0); // square rise ramp
     this.fall = Float32Array.of(1.0, 0.0); // square fall ramp
+    this.hold = Math.max(this.rise.length, this.fall.length);
     this.port.onmessage = (e) => this.onmessage(e);
     this.port.onmessageerror = (e) => this.onmessageerror(e);
     this.zeroes = new Float32Array(128);
@@ -45,6 +48,7 @@ class KeyerASKProcessor extends AudioWorkletProcessor {
     case 'fall': this.fall = ramp; break;
     default: console.log(`KeyerASKProcessor message? ${e.data}`); break;
     }
+    this.hold = Math.max(this.rise.length, this.fall.length);
   }
   
   onmessageerror(e) {
@@ -73,11 +77,16 @@ class KeyerASKProcessor extends AudioWorkletProcessor {
 	  this.ramping = false;
 	  this.ramp = null;
 	  this.rampIndex = 0;
+	  // start hold period
+	  this.holding = true;
+	  this.holdCount = this.hold;
 	}
       } else if (this.keyOn) {
 	// key is on, not ramping
 	output[i] = 1;
-	if (input[i] >= 1) {
+	if (this.holding) {
+	  this.holding = (this.holdCount -= 1) <= 0;
+	} else if (input[i] >= 1) {
 	  // no transition
 	} else if (input[i] === 0) {
 	  // transition off
@@ -93,7 +102,9 @@ class KeyerASKProcessor extends AudioWorkletProcessor {
       } else {
 	// key is off, not ramping
 	output[i] = 0;
-	if (input[i] === 0) {
+	if (this.holding) {
+	  this.holding = (this.holdCount -= 1) <= 0;
+	} else if (input[i] === 0) {
 	  // no transition
 	} else if (input[i] >= 1) {
 	  // transition on

@@ -1,4 +1,8 @@
 * To do list for keyer.js
+** [ ] pops in straight keying
+** [ ] ramp functions look wrong
+** [ ] ramp not zeroing oscillator
+** [ ] heavy jitter in dit length and spacing at 60WPM   
 ** [ ] menu headers need more hinting for keyboard activation
    they should work like buttons, Space and Enter should toggle
    them when they have focus.
@@ -7,37 +11,39 @@
    Keyboard: straight [x/y] left [x/y] right [x/y]
    MIDI: straight [x/y] left [x/y] right [x/y]
    Touch: straight [0/n/s/e/w] paddle [0/n/s/e/w]
+** [ ] make input Settings optionally copy output Settings
+   but provide a separate settings dialog if requested.
+** [ ] A Key which is a 'paddle' can have a Keyer which could be
+   'iambic-a', 'iambic-b', 'bug', 'ultimatic', or 'swiper'.
+** [ ] slant touch keys 
+** [ ] make an ultimatic keyer
+   have a iambic->ultimatic adaptor, rewires paddle events
+   to make an ultimatic.  Also does a lever
+** [ ] float touch keys over the rest of the interface, place at
+   edges or corners of the screen.
 ** [ ] scope: multichannel
 ** [ ] scope: trigger
 ** [ ] scope: continuous capture   
 ** [ ] decode microphone tone source
+ The microphone can be listening to a radio, so it can provide
+ radio audio in the earphones, and be tuned to decode into ascii.
+** [ ] allow other code tables.	
 ** [ ] decode microphone sung source
+   decode didadidadit as morse code
 ** [ ] webrtc tone sink
 ** [ ] webrtc tone source
 ** [ ] phone version requires a font to get Arrow chars
 ** [ ] without contentEditable the phone version doesn't
    bring up a keyboard to enter text.
-** [ ] pops in straight keying
-** [ ] ramp functions look wrong
-** [ ] ramp not zeroing oscillator
-** [ ] heavy jitter in dit length and spacing at 60WPM   
-** [ ] make input Settings optionally copy output Settings
-   but provide a separate settings dialog if requested.
 ** [ ] edit color of input text classes
 ** [ ] use material design color set
 ** [ ] use css variables to setup color set
-** [ ] A Key which is a 'paddle' can have a Keyer which could be
-   'iambic-a', 'iambic-b', 'bug', 'ultimatic', or 'swiper'.
-** [ ] slant touch keys 
-** [ ] float touch keys over the rest of the interface, place at
-   edges or corners of the screen.
-** [ ] make a bug keyer
-** [ ] make an ultimatic keyer
-   have a iambic->ultimatic adaptor, rewires paddle events
-   to make an ultimatic.  Also does a lever
 ** [ ] fix KeyerDetone
    should be a tuneable component, 
 ** [ ] Discovered chrome.socket.udp today, so an HL2 PWA is going to happen.
+** [x] make a bug keyer
+** [x] fix keyOut in vk6ph.
+** [x] pass timing parameters to iambic processors
 ** [x] run keyer logic in the sample stream
    straightKey changes the value of a constant node between 0 and 1
    left and right paddle keys change the values of constant nodes between 0 and 1

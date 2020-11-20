@@ -225,8 +225,6 @@ export class KeyerScope extends KeyerEvent {
     this.canvasCtx.stroke();
 
     // console.log(`draw completed ${nd} points in ${(this.currentTime-t0).toFixed(3)} seconds`);
-    if (this.running) {
-      this.after(this.holdStep, () => this.capture());
-    }
+    this.after(this.holdStep, () => { if (this.running) this.capture(); });
   }
 }
