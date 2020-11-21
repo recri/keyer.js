@@ -245,7 +245,7 @@ export class KeyerJs extends LitElement {
 
   set compensation(v) { this.mirrorParam('compensation', v); }
 
-  get compensation() { return this.keyer.compensation; }
+  get compensation() { return this.keyer.output.compensation; }
 
   set rise(v) { this.mirrorParam('rise', v); }
 
@@ -299,6 +299,47 @@ export class KeyerJs extends LitElement {
   set rightPaddleMidi(v) { this.keyer.input.rightPaddleMidi = v; }
 
   get rightPaddleMidi() { return this.keyer.input.rightPaddleMidi; }
+
+  // input keyer properties
+  set inputPitch(v) { this.keyer.input.pitch = v; }
+
+  get inputPitch() { return this.keyer.input.pitch; }
+
+  set inputGain(v) { this.keyer.input.gain = v; }
+  
+  get inputGain() { return Math.round(this.keyer.input.gain); }
+
+  set inputSpeed(v) { this.keyer.input.speed = v; }
+
+  get inputSpeed() { return this.keyer.input.speed; }
+
+  set inputWeight(v) { this.keyer.input.weight = v; }
+
+  get inputWeight() { return this.keyer.input.weight; }
+
+  set inputRatio(v) { this.keyer.input.ratio = v; }
+
+  get inputRatio() { return this.keyer.input.ratio; }
+
+  set inputCompensation(v) { this.keyer.input.compensation = v; }
+
+  get inputCompensation() { return this.keyer.input.compensation; }
+
+  set inputRise(v) { this.keyer.input.rise = v; }
+
+  get inputRise() { return this.keyer.input.rise; }
+
+  set inputFall(v) {  this.keyer.input.fall = v; }
+
+  get inputFall() { return this.keyer.input.fall; }
+
+  set inputEnvelope(v) { this.keyer.input.envelope = v; }
+
+  get inputEnvelope() { return this.keyer.input.envelope; }
+
+  set inputEnvelope2(v) { this.keyer.input.envelope2 = v; }
+
+  get inputEnvelope2() { return this.keyer.input.envelope2; }
 
   // scope properties
   set scopeRunning(v) { this.keyer.scope.running = v; }

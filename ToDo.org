@@ -1,5 +1,5 @@
 * To do list for keyer.js
-** [ ] rollup screws up the Processor.js source locations.
+** [ ] pan the tones to specified directions in stereo
 ** [ ] set up name: label object for keyers
 ** [ ] some controls are not getting defaulted at start
    scope number of buffers, paddle keyer, ...
@@ -41,6 +41,8 @@
 ** [ ] fix KeyerDetone
    should be a tuneable component, 
 ** [ ] Discovered chrome.socket.udp today, so an HL2 PWA is going to happen.
+** [x] rollup screws up the Processor.js source locations.
+   it had to be told to copy them where they needed to be.
 ** [x] reorganize Input Key:
    Paddle: swapped [t/f] keyer [a/b/c/d]
    Keyboard: straight [x/y] left [x/y] right [x/y]
