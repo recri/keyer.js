@@ -35,7 +35,7 @@ class KeyerASKProcessor extends AudioWorkletProcessor {
     this.rampIndex = 0;		// index into ramp values
     this.rise = Float32Array.of(0.0, 1.0); // square rise ramp
     this.fall = Float32Array.of(1.0, 0.0); // square fall ramp
-    this.hold = Math.max(this.rise.length, this.fall.length);
+    this.hold = 1;			   // sample hold after ramp
     this.port.onmessage = (e) => this.onmessage(e);
     this.port.onmessageerror = (e) => this.onmessageerror(e);
     this.zeroes = new Float32Array(128);
@@ -43,13 +43,13 @@ class KeyerASKProcessor extends AudioWorkletProcessor {
   
   onmessage(e) {
     // console.log(`KeyerASKProcessor message ${e}`);
-    const [message, ramp] = e.data;
+    const [message, data] = e.data;
     switch (message) {
-    case 'rise': this.rise = ramp; break;
-    case 'fall': this.fall = ramp; break;
+    case 'rise': this.rise = data; break;
+    case 'fall': this.fall = data; break;
+    // case 'hold': this.hold = Math.floor(data * sampleRate); break;
     default: console.log(`KeyerASKProcessor message? ${e.data}`); break;
     }
-    this.hold = Math.max(this.rise.length, this.fall.length);
   }
   
   onmessageerror(e) {
@@ -86,7 +86,7 @@ class KeyerASKProcessor extends AudioWorkletProcessor {
       } else {
 	output[i] = this.keyOut;
 	if (this.holding) {
-	  this.holding = (this.holdCount -= 1) <= 0;
+	  this.holding = (this.holdCount -= 1) >= 0;
 	} else if (this.keyOn !== (input[i] >= 1)) {
 	  // transition
 	  this.keyOn = ! this.keyOn;

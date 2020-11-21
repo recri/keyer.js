@@ -99,10 +99,13 @@ const toggleOnOff = (onOff) => isOnOff(onOff) ? ! onOff : console.log(`toggleOnO
 // always force default values, because I don't trust what's stored, yet
 const alwaysForceDefault = false;
 
+// parse JSON and return undefined on error
+const JSONparse = (value) => { try { return JSON.parse(value); } catch(e) { return undefined; } }
+
 // grab a value from localStorage or return the default value
 const controlDefault = (control, defaultValue, forceDefault) => {
-  const value = localStorage[control] === undefined || typeof(localStorage[control]) === 'undefined' || forceDefault || alwaysForceDefault ?
-	defaultValue : JSON.parse(localStorage[control]);
+  const localValue = JSONparse(localStorage[control])
+  const value = forceDefault || alwaysForceDefault || localValue === undefined ? defaultValue : localValue;
   localStorage[control] = JSON.stringify(value);
   return value;
 }
