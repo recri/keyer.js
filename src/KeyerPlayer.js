@@ -39,7 +39,7 @@ export class KeyerPlayer extends KeyerEvent {
     this.weight = 50;
     this.ratio = 50;
     this.compensation = 0;
-    this.wpm = 20;
+    this.speed = 20;
     
     // initialize the key
     this.key = this.context.createConstantSource();
@@ -104,19 +104,19 @@ export class KeyerPlayer extends KeyerEvent {
 
   get envelopes() { return this.ask.ramps; }
 
-  set wpm(v) { this._wpm = v; this.updateTiming(); }
+  set speed(v) { this.updateTiming('_speed', v); }
 
-  get wpm() { return this._wpm; }
+  get speed() { return this._speed; }
 
-  set weight(v) { this._weight = v; this.updateTiming(); }
+  set weight(v) { this.updateTiming('_weight', v); }
 
   get weight() { return this._weight; }
 
-  set ratio(v) { this._ratio = v; this.updateTiming(); }
+  set ratio(v) { this.updateTiming('_ratio', v); }
 
   get ratio() { return this._ratio; }
   
-  set compensation(v) { this._compensation = v; this.updateTiming(); }
+  set compensation(v) { this.updateTiming('_compensation', v); }
 
   get compensation() { return this._compensation; }
 
@@ -124,8 +124,10 @@ export class KeyerPlayer extends KeyerEvent {
 
   get cursor() { this._cursor = Math.max(this._cursor, this.currentTime); return this._cursor; }
 
-  updateTiming() {
-    const dit = 60.0 / (this.wpm * 50); // seconds/dit
+  updateTiming(control, value) {
+    // console.log(`updateTiming this[${control}] = ${value}`);
+    this[control] = value;
+    const dit = 60.0 / (this._speed * 50); // seconds/dit
     const microsPerDit = dit * 1e6;
     const r = (this._ratio-50)/100.0;
     const w = (this._weight-50)/100.0;

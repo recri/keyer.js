@@ -31,6 +31,7 @@ export class KeyerInput extends KeyerPlayer {
     this.right.start();
     
     this.keyerList = [ 'none', 'nd7pa-a', 'nd7pa-b', 'vk6ph-a', 'vk6ph-b', 'vk6ph-s' ]
+    this.keyer = 'nd7pa-b';
     this.paddle = null;
 
     this.adaptorList = [ 'ultimatic' ];
@@ -76,7 +77,7 @@ export class KeyerInput extends KeyerPlayer {
     case 'vk6ph-s': this.paddle = this.createPaddleWorklet('keyer-paddle-vk6ph-processor', 'S'); break;
     default:	    console.log(`invalid keyer ${keyer}`); return;
     }
-    this._keyerName = keyer;
+    this._keyer = keyer;
     this.left.connect(this.paddle, 0, this.swapped ? 1 : 0);
     this.right.connect(this.paddle, 0, this.swapped ? 0 : 1);
     this.paddle.connect(this.ask);
