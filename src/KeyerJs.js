@@ -26,13 +26,13 @@ import { Keyer } from './Keyer.js';
 // default values for properties
 const defaults = {
   // properties that are local to this
-  mirrorOutputParams: true, 
   requestedSampleRate: '48000',
   qrq: false,
   displaySettings: true,
   displayOutput: true,
   displayAdvanced: false,
   displayInputKey: false,
+  displayManualAdvanced: false,
   displayMisc: false,
   displayScope: false,
   displayStatus: true,
@@ -40,7 +40,7 @@ const defaults = {
   displayLicense: false,
   displayTouchStraight: false,
   displayTouchPaddle: false,
-  // properties that delegate to this.keyer.output and this.keyer.input
+  // properties that delegate to this.keyer.output
   pitch: 700,
   gain: -26,
   weight: 50,
@@ -60,6 +60,17 @@ const defaults = {
   rightPaddleKey: 'ControlRight',
   leftPaddleMidi: 'None',
   rightPaddleMidi: 'None',
+  // properties that delegate to this.keyer.input
+  inputPitch: 700,
+  inputGain: -26,
+  inputWeight: 50,
+  inputRatio: 50,
+  inputCompensation: 0,
+  inputRise: 4,
+  inputFall: 4,
+  inputEnvelope: 'hann',
+  inputEnvelope2: 'rectangular',
+  inputSpeed: 20,
   // properties that delegate to this.keyer.scope
   scopeTarget: 'input-output',
   scopeTimeScale: '10ms/div',
@@ -111,21 +122,8 @@ const controlDefault = (control, defaultValue, forceDefault) => {
 }
 const controlSave = (control, newValue) => { localStorage[control] = JSON.stringify(newValue); }
 
-// generate a list of <option>name</option> html templates
-const templateOptions = (names, selected) => names ? names.map(x => html`<option value=${x} ?selected=${x === selected}>${x}</option>`) : html``;
-
-// generate a list of <input type="checkbox"></input> html templates
-// const templateAlternates = (names, selected, handler) => names.map(x => {
-//  const isSelected = selected.includes(x);
-//  const checkBox = isSelected ? checkedCheckBox : uncheckedCheckBox;
-//  return html`<button role="switch" aria-checked=${isSelected} @click=${e => handler(e,x)}>${checkBox} ${x}</button>`;
-// });
-
 // list of left/right qualified shift keys
 const shiftKeys = ['None','ShiftLeft','ControlLeft','AltLeft','AltRight','ControlRight','ShiftRight'];
-
-// generate a list of shift key <option>name</option> html templates
-const shiftKeyOptions = (selected) => templateOptions(shiftKeys, selected);
 const isShiftKey = (value) => shiftKeys.includes(value);
 
 // list of sampleRates
@@ -151,7 +149,6 @@ export class KeyerJs extends LitElement {
       title: { type: String },
       page: { type: String },
       // properties of keyer output
-      // possibly mirrored to keyer input 
       pitch: { type: Number },
       gain: { type: Number },
       speed: { type: Number },
@@ -171,6 +168,17 @@ export class KeyerJs extends LitElement {
       straightMidi: { type: String },
       leftPaddleMidi: { type: String },
       rightPaddleMidi: { type: String },
+      // more propeties of keyer.input
+      inputPitch: { type: Number },
+      inputGain: { type: Number },
+      inputSpeed: { type: Number },
+      inputWeight: { type: Number },
+      inputRatio: { type: Number },
+      inputCompensation: { type: Number },
+      inputRise: { type: Number },
+      inputFall: { type: Number },
+      inputEnvelope: { type: String },
+      inputEnvelope2: { type: String },
       // miscellaneous
       requestedSampleRate: { type: Number },
       // properties of scope
@@ -189,7 +197,6 @@ export class KeyerJs extends LitElement {
       baseLatency: { type: Number },
       // properties that are local
       qrq: { type: Boolean },
-      mirrorOutputParams: { type: Boolean },
       displayTouchStraight: { type: Boolean },
       displayTouchPaddle: { type: Boolean },
       displaySettings: { type: Boolean },
@@ -197,6 +204,7 @@ export class KeyerJs extends LitElement {
       displayOutput: { type: Boolean },
       displayAdvanced: { type: Boolean },
       displayInputKey: { type: Boolean },
+      displayManualAdvanced: { type: Boolean },
       displayMisc: { type: Boolean },
       displayLicense: { type: Boolean },
       displayScope: { type: Boolean },
@@ -214,55 +222,44 @@ export class KeyerJs extends LitElement {
     };
   }
 
-  // mirror output params to input params or not
-  mirrorParam(control, v) {
-    this.keyer.output[control] = v;
-    // console.log(`mirror ${control} ${v}`);
-    if (this.mirrorOutputParams) {
-      // console.log(`mirror ${control} ${v} to input`);
-      this.keyer.input[control] = v;
-    }
-  }
-  
   // keyer properties for output
-  // possibly mirrored to input
-  set pitch(v) { this.mirrorParam('pitch', v); }
+  set pitch(v) { this.keyer.output.pitch = v; }
 
   get pitch() { return this.keyer.output.pitch; }
 
-  set gain(v) { this.mirrorParam('gain', v); }
+  set gain(v) { this.keyer.output.gain = v; }
   
   get gain() { return Math.round(this.keyer.output.gain); }
 
-  set speed(v) { this.mirrorParam('speed', v); }
+  set speed(v) { this.keyer.output.speed = v; }
 
   get speed() { return this.keyer.output.speed; }
 
-  set weight(v) { this.mirrorParam('weight', v); }
+  set weight(v) { this.keyer.output.weight = v; }
 
   get weight() { return this.keyer.output.weight; }
 
-  set ratio(v) { this.mirrorParam('ratio', v); }
+  set ratio(v) { this.keyer.output.ratio = v; }
 
   get ratio() { return this.keyer.output.ratio; }
 
-  set compensation(v) { this.mirrorParam('compensation', v); }
+  set compensation(v) { this.keyer.output.compensation = v; }
 
   get compensation() { return this.keyer.output.compensation; }
 
-  set rise(v) { this.mirrorParam('rise', v); }
+  set rise(v) { this.keyer.output.rise = v; }
 
   get rise() { return this.keyer.output.rise; }
 
-  set fall(v) {  this.mirrorParam('fall', v); }
+  set fall(v) {  this.keyer.output.fall = v; }
 
   get fall() { return this.keyer.output.fall; }
 
-  set envelope(v) { this.mirrorParam('envelope', v); }
+  set envelope(v) { this.keyer.output.envelope = v; }
 
   get envelope() { return this.keyer.output.envelope; }
 
-  set envelope2(v) { this.mirrorParam('envelope2', v); }
+  set envelope2(v) { this.keyer.output.envelope2 = v; }
 
   get envelope2() { return this.keyer.output.envelope2; }
 
@@ -612,31 +609,36 @@ export class KeyerJs extends LitElement {
     this[control] = toggleOnOff(this[control]);
     controlSave(control, this[control]);
     this.requestUpdate(control, oldv);
-  }
-
-  toggleQrq() {
-    // console.log(`toggleQrq qrq ${this.qrq}`);
-    this.controlToggle('qrq');
-    if (isOn(this.qrq)) {
-      this.speed = Math.max(qrqMin, qrqStep * Math.floor(this.speed/qrqStep));
-    } else {
-      this.speed = Math.min(this.speed, qrsMax);
+    switch (control) {
+    case 'qrq':
+      if (isOn(this.qrq)) {
+	this.speed = Math.max(qrqMin, qrqStep * Math.floor(this.speed/qrqStep));
+      } else {
+	this.speed = Math.min(this.speed, qrsMax);
+      }
+      break;
+    default:
+      break;
     }
   }
 
   controlMenuIndicator(control) { return isOff(this[control]) ? hiddenMenuIndicator : shownMenuIndicator; }
 
+  controlGet(control) { return this[control]; }
+  
   controlSelect(control, e) { 
     // console.log(`controlSelect('${control}', ${e.target.value})`);
     const oldv = this[control];
     this[control] = e.target.value;
     controlSave(control, e.target.value);
     this.requestUpdate(control, oldv);
-  }
-  
-  selectRequestedSampleRate(e) { 
-    this.controlSelect('requestedSampleRate', e);
-    this.start();
+    switch (control) {
+    case 'requestedSampleRate':
+      this.start();
+      break;
+    default:
+      break;
+    }
   }
   
   scopeResize() {
@@ -661,31 +663,34 @@ export class KeyerJs extends LitElement {
         margin: 0;
         text-align: center;
       }
-
+      .h1 { font-size: 2em; margin: .33em 0 }
+      .h2 { font-size: 1.5em; margin: .38em 0 }
+      .h3 { font-size: 1.17em; margin: .42em 0 }
+      .h5 { font-size: .83em; margin: .75em 0 }
+      .h6 { font-size: .75em; margin: .84em 0 }
+      .h1, .h2, .h3, .h4, .h5, .h6 { 
+	font-weight: bolder;
+	width: 50%;
+      }
       main {
         flex-grow: 1;
       }
-
       .logo > svg {
         margin-left: 5%;
         max-width: 90%;
         margin-top: 16px;
       }
-
       button, select {
         font-size: calc(10px + 2vmin);
       }
-
       div.panel {
 	margin: auto;
 	width: 90%;
       }
-
       div.subpanel {
 	margin: auto;
 	width: 100%;
       }
-
       div.keyboard {
         display: inline-block;
         padding: 10px;
@@ -700,7 +705,9 @@ export class KeyerJs extends LitElement {
         border: 1px solid #9e9e9e;
         color: #000000;
       }
-
+      div.group {
+	display: inline-block;
+      }
       .sent {
         color: #888;
       }
@@ -759,6 +766,45 @@ export class KeyerJs extends LitElement {
     `;
   }
 
+  sliderRender(control, min, max, step, label, unit) {
+    return html`
+	  <input
+	    type="range"
+	    id="${control}"
+	    name="${control}" 
+	    min="${min}"
+	    max="${max}"
+	    step="${step}"
+	    .value=${this[control]}
+	    @input=${(e) => this.controlSelect(control, e)}>
+	  <label for="${control}">${label} ${this[control]} (${unit})</label>`;
+  }
+
+  optionsRender(control, values, label) {
+    const options = values ? 
+	  values.map(x => html`<option .value=${x} ?selected=${x === this[control]}>${x}</option>`) :
+	  html``;
+    return html`
+	<label for="${control}">${label}
+	  <select
+	    name="${control}"
+	    .value=${this[control]} 
+	    @change=${(e) => this.controlSelect(control, e)}>
+	      ${options}
+	  </select>
+	</label>`;
+  }
+  
+  toggleRender(control, onLabel, offLabel) {
+    return html`
+	  <button
+	    role="switch" 
+	    aria-checked=${this[control]} 
+	    @click=${() => this.controlToggle(control)}>
+	    <span>${this[control] ? onLabel : offLabel}</span>
+	  </button>`;
+  }
+  
   touchKeyRender() {
     return html``;
 /*
@@ -802,104 +848,68 @@ export class KeyerJs extends LitElement {
 
     case 'displayOutput': 
       return html`
-	<input type="range" id="speed" name="speed" min=${isOn(this.qrq) ? qrqMin : qrsMin} max=${isOn(this.qrq) ? qrqMax : qrsMax}
-	  .value=${this.speed} step=${isOn(this.qrq) ? qrqStep : qrsStep} @input=${(e) => this.controlSelect('speed', e)}>
-	<label for="speed">Speed ${this.speed} (WPM)</label>
-	<button role="switch" aria-checked=${isOn(this.qrq)} @click=${this.toggleQrq}>
-	  <span>${isOn(this.qrq) ? 'QRQ' : 'QRS'}</span>
-	</button>
-	<input type="range" id="gain" name="gain" min="-50" max="10" .value=${this.gain} step="1" @input=${(e) => this.controlSelect('gain', e)}>
-	<label for="gain">Gain ${this.gain} (dB)</label>
-	<input type="range" id="pitch" name="pitch" min="250" max="2000" .value=${this.pitch} step="1" @input=${(e) => this.controlSelect('pitch', e)}>
-	<label for="pitch">Pitch ${this.pitch} (Hz)</label>
+	<div class="group">${isOn(this.qrq) ? 
+	  this.sliderRender('speed', qrqMin, qrqMax,  qrqStep, 'Speed', 'WPM') :
+	  this.sliderRender('speed', qrsMin, qrsMax,  qrsStep, 'Speed', 'WPM')}</div>
+	<div class="group">${this.toggleRender('qrq', 'QRQ', 'QRS')}</div>
+	<div class="group">${this.sliderRender('gain', -50, 10, 1, 'Gain', 'dB')}</div>
+	<div class="group">${this.sliderRender('pitch', 250, 2000, 1, 'Pitch', 'Hz')}</div>
+	<div class="subpanel">${this.headerRender(4, 'displayAdvanced', 'More Options')}</div>
+	<div class="subpanel">${this.displayRender('displayAdvanced')}</div>
 	`;
 
     case 'displayAdvanced':
-      return  html`
-	<input type="range" id="weight" name="weight" min="25" max="75"
-	  .value=${this.weight} step="0.1"
-	  @input=${(e) => this.controlSelect('weight', e)}>
-	<label for="weight">Weight ${this.weight} (%)</label>
-	<input type="range" id="ratio" name="ratio" min="25" max="75"
-	  .value=${this.ratio} step="0.1"
-	  @input=${(e) => this.controlSelect('ratio', e)}>
-	<label for="ratio">Ratio ${this.ratio} (%)</label>
-	<br>
-	<input type="range" id="compensation" name="compensation" min="-15" max="15"
-	  .value=${this.compensation} step="0.1"
-	  @input=${(e) => this.controlSelect('compensation', e)}>
-	<label for="compensation">Compensation ${this.compensation} (%)</label>
-	<br>
-	<input type="range" id="rise" name="rise" min="1" max="10" 
-	  .value=${this.rise} step="0.1"
-	  @input=${(e) => this.controlSelect('rise', e)}>
-	<label for="rise">Rise ${this.rise} (ms)</label>
-	<input type="range" id="fall" name="fall" min="1" max="10"
-	  .value=${this.fall} step="0.1"
-	  @input=${(e) => this.controlSelect('fall', e)}>
-	<label for="fall">Fall ${this.fall} (ms)</label>
-	<br>
-	<label>Envelope: 
-	  <select .value=${this.envelope} @change=${(e) => this.controlSelect('envelope', e)}>
-	    ${templateOptions(this.envelopes, this.envelope)}
-	  </select> * 
-	  <select .value=${this.envelope2} @change=${(e) => this.controlSelect('envelope2', e)}>
-	    ${templateOptions(this.envelopes, this.envelope2)}
-	  </select>
-	</label>
-	`;
+      return html`
+	<div class="group">${this.sliderRender('weight', 25, 75, 0.1, 'Weight', '%')}</div>
+	<div class="group">${this.sliderRender('ratio', 25, 75, 0.1, 'Ratio', '%')}</div>
+	<div class="group">${this.sliderRender('compensation', -15, 15, 0.1, 'Compensation', '%')}</div>
+	<br/>
+	<div class="group">${this.sliderRender('rise', 1, 10, 0.1, 'Rise', 'ms')}</div>
+	<div class="group">${this.sliderRender('fall', 1, 10, 0.1, 'Fall', 'ms')}</div>
+	<br/>
+	<div class="group"><label>Envelope: 
+	  ${this.optionsRender('envelope', this.envelopes, '')} * ${this.optionsRender('envelope2', this.envelopes, '')}
+	</label></div>`;
 
     case 'displayInputKey':
       return html`
-	<div>Paddles:
-	  <label>Keyer:
-            <select .value=${this.paddleKeyer} @change=${(e) => this.controlSelect('paddleKeyer', e)}>
-	      ${templateOptions(this.paddleKeyers, this.paddleKeyer)}
-	    </select>
-	  </label>
-	  <label>Swap: 
-            <button role="switch" aria-checked=${isOn(this.swapped)} @click=${() => this.controlToggle('swapped')}>
-	      <span>${html`${this.swapped}`}</span>
-	    </button>
-	  </label>
+	<div class="group">Paddles:
+	  <div class="group">${this.optionsRender('paddleKeyer', this.paddleKeyers, 'Keyer: ')}</div>
+	  <div class="group">${this.toggleRender('swapped', 'Swapped', 'Not Swapped')}</div>
 	</div>
-	<div>Keyboard:
-	  <label>Straight:
-            <select .value=${this.straightKey} @change=${(e) => this.controlSelect('straightKey', e)}
-		>${shiftKeyOptions(this.straightKey)}</select>
-	  </label>
-	  <label>Left:
-            <select .value=${this.leftPaddleKey} @change=${(e) => this.controlSelect('leftPaddleKey', e)}
-		>${shiftKeyOptions(this.leftPaddleKey)}</select>
-	  </label>
-	  <label>Right:
-            <select .value=${this.rightPaddleKey} @change=${(e) => this.controlSelect('rightPaddleKey', e)}
-		>${shiftKeyOptions(this.rightPaddleKey)}</select>
-	  </label>
+	<div class="group">Keyboard:
+	  <div class="group">${this.optionsRender('straightKey', shiftKeys, 'Straight: ')}</div>
+	  <div class="group">${this.optionsRender('leftPaddleKey', shiftKeys, 'Left: ')}</div>
+	  <div class="group">${this.optionsRender('rightPaddleKey', shiftKeys, 'Right: ')}</div>
         </div>
-	<div>MIDI:	
-	  <label>Straight:
-            <select .value=${this.straightMidi} @change=${(e) => this.controlSelect('straightMidi', e)}
-		>${templateOptions(this.midiNotes, this.straightMidi)}</select>
-	  </label>
-	  <label>Left:
-            <select .value=${this.leftPaddleMidi} @change=${(e) => this.controlSelect('leftPaddleMidi', e)}
-		> ${templateOptions(this.midiNotes, this.leftPaddleMidi)}</select>
-	  </label>
-	  <label>Right:
-            <select .value=${this.rightPaddleMidi} @change=${(e) => this.controlSelect('rightPaddleMidi', e)}
-		>${templateOptions(this.midiNotes, this.rightPaddleMidi)}</select>
-	  </label>
+	<div class="group">MIDI:	
+	  <div class="group">${this.optionsRender('straightMidi', this.midiNotes, 'Straight: ')}</div>
+	  <div class="group">${this.optionsRender('leftPaddleMidi', this.midiNotes, 'Left: ')}</div>
+	  <div class="group">${this.optionsRender('rightPaddleMidi', this.midiNotes, 'Right: ')}</div>
         </div>
+	<div class="group">${this.sliderRender('inputSpeed', qrsMin, qrsMax,  qrsStep, 'Speed', 'WPM')}</div>
+	<div class="group">${this.sliderRender('inputGain', -50, 10, 1, 'Gain', 'dB')}</div>
+	<div class="group">${this.sliderRender('inputPitch', 250, 2000, 1, 'Pitch', 'Hz')}</div>
+	<div class="subpanel">${this.headerRender(4, 'displayManualAdvanced', 'More Options')}</div>
+	<div class="subpanel">${this.displayRender('displayManualAdvanced')}</div>
 	`;
+
+    case 'displayManualAdvanced':
+      return html`
+	<div class="group">${this.sliderRender('inputWeight', 25, 75, 0.1, 'Weight', '%')}</div>
+	<div class="group">${this.sliderRender('inputRatio', 25, 75, 0.1, 'Ratio', '%')}</div>
+	<div class="group">${this.sliderRender('inputCompensation', -15, 15, 0.1, 'Compensation', '%')}</div>
+	<br/>
+	<div class="group">${this.sliderRender('inputRise', 1, 10, 0.1, 'Rise', 'ms')}</div>
+	<div class="group">${this.sliderRender('inputFall', 1, 10, 0.1, 'Fall', 'ms')}</div>
+	<br/>
+	<div class="group"><label>Envelope: 
+	  ${this.optionsRender('inputEnvelope', this.envelopes, '')} * ${this.optionsRender('inputEnvelope2', this.envelopes, '')}
+	</label></div>`;
 
     case 'displayMisc':
       return html`
-	<label>Requested sample rate:
-          <select .value=${this.requestedSampleRate} @change=${this.selectRequestedSampleRate}>
-	    ${templateOptions(sampleRates, this.requestedSampleRate)}
-	  </select>
-	</label>
+	<div class="group">${this.optionsRender('requestedSampleRate', sampleRates, 'Requested sample rate:')}</div>
 	<br/>
 	<label>Reset default values: 
 	  <button @click=${() => this.controlSetDefaultValues(true)}>Reset</button>
@@ -908,51 +918,24 @@ export class KeyerJs extends LitElement {
 
     case 'displaySettings':
       return html`
-	<div class="subpanel">${this.section3Render('displayOutput', 'Keyer Output')}</div>
+	<div class="subpanel">${this.headerRender(3, 'displayOutput', 'Keyboard Keyer')}</div>
 	<div class="subpanel">${this.displayRender('displayOutput')}</div>
-	<div class="subpanel">${this.section3Render('displayAdvanced', 'More Keyer Output')}</div>
-	<div class="subpanel">${this.displayRender('displayAdvanced')}</div>
-	<div class="subpanel">${this.section3Render('displayInputKey', 'Keyer Input')}</div>
+	<div class="subpanel">${this.headerRender(3, 'displayInputKey', 'Manual Keyer')}</div>
 	<div class="subpanel">${this.displayRender('displayInputKey')}</div>
-	<div class="subpanel">${this.section3Render('displayMisc', 'More Options')}</div>
+	<div class="subpanel">${this.headerRender(3, 'displayMisc', 'More Options')}</div>
 	<div class="subpanel">${this.displayRender('displayMisc')}</div>
 	`;
 
     case 'displayScope':
       return html`
 	<div class="scope"><canvas @resize=${this.scopeResize}></canvas></div>
-	<label>Time:
-          <select .value=${this.scopeTimeScale} @change=${(e) => this.controlSelect('scopeTimeScale', e)}>
-	    ${templateOptions(this.scopeTimeScales, this.scopeTimeScale)}
-	  </select>
-	</label>
-	<label>Vertical:
-          <select .value=${this.scopeVerticalScale} @change=${(e) => this.controlSelect('scopeVerticalScale', e)}>
-	    ${templateOptions(this.scopeVerticalScales, this.scopeVerticalScale)}
-	  </select>
-	</label>
-	<button role="switch" aria-checked=${isOn(this.scopeRunning)} 
-	  @click=${() => this.controlToggle('scopeRunning')}>${isOn(this.scopeRunning) ? html`Stop` : html`Run`}</button>
-	<div>
-	  <input type="range" name="scopetimeoffset" min="0" max="100" step="0.1" 
-	    .value=${this.scopeTimeOffset} @input=${(e) => this.controlSelect('scopeTimeOffset', e)}>
-	  <label for="scopetimeoffset">Time offset ${this.scopeTimeOffset} (%)</label>
-	</div>
-	<label>Target:
-          <select .value=${this.scopeTarget} @change=${(e) => this.controlSelect('scopeTarget', e)}>
-	    ${templateOptions(this.scopeTargets, this.scopeTarget)}
-	  </select>
-	</label>
-	<label>Buffers:
-          <select .value=${this.scopeLength} @change=${(e) => this.controlSelect('scopeLength', e)}>
-	    ${templateOptions(this.scopeLengths, this.scopeLength)}
-	  </select>
-	</label>
-	<label>Hold time:
-          <select .value=${this.scopeHoldTime} @change=${(e) => this.controlSelect('scopeHoldTime', e)}>
-	    ${templateOptions(this.scopeHoldTimes, this.scopeHoldTime)}
-	  </select>
-	</label>
+	<div class="group">${this.optionsRender('scopeTimeScale', this.scopeTimeScales, 'Time:')}</div>
+	<div class="group">${this.optionsRender('scopeVerticalScale', this.scopeVerticalScales, 'Vertical:')}</div>
+	<div class="group">${this.toggleRender('scopeRunning', 'Stop', 'Run')}</div>
+	<div class="group">${this.sliderRender('scopeTimeOffset', 0, 100, 0.1, 'Time offset', '%')}</div>
+	<div class="group">${this.optionsRender('scopeTarget', this.scopeTargets, 'Target:')}</div>
+	<div class="group">${this.optionsRender('scopeLength', this.scopeLengths, 'Buffers:')}</div>
+	<div class="group">${this.optionsRender('scopeHoldTime', this.scopeHoldTimes, 'Hold time:')}</div>
 	`;
 
     case 'displayStatus':
@@ -1008,19 +991,41 @@ export class KeyerJs extends LitElement {
     }
   }
   
-  section2Render(control, label) {
-    const l = html`${label}`;
-    return html`<h2 tabindex="0" @click=${() => this.controlToggle(control)}
-	>${this.controlMenuIndicator(control)} ${l}</h2>`;
+  headerRender(level, control, label) {
+    return html`
+	<button class="h${level}"
+	  @click=${() => this.controlToggle(control)}>
+	    ${this.controlMenuIndicator(control)} ${label}
+	</button}>`;
+/*    
+    switch (level) {
+    case 2:
+      return html`
+	<h2 
+	  tabindex="0" 
+	  @click=${() => this.controlToggle(control)}>
+	    ${this.controlMenuIndicator(control)} ${label}
+	</h2}>`;
+    case 3:
+      return html`
+	<h3 
+	  tabindex="0" 
+	  @click=${() => this.controlToggle(control)}>
+	    ${this.controlMenuIndicator(control)} ${label}
+	</h3}>`;
+    case 4:
+      return html`
+	<h4 
+	  tabindex="0" 
+	  @click=${() => this.controlToggle(control)}>
+	    ${this.controlMenuIndicator(control)} ${label}
+	</h4}>`;
+    }
+    return html`<h1>headerRender level=${level} isn't written</h1>`;
+*/
   }
-
-  section3Render(control, label) {
-    const l = html`${label}`;
-    return html`<h3 tabindex="0" @click=${() => this.controlToggle(control)}
-	>${this.controlMenuIndicator(control)} ${l}</h3>`;
-  }
-
-  mainRender() {
+  
+  renderMain() {
     return html`
         <div class="keyboard" tabindex="0" @keydown=${this.ttyKeydown} @focus=${this.onfocus} @blur=${this.onblur}>${this.content}</div>
         <div class="panel">
@@ -1028,22 +1033,22 @@ export class KeyerJs extends LitElement {
 	  <button @click=${this.clear}><span>Clear</span></button>
 	  <button @click=${this.cancel}><span>Cancel</span></button>
 	</div>
-	<div class="panel">${this.section2Render('displaySettings', 'Settings')}</div>
+	<div class="panel">${this.headerRender(2, 'displaySettings', 'Settings')}</div>
 	<div class="panel">${this.displayRender('displaySettings')}</div>
-	<div class="panel">${this.section2Render('displayScope', 'Scope')}</div>
+	<div class="panel">${this.headerRender(2, 'displayScope', 'Scope')}</div>
 	<div class="panel">${this.displayRender('displayScope')}</div>
-	<div class="panel">${this.section2Render('displayStatus', 'Status')}</div>
+	<div class="panel">${this.headerRender(2, 'displayStatus', 'Status')}</div>
 	<div class="panel">${this.displayRender('displayStatus')}</div>
-	<div class="panel">${this.section2Render('displayAbout', 'About')}</div>
+	<div class="panel">${this.headerRender(2, 'displayAbout', 'About')}</div>
 	<div class="panel">${this.displayRender('displayAbout')}</div>
-	<div class="panel">${this.section2Render('displayLicense', 'License')}</div>
+	<div class="panel">${this.headerRender(2, 'displayLicense', 'License')}</div>
 	<div class="panel">${this.displayRender('displayLicense')}</div>
 	<div class="touch straight">${this.displayRender('displayTouchStraight')}</div>
 	<div class="touch paddle">${this.displayRender('displayTouchPaddle')}</div>
 	`;
   }
   
-  startupRender() {
+  renderStartup() {
     return html`
         <div>
           <button class="start" @click=${this.start}>
@@ -1059,7 +1064,7 @@ export class KeyerJs extends LitElement {
       <main>
         <div class="logo">${keyerLogo}</div>
         <div><h1>keyer.js</h1></div>
-	${this.keyer === null ? this.startupRender() : this.mainRender()}
+	${this.keyer === null ? this.renderStartup() : this.renderMain()}
       </main>
 
       <p class="app-footer">
