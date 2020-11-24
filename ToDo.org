@@ -1,4 +1,5 @@
 * To do list for keyer.js
+** [ ] light/dark themes
 ** [ ] pan the tones to specified directions in stereo
 ** [ ] set up name: label object for keyers
 ** [ ] some controls are not getting defaulted at start
@@ -7,22 +8,25 @@
 ** [ ] ramp functions look wrong
 ** [ ] ramp not zeroing oscillator
 ** [ ] heavy jitter in dit length and spacing at 60WPM   
-** [ ] menu headers need more hinting for keyboard activation
+** [x] menu headers need more hinting for keyboard activation
    they should work like buttons, Space and Enter should toggle
-   them when they have focus.
-** [ ] make input Settings optionally copy output Settings
+   them when they have focus.  Made them buttons with <h?> 
+   scaling classes.
+** [x] make input Settings optionally copy output Settings
    but provide a separate settings dialog if requested.
+   Provided separate settings dialog.  No mirroring.
 ** [ ] A Key which is a 'paddle' can have a Keyer which could be
    'iambic-a', 'iambic-b', 'bug', 'ultimatic', or 'swiper'.
 ** [ ] slant touch keys 
 ** [ ] make an ultimatic keyer
    have a iambic->ultimatic adaptor, rewires paddle events
-   to make an ultimatic.  Also does a lever
+   to make an ultimatic.  Also does a single lever conversion
 ** [ ] float touch keys over the rest of the interface, place at
    edges or corners of the screen.
 ** [ ] scope: multichannel
 ** [ ] scope: trigger
 ** [ ] scope: continuous capture   
+** [ ] enable microphone source
 ** [ ] decode microphone tone source
  The microphone can be listening to a radio, so it can provide
  radio audio in the earphones, and be tuned to decode into ascii.
@@ -41,6 +45,14 @@
 ** [ ] fix KeyerDetone
    should be a tuneable component, 
 ** [ ] Discovered chrome.socket.udp today, so an HL2 PWA is going to happen.
+** [ ] web audio accepts sample rates of 48000, 96000, 192000, and 384000.
+** [x] menu headers need more hinting for keyboard activation
+   they should work like buttons, Space and Enter should toggle
+   them when they have focus.  Made them buttons with <h?> 
+   scaling classes.
+** [x] make input Settings optionally copy output Settings
+   but provide a separate settings dialog if requested.
+   Provided separate settings dialog.  No mirroring.
 ** [x] rollup screws up the Processor.js source locations.
    it had to be told to copy them where they needed to be.
 ** [x] reorganize Input Key:

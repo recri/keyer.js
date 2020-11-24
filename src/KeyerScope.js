@@ -15,25 +15,60 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 // 
+
+// scope. should be a web component.
+// <keyer-scope ...>
+//  <keyer-scope-source ...>...</keyer-scope-source>
+//  ...
+//  <keyer-scope-channel ...>...</keyer-scope-channel>
+//  ...
+// </keyer-scope>
+//
 import { KeyerEvent } from './KeyerEvent.js';
+import { KeyerScopeSource } from './KeyerScopeSource.js';
+import { KeyerScopeChannel } from './KeyerScopeChannel.js';
 
 export class KeyerScope extends KeyerEvent {
 
+  addSource(name, node, asByte) { this._sources[name] = new KeyerScopeSource(name, node, asByte); }
+
+  addChannel(source, scale, offset, color, size) { 
+    this._nchannels += 1;
+    this._channels[this._nchannels] = new KeyerScopeChannel(this, source, scale, offset, color, size); 
+  }
+
   constructor(context) {
     super(context);
-    this.enabled = false;	// we are not displayed on screen
-    this.sampling = false;	// we are not capturing samples
-    this.redraw = false;	// we do not require a redraw
-    this.running = false;	// we do not start running
-    this.analyser = this.context.createAnalyser();
-    this.size = 2**15;
-    this.analyser.fftSize = this.size;
-    this.holdSteps = {
+    this._enabled = false;	// not displayed
+    this._running = false;	// not capturing and plotting
+    this._sources = {};		// sources available for channels
+    this.addSource('none', null, true); // the nil source
+    this._channels = {};		// channels available for capture
+    this._nchannels = 0;
+    this.addChannel('none', '200mFS/div', 0.25, "rgb(0,0,0)", 2**12);		// channel 1
+    this.addChannel('none', '200mFS/div', 0.25, "rgb(0,0,0)", 2**12);		// channel 2
+
+    // this could be autoscaled according to the timeScale
+    this._sizes = { '512': 2**9, '1k': 2**10, '2k': 2**11, '4k': 2**12, '8k': 2**13, '16k': 2**14, '32k': 2**15 };
+    this._size = 2**11;
+
+    // triggers
+    this._triggers = { 'none': 0, '+': 1, '-': -1 };
+    this._trigger = '+';
+    this._triggerChannel = 0;
+    
+    // hold after capture/trigger
+    // needs to be continuously tuned?
+    this._holds = {
+      'none': 0,
       '100ms': 0.1, '200ms': 0.2, '500ms': 0.5,
       '1s': 1, '2s': 2, '5s': 5,
       '10s': 10, '20s': 20, '50s': 50
     };
-    this.timeSteps = {
+    this._hold = 'none';
+
+    // horizontal scale
+    this._timeScales = {
       '1µs/div': 1e-6, '2µs/div': 2e-6, '5µs/div': 5e-6,
       '10µs/div': 1e-5, '20µs/div': 2e-5, '50µs/div': 5e-5,
       '100µs/div': 1e-4, '200µs/div': 2e-4, '500µs/div': 5e-4,
@@ -42,7 +77,10 @@ export class KeyerScope extends KeyerEvent {
       '100ms/div': 1e-1, '200ms/div': 2e-1, '500ms/div': 5e-1,
       '1s/div': 1e+0, '2s/div': 2e+0, '5s/div': 5e+0
     };
-    this.verticalSteps = {
+    this._timeScale = '10ms/div';
+
+    // vertical scale, one per channel
+    this._verticalScales = {
       '1µFS/div': 1e-6, '2µFS/div': 2e-6, '5µFS/div': 5e-6,
       '10µFS/div': 1e-5, '20µFS/div': 2e-5, '50µFS/div': 5e-5,
       '100µFS/div': 1e-4, '200µFS/div': 2e-4, '500µFS/div': 5e-4,
@@ -51,182 +89,155 @@ export class KeyerScope extends KeyerEvent {
       '100mFS/div': 1e-1, '200mFS/div': 2e-1, '500mFS/div': 5e-1,
       '1FS/div': 1e+0, '2FS/div': 2e+0, '5FS/div': 5e+0
     };
-    this.holdTime = '1s';
-    this.timeOffset = 0;
-    this.timeScale = '10ms/div';
-    this.verticalScale = '200mFS/div';
-    this.length = 1;		// 1 * 2**15 samples/capture
-    this.lengths = [ 1, 2, 3 ];
-    this.draw();
+
+    // start the animation frame
+    this.loop();
   }
   
-  set running(v) { this._running = v; if (this.running) this.capture(); }
+  // run/stop behavior
+  set running(v) { this._running = v; }
 
   get running() { return this._running; }
   
-  // length determines the number of 32k sample buffers captured
-  set length(v) {
-    this._length = v;
-    this.samples = [];
-    for (let i = 0; i < v; i += 1) this.samples.push(new Float32Array(this.size));
-  }
+  // sources for channels
+  get sources() { return Array.from(Object.keys(this._sources)); }
+
+  source(i) { return this._sources[i]; }
   
-  get length() { return this._length; }
-
-  get holdTimes() { return Array.from(Object.keys(this.holdSteps)); }
-
-  set holdTime(v) {
-    this._holdTime = v;
-    this.holdStep = this.holdSteps[v];
-  }
-
-  get holdTime() { return this._holdTime; }
+  // channels
+  get channels() { return Array.from(Object.keys(this._channels)); }
   
+  channel(i) { return this._channels[i]; }
+
+  // trigger
+  get triggers() { return Array.from(Object.keys(this._triggers)); }
+
+  set trigger(v) { this._trigger = v; }
+
+  get trigger() { return this._trigger; }
+
+  get triggerValue() { return this._triggers[this._trigger]; }
+  
+  // trigger channel
+  set triggerChannel(v) { this._triggerChannel = v; }
+
+  get triggerChannel() { return this._triggerChannel; }
+
+  get triggerChannelValue() { return this.channel(this.triggerChannel); }
+  
+  // hold off between scans
+  get holds() { return Array.from(Object.keys(this._holds)); }
+
+  set hold(v) { this._hold = v; }
+  
+  get hold() { return this._hold; }
+  
+  get holdValue() { return this._holds[this._hold]; }
+
   // time scale determines the number of samples per pixel
-  get timeScales() { return Array.from(Object.keys(this.timeSteps)); }
+  get timeScales() { return Array.from(Object.keys(this._timeScales)); }
 
-  set timeScale(v) {
-    this._timeScale = v;
-    this.timeStep = this.timeSteps[v];
-    // console.log(`set timeScale(${v}) => ${this.timeStep}`);
-    this.redraw = true;
-  }
+  set timeScale(v) { this._timeScale = v; this.redraw = true; }
 
   get timeScale() { return this._timeScale; }
 		 
+  get timeScaleValue() { return this._timeScales[this._timeScale]; }
+
   // vertical scale 
-  get verticalScales() { return Array.from(Object.keys(this.verticalSteps)); }
+  get verticalScales() { return Array.from(Object.keys(this._verticalScales)); }
 
-  set verticalScale(v) { 
-    this._verticalScale = v;
-    this.verticalStep = this.verticalSteps[v];
-    this.redraw = true;
-  }
-  
-  get verticalScale() { return this._verticalScale; }
-  
-  // time offset
-  set timeOffset(v) { this._timeOffset = v; this.redraw = true; }
-
-  get timeOffset() { return this._timeOffset; }
-  
   // enable called when displayed?
   enable(v, canvas) { 
-    if (this.enabled !== v) {
-      this.enabled = v;
-      if (this.canvas !== canvas) {
-	this.canvas = canvas;
-	if (this.canvas) {
-	  this.canvasCtx = canvas.getContext("2d");
+    this.channels.forEach(ch => { this.channel(ch).enabled = v; });
+    if (this._enabled !== v) {
+      this._enabled = v;
+      if (this._canvas !== canvas) {
+	this._canvas = canvas;
+	if (this._canvas) {
+	  this._canvasCtx = canvas.getContext("2d");
 	  if (canvas.width !== canvas.clientWidth) {
 	    this.canvas.width = canvas.clientWidth;
-	    this.redraw = true;
+	    this._redraw = true;
 	  }
 	  if (canvas.height !== canvas.clientHeight) {
 	    this.canvas.height = canvas.clientHeight;
-	    this.redraw = true;
+	    this._redraw = true;
 	  }
 	}
       }
     }
   }
   
-  // The capture steps are reasonable for the audio timer,
-  // but the draw step may spoil timing for other audio events.
-  // may want some other way to trigger a redraw
-  capture() { 
-    console.log(`capture ${this.length} segments`);
-    this.sampling = true;
-    const dt = this.size/this.sampleRate;
-    const t = this.currentTime;
-    // console.log(`capture ${dt} sec per segment`);
-    for (let i = 0; i < this.length; i += 1)
-      this.when(t+i*dt, () => {
-	// console.log(`capture segment ${i}`);
-	this.analyser.getFloatTimeDomainData(this.samples[i]);
-	if (i === this.length-1) {
-	  this.sampling = false;
-	  this.redraw = true;
-	}
-      });
-  }
+	      
+  loop(step) {
+    // enabled means displayed on screen
+    if (this.enabled) {
+      // running means collecting and displaying samples
+      const capture = this.running && step >= this.holdOffTime;
+      const redraw = capture || this.redraw;
+      
+      if (capture) {
+	// capture samples
+	this.channels.forEach(channel => channel.capture());
+	// set the delay for the next capture
+	this.holdOffTime = step + this.hold / 1000; // convert hold off time to milliseconds
+      }
 
-  draw() {
-    // console.log(`draw enabled = '${this.enabled}' sampling = '${this.sampling}', redraw = '${this.redraw}', canvas = '${this.canvas}'`);
+      if (redraw) {
+	// get the size of the canvas in pixels, 
+	// which has been hacked to be the size
+	// the canvas occupies on the screen
+	const {width, height} = this.canvas;
 
-    window.requestAnimationFrame((step) => this.draw(step));
+	// ts converts sampleOffset to pixels to effect the time/division setting.
+	// we have sampleRate samp/sec, and 50px/div, and x sec/div,
+	// then (50px/div) / ((x sec/div) * (sampleRate samp/sec)) yields
+	// 50 / (x * sampleRate) = px/sample
+	const ts = 50 / (this.timeScaleValue * this.sampleRate);
 
-    if ( ! this.enabled ) return;
-    if ( this.sampling ) return;
-    if ( ! this.redraw ) return;
+	// compute the sample width of the canvas window
+	const sWidth = Math.floor(width / ts);
 
-    this.redraw = false;
+	// number of samples buffered
+	const ktotal = this.size;
 
-    // get the size of the canvas in pixels, 
-    // which has been hacked to be the size
-    // the canvas occupies on the screen
-    const {width, height} = this.canvas;
+	// first sample to draw
+	// either the beginning of the capture buffer
+	// or the trigger location in the capture buffer
+	const k0 = 
+	      this.trigger === 0 ?
+	      0 : 
+	      this.findTrigger(this.trigger, this.triggerChannel);
 
-    // ts converts sampleOffset to pixels to effect the time/division setting.
-    // we have sampleRate samp/sec, and 50px/div, and x sec/div,
-    // then (50px/div) / ((x sec/div) * (sampleRate samp/sec)) yields
-    // 50 / (x * sampleRate) = px/sample
-    const ts = 50 / (this.timeStep * this.sampleRate);
+	// end of samples to draw
+	const kmax = Math.min(ktotal, k0 + sWidth);
 
-    // let the units of the samples volts, so they range from 1V to -1V,
-    // we compute (1-sample) to flip positive and negative,
-    // to get 1/div we multiply by 50, 
-    // to get 0.5/div we multiply by 100,
-    // so vs = 50/(v/div)
-    const vs = 50 / this.verticalStep;
+	this.canvasCtx.clearRect(0, 0, width, height);
+	this.canvasCtx.lineWidth = 1;
+	
+	this.channels.forEach(channel => {
+	  // let the units of the samples volts, so they range from 1V to -1V,
+	  // we compute (1-sample) to flip positive and negative,
+	  // to get 1/div we multiply by 50, 
+	  // to get 0.5/div we multiply by 100,
+	  // so vs = 50/(v/div)
+	  const vs = 50 / channel.verticalScaleValue;
 
-    // compute the sample width of the canvas window
-    const sWidth = Math.floor(width / ts);
-
-    // number of samples buffered
-    const ktotal = this.length*this.size;
-
-    // first sample to draw
-    // the offset percentage applies to the midpoint of the window
-    // it's possible that the whole capture buffer is displayed at offset 0
-    const k0 = Math.max(0, Math.floor((ktotal - sWidth) * this.timeOffset/100)); // offset in samples
-
-    // first buffer of samples to touch
-    const i0 = Math.floor(k0 / this.size)
-
-    // first sample in first buffer to touch
-    const j0 = Math.floor(k0 % this.size)
-    
-    // end of samples to draw
-    const kmax = Math.min(ktotal, k0 + sWidth);
-
-    // compute the x and y coordinates
-    const x = (k) => (k-k0) * ts;
-    const y = (s) => height/2 - s * vs;
-
-    this.canvasCtx.clearRect(0, 0, width, height);
-    this.canvasCtx.lineWidth = 1;
-    this.canvasCtx.strokeStyle = "rgb(0, 0, 0)";
-    this.canvasCtx.beginPath();
-    let i = i0;
-    let j = j0;
-    let k = k0;
-    let nd = 0;
-    if (i < this.length) {
-      const s = this.samples[i];
-      this.canvasCtx.moveTo(x(k), y(s[j]));
-      for ( ; j < this.size && k < kmax; j += 1, k += 1, nd += 1)
-	this.canvasCtx.lineTo(x(k), y(s[j]));
+	  // compute the x and y coordinates
+	  const x = (k) => (k-k0) * ts;
+	  const y = (s) => height/2 - s * vs + channel.verticalOffset;
+	  
+	  this.canvasCtx.strokeStyle = channel.color;
+	  this.canvasCtx.beginPath();
+	  const s = channel.samples;
+	  this.canvasCtx.moveTo(x(k0), y(s[k0]));
+	  for (let k = k0+1; k < this.size && k < kmax; k += 1)
+	    this.canvasCtx.lineTo(x(k), y(s[k]));
+	  this.canvasCtx.stroke();
+	});
+      }
     }
-    for (i += 1; i < this.length && k < kmax; i += 1) {
-      const s = this.samples[i];
-      for (j = 0; j < this.size && k < kmax; j += 1, k += 1, nd += 1)
-	this.canvasCtx.lineTo(x(k), y(s[j]));
-    }
-    this.canvasCtx.stroke();
-
-    // console.log(`draw completed ${nd} points in ${(this.currentTime-t0).toFixed(3)} seconds`);
-    if (this.running)
-      this.after(this.holdStep, () => { if (this.running) this.capture(); });
+    // always loop on animation frame for the moment
+    requestAnimationFrame((tstep) => this.loop(tstep));
   }
 }

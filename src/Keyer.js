@@ -65,56 +65,25 @@ export class Keyer extends KeyerEvent {
       // this.input.on('element', (elt, timeEnded) => this.inputDecoder.onelement(elt, timeEnded));
     }
 
-    this._scopeTargets = { 'none': null, 
-			   'input-osc': this.input.oscillator,
-			   'input-key': this.input.key,
-			   'input-ramp': this.input.ask, 
-			   'input': this.input.volume,
-			   'output-osc': this.output.oscillator,
-			   'output-key': this.output.key,
-			   'output-ramp': this.output.ask,
-			   'output': this.output.volume,
-			   'left-key': this.input.left,
-			   'right-key': this.input.right,
-			   'paddle-out': null,
-			   'input-output': null
-			 };
-    this._scopeTarget = 'none';
+    // scope sources for the interesting stuff
+    // change some of these to byte size samples later
+    // note these are all 0..1 or -1..1 scaled
+    this.scope.addSource('man-osc', this.input.oscillator, false);
+    this.scope.addSource('kbd-osc', this.output.oscillator, false);
+    this.scope.addSource('man-key', this.input.key, false);
+    this.scope.addSource('left-key', this.input.left, false);
+    this.scope.addSource('right-key', this.input.right, false);
+    this.scope.addSource('kbd-key', this.output.key, false);
+    this.scope.addSource('man-ramp', this.input.ask, false);
+    this.scope.addSource('kbd-ramp', this.output.ask, false);
+    this.scope.addSource('manual', this.input.ramp, false);
+    this.scope.addSource('keyboard', this.output.ramp, false);
+
     this.table = this.output.table;
     this.outputDecoder.table = this.table;
     this.inputDecoder.table = this.table;
   }
 
-  // scope targets
-  get scopeTargets() { return Array.from(Object.keys(this._scopeTargets)); }
-  
-  get scopeTarget() { return this._scopeTarget; }
-
-  set scopeTarget(target) {
-    if (this._scopeTargets[this._scopeTarget] !== null)
-      this._scopeTargets[this._scopeTarget].disconnect(this.scope.analyser);
-    else
-      switch (this._scopeTarget) {
-      case 'none': break;
-      case 'paddle-out': this.input.paddle.disconnect(this.scope.analyser); break;
-      case 'input-output': this.input.volume.disconnect(this.scope.analyser); this.output.volume.disconnect(this.scope.analyser); break;
-      default:
-	console.log(`unknown this.scopeTarget ${this._scopeTarget}`);
-	return;
-      }
-    if (this._scopeTargets[target] !== null)
-      this._scopeTargets[target].connect(this.scope.analyser);
-    else
-      switch (target) {
-      case 'none': break;
-      case 'paddle-out': this.input.paddle.connect(this.scope.analyser); break;
-      case 'input-output': this.input.volume.connect(this.scope.analyser); this.output.volume.connect(this.scope.analyser); break;
-      default:
-	console.log(`unknown scope target ${target}`);
-	return;
-      }
-    this._scopeTarget = target;
-  }
 }
 // Local Variables:
 // mode: JavaScript

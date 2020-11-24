@@ -27,7 +27,6 @@ import { Keyer } from './Keyer.js';
 const defaults = {
   // properties that are local to this
   requestedSampleRate: '48000',
-  qrq: false,
   displaySettings: true,
   displayOutput: true,
   displayAdvanced: false,
@@ -72,21 +71,15 @@ const defaults = {
   inputEnvelope2: 'rectangular',
   inputSpeed: 20,
   // properties that delegate to this.keyer.scope
-  scopeTarget: 'input-output',
   scopeTimeScale: '10ms/div',
-  scopeVerticalScale: '200mFS/div',
-  scopeTimeOffset: 0,
-  scopeHoldTime: '1s',
-  scopeLength: 1,
+  scopeTrigger: 'none',
+  scopeTriggerChannel: 'none',
+  scopeHold: '1s',
+  scopeSource1: 'none',
+  scopeVerticalScale1: '200mFS/div',
+  scopeSource2: 'none',
+  scopeVerticalScale2: '200mFS/div',
 }
-
-// wpm speed limits
-const qrqStep = 1;
-const qrsStep = 1;
-const qrqMax = 150;
-const qrsMax = 50;
-const qrqMin = 10;
-const qrsMin = 10;
 
 // menu indicators
 const hiddenMenuIndicator = html`<span>&#x23f5;</span>`;
@@ -127,7 +120,7 @@ const shiftKeys = ['None','ShiftLeft','ControlLeft','AltLeft','AltRight','Contro
 const isShiftKey = (value) => shiftKeys.includes(value);
 
 // list of sampleRates
-const sampleRates = ['8000', '32000', '44100', '48000', '96000', '192000' ]
+const sampleRates = ['8000', '32000', '44100', '48000', '96000', '192000', '384000' ]
 const isSampleRate = (value) => sampleRates.includes(value);
 
 // application color scheme, from material design color tool
@@ -183,20 +176,20 @@ export class KeyerJs extends LitElement {
       requestedSampleRate: { type: Number },
       // properties of scope
       scopeRunning: { type: Boolean },
-      scopeHoldStep: { type: String },
-      scopeTarget: { type: String },
       scopeTimeScale: { type: String },
-      scopeVerticalScale: { type: String },
-      scopeTimeOffset: { type: Number },
-      scopeHoldTime: { type: String },
-      scopeLength: { type: Number },
+      scopeTrigger: { type: String },
+      scopeTriggerChannel: { type: String },
+      scopeHold: { type: String },
+      scopeSource1: { type: String },
+      scopeVerticalScale1: { type: String },
+      scopeSource2: { type: String },
+      scopeVerticalScale2: { type: String },
       // properties read only from this.keyer.context
       state: { type: String },
       sampleRate: { type: Number },
       currentTime: { type: Number },
       baseLatency: { type: Number },
       // properties that are local
-      qrq: { type: Boolean },
       displayTouchStraight: { type: Boolean },
       displayTouchPaddle: { type: Boolean },
       displaySettings: { type: Boolean },
@@ -288,9 +281,9 @@ export class KeyerJs extends LitElement {
 
   get rightPaddleKey() { return this.keyer.input.rightPaddleKey; }
 
-  set straightMidi(v) { this.keyer.straightMidi = v; }
+  set straightMidi(v) { this.keyer.input.straightMidi = v; }
 
-  get straightMidi() { return this.keyer.straightMidi; }
+  get straightMidi() { return this.keyer.input.straightMidi; }
 
   set leftPaddleMidi(v) { this.keyer.input.leftPaddleMidi = v; }
 
@@ -341,51 +334,68 @@ export class KeyerJs extends LitElement {
 
   get inputEnvelope2() { return this.keyer.input.envelope2; }
 
-  // scope properties
+  //
+  // per scope scope properties
+  //
+  // scope run/stop
   set scopeRunning(v) { this.keyer.scope.running = v; }
   
   get scopeRunning() { return this.keyer.scope.running; }
   
-  set scopeTarget(v) { this.keyer.scopeTarget = v; }
-
-  get scopeTarget() { return this.keyer.scopeTarget; }
-  
-  get scopeTargets() { return this.keyer.scopeTargets; }
-  
-  get scopeHoldSteps() { return this.keyer.scope.holdSteps; }
-
-  set scopeHoldStep(v) { this.keyer.scope.holdStep = v; }
-
-  get scopeHoldStep() { return this.keyer.scope.holdStep; }
-  
+  // horizontal scale
   set scopeTimeScale(v) { this.keyer.scope.timeScale = v; }
 
   get scopeTimeScale() { return this.keyer.scope.timeScale; }
 
   get scopeTimeScales() { return this.keyer.scope.timeScales; }
   
-  set scopeVerticalScale(v) { this.keyer.scope.verticalScale = v; }
+  // trigger
+  get scopeTriggers() { return this.keyer.scope.triggers; }
+  
+  set scopeTrigger(v) { this.keyer.scope.trigger = v; }
 
-  get scopeVerticalScale() { return this.keyer.scope.verticalScale; }
+  get scopeTrigger() { return this.keyer.scope.trigger; }
+  
+  // trigger channel
+  get scopeChannels() { return this.keyer.scope.channels; }
+  
+  set scopeTriggerChannel(v) { this.keyer.scope.triggerChannel = v; }
 
+  get scopeTriggerChannel() { return this.keyer.scope.triggerChannel; }
+  
+  // hold after scan
+  get scopeHolds() { return this.keyer.scope.holds; }
+  
+  set scopeHold(v) { this.keyer.scope.hold = v; }
+
+  get scopeHold() { return this.keyer.scope.hold; }
+  
+  // available sources for scope channels
+  get scopeSources() { return this.keyer.scope.sources; }
+
+  // available vertical scales for scope channels
   get scopeVerticalScales() { return this.keyer.scope.verticalScales; }
   
-  set scopeTimeOffset(v) { this.keyer.scope.timeOffset = v; }
+  // per channel scope properties
+  //
+  // channel signal source
+  set scopeSource1(v) { this.keyer.scope.channel(1).source = v; }
 
-  get scopeTimeOffset() { return this.keyer.scope.timeOffset; }
-
-  get scopeHoldTimes() { return this.keyer.scope.holdTimes; }
-
-  set scopeHoldTime(v) { this.keyer.scope.holdTime = v; }
-
-  get scopeHoldTime() { return this.keyer.scope.holdTime; }
-
-  set scopeLength(v) { this.keyer.scope.length = v; }
-
-  get scopeLength() { return this.keyer.scope.length; }
-
-  get scopeLengths() { return this.keyer.scope.lengths; }
+  get scopeSource1() { return this.keyer.scope.channel(1).source; }
   
+  set scopeSource2(v) { this.keyer.scope.channel(2).source = v; }
+
+  get scopeSource2() { return this.keyer.scope.channel(2).source; }
+  
+  // channel vertical scale: auto
+  set scopeVerticalScale1(v) { this.keyer.scope.channel(1).verticalScale = v; }
+
+  get scopeVerticalScale1() { return this.keyer.scope.channel(1).verticalScale; }
+
+  set scopeVerticalScale2(v) { this.keyer.scope.channel(2).verticalScale = v; }
+
+  get scopeVerticalScale2() { return this.keyer.scope.channel(2).verticalScale; }
+
   // get properties delegated to this.keyer.context
   get currentTime() { return this.keyer.currentTime; }
 
@@ -458,7 +468,7 @@ export class KeyerJs extends LitElement {
   validate() {
     shiftKeys.forEach(x => isShiftKey(x) || console.log(`shiftKey ${x} failed isShiftKey`));
     sampleRates.forEach(x => isSampleRate(x) || console.log(`sampleRate ${x} failed isSampleRate`));
-    ['qrq','swapped', 'displayTouchStraight', 'displayTouchPaddle', 'displaySettings', 'displayOutput', 
+    ['swapped', 'displayTouchStraight', 'displayTouchPaddle', 'displaySettings', 'displayOutput', 
      'displayAdvanced', 'displayInputKey', 'displayStatus', 'displayAbout', 'displayLicense',
      'displayScope'].
       forEach(x => isOnOff(this[x]) || console.log(`property '${x}' failed isOnOff: ${this[x]}`));
@@ -610,13 +620,6 @@ export class KeyerJs extends LitElement {
     controlSave(control, this[control]);
     this.requestUpdate(control, oldv);
     switch (control) {
-    case 'qrq':
-      if (isOn(this.qrq)) {
-	this.speed = Math.max(qrqMin, qrqStep * Math.floor(this.speed/qrqStep));
-      } else {
-	this.speed = Math.min(this.speed, qrsMax);
-      }
-      break;
     default:
       break;
     }
@@ -680,8 +683,17 @@ export class KeyerJs extends LitElement {
         max-width: 90%;
         margin-top: 16px;
       }
-      button, select {
+      button, select, input {
         font-size: calc(10px + 2vmin);
+      }
+      input[type="number"][size="5"] {
+	 width: 3.25em;
+      }
+      input[type="number"][size="4"] {
+	 width: 2.5em;
+      }
+      input[type="number"][size="3"] {
+	 width: 2em;
       }
       div.panel {
 	margin: auto;
@@ -770,7 +782,6 @@ export class KeyerJs extends LitElement {
     return html`
 	  <input
 	    type="range"
-	    id="${control}"
 	    name="${control}" 
 	    min="${min}"
 	    max="${max}"
@@ -778,6 +789,21 @@ export class KeyerJs extends LitElement {
 	    .value=${this[control]}
 	    @input=${(e) => this.controlSelect(control, e)}>
 	  <label for="${control}">${label} ${this[control]} (${unit})</label>`;
+  }
+
+  spinnerRender(control, min, max, step, label, unit, size) {
+    return html`
+	<label for="${control}">${label}
+	  <input
+	    type="number"
+	    name="${control}" 
+	    min="${min}"
+	    max="${max}"
+	    step="${step}"
+	    size="${size}"
+	    .value=${this[control]}
+	    @input=${(e) => this.controlSelect(control, e)}>
+	    (${unit})</label>`;
   }
 
   optionsRender(control, values, label) {
@@ -848,24 +874,21 @@ export class KeyerJs extends LitElement {
 
     case 'displayOutput': 
       return html`
-	<div class="group">${isOn(this.qrq) ? 
-	  this.sliderRender('speed', qrqMin, qrqMax,  qrqStep, 'Speed', 'WPM') :
-	  this.sliderRender('speed', qrsMin, qrsMax,  qrsStep, 'Speed', 'WPM')}</div>
-	<div class="group">${this.toggleRender('qrq', 'QRQ', 'QRS')}</div>
-	<div class="group">${this.sliderRender('gain', -50, 10, 1, 'Gain', 'dB')}</div>
-	<div class="group">${this.sliderRender('pitch', 250, 2000, 1, 'Pitch', 'Hz')}</div>
+	<div class="group">${this.spinnerRender('speed', 1, 150,  1, 'Speed', 'WPM', 4)}</div>
+	<div class="group">${this.spinnerRender('gain', -50, 10, 1, 'Gain', 'dB', 4)}</div>
+	<div class="group">${this.spinnerRender('pitch', 250, 2000, 1, 'Pitch', 'Hz', 4)}</div>
 	<div class="subpanel">${this.headerRender(4, 'displayAdvanced', 'More Options')}</div>
 	<div class="subpanel">${this.displayRender('displayAdvanced')}</div>
 	`;
 
     case 'displayAdvanced':
       return html`
-	<div class="group">${this.sliderRender('weight', 25, 75, 0.1, 'Weight', '%')}</div>
-	<div class="group">${this.sliderRender('ratio', 25, 75, 0.1, 'Ratio', '%')}</div>
-	<div class="group">${this.sliderRender('compensation', -15, 15, 0.1, 'Compensation', '%')}</div>
+	<div class="group">${this.spinnerRender('weight', 25, 75, 0.1, 'Weight', '%', 4)}</div>
+	<div class="group">${this.spinnerRender('ratio', 25, 75, 0.1, 'Ratio', '%', 4)}</div>
+	<div class="group">${this.spinnerRender('compensation', -15, 15, 0.1, 'Compensation', '%', 5)}</div>
 	<br/>
-	<div class="group">${this.sliderRender('rise', 1, 10, 0.1, 'Rise', 'ms')}</div>
-	<div class="group">${this.sliderRender('fall', 1, 10, 0.1, 'Fall', 'ms')}</div>
+	<div class="group">${this.spinnerRender('rise', 1, 10, 0.1, 'Rise', 'ms', 3)}</div>
+	<div class="group">${this.spinnerRender('fall', 1, 10, 0.1, 'Fall', 'ms', 3)}</div>
 	<br/>
 	<div class="group"><label>Envelope: 
 	  ${this.optionsRender('envelope', this.envelopes, '')} * ${this.optionsRender('envelope2', this.envelopes, '')}
@@ -887,21 +910,21 @@ export class KeyerJs extends LitElement {
 	  <div class="group">${this.optionsRender('leftPaddleMidi', this.midiNotes, 'Left: ')}</div>
 	  <div class="group">${this.optionsRender('rightPaddleMidi', this.midiNotes, 'Right: ')}</div>
         </div>
-	<div class="group">${this.sliderRender('inputSpeed', qrsMin, qrsMax,  qrsStep, 'Speed', 'WPM')}</div>
-	<div class="group">${this.sliderRender('inputGain', -50, 10, 1, 'Gain', 'dB')}</div>
-	<div class="group">${this.sliderRender('inputPitch', 250, 2000, 1, 'Pitch', 'Hz')}</div>
+	<div class="group">${this.spinnerRender('inputSpeed', 1, 150,  1, 'Speed', 'WPM', 4)}</div>
+	<div class="group">${this.spinnerRender('inputGain', -50, 10, 1, 'Gain', 'dB', 4)}</div>
+	<div class="group">${this.spinnerRender('inputPitch', 250, 2000, 1, 'Pitch', 'Hz', 4)}</div>
 	<div class="subpanel">${this.headerRender(4, 'displayManualAdvanced', 'More Options')}</div>
 	<div class="subpanel">${this.displayRender('displayManualAdvanced')}</div>
 	`;
 
     case 'displayManualAdvanced':
       return html`
-	<div class="group">${this.sliderRender('inputWeight', 25, 75, 0.1, 'Weight', '%')}</div>
-	<div class="group">${this.sliderRender('inputRatio', 25, 75, 0.1, 'Ratio', '%')}</div>
-	<div class="group">${this.sliderRender('inputCompensation', -15, 15, 0.1, 'Compensation', '%')}</div>
+	<div class="group">${this.spinnerRender('inputWeight', 25, 75, 0.1, 'Weight', '%', 4)}</div>
+	<div class="group">${this.spinnerRender('inputRatio', 25, 75, 0.1, 'Ratio', '%', 4)}</div>
+	<div class="group">${this.spinnerRender('inputCompensation', -15, 15, 0.1, 'Compensation', '%', 5)}</div>
 	<br/>
-	<div class="group">${this.sliderRender('inputRise', 1, 10, 0.1, 'Rise', 'ms')}</div>
-	<div class="group">${this.sliderRender('inputFall', 1, 10, 0.1, 'Fall', 'ms')}</div>
+	<div class="group">${this.spinnerRender('inputRise', 1, 10, 0.1, 'Rise', 'ms', 3)}</div>
+	<div class="group">${this.spinnerRender('inputFall', 1, 10, 0.1, 'Fall', 'ms', 3)}</div>
 	<br/>
 	<div class="group"><label>Envelope: 
 	  ${this.optionsRender('inputEnvelope', this.envelopes, '')} * ${this.optionsRender('inputEnvelope2', this.envelopes, '')}
@@ -929,13 +952,20 @@ export class KeyerJs extends LitElement {
     case 'displayScope':
       return html`
 	<div class="scope"><canvas @resize=${this.scopeResize}></canvas></div>
-	<div class="group">${this.optionsRender('scopeTimeScale', this.scopeTimeScales, 'Time:')}</div>
-	<div class="group">${this.optionsRender('scopeVerticalScale', this.scopeVerticalScales, 'Vertical:')}</div>
 	<div class="group">${this.toggleRender('scopeRunning', 'Stop', 'Run')}</div>
-	<div class="group">${this.sliderRender('scopeTimeOffset', 0, 100, 0.1, 'Time offset', '%')}</div>
-	<div class="group">${this.optionsRender('scopeTarget', this.scopeTargets, 'Target:')}</div>
-	<div class="group">${this.optionsRender('scopeLength', this.scopeLengths, 'Buffers:')}</div>
-	<div class="group">${this.optionsRender('scopeHoldTime', this.scopeHoldTimes, 'Hold time:')}</div>
+	<div class="group">${this.optionsRender('scopeTrigger', this.scopeTriggers, 'Trigger:')}</div>
+	<div class="group">${this.optionsRender('scopeTriggerChannel', this.scopeChannels, 'Channel:')}</div>
+	<div class="group">${this.optionsRender('scopeHold', this.scopeHolds, 'Hold:')}</div>
+	<br/>
+	<div class="group">${this.optionsRender('scopeTimeScale', this.scopeTimeScales, 'Time:')}</div></br>
+	<br/>
+	Ch1: 
+	<div class="group">${this.optionsRender('scopeSource1', this.scopeSources, 'Source:')}</div>
+	<div class="group">${this.optionsRender('scopeVerticalScale1', this.scopeVerticalScales, 'Vertical:')}</div>
+	<br/>
+	Ch2: 
+	<div class="group">${this.optionsRender('scopeSource2', this.scopeSources, 'Source:')}</div>
+	<div class="group">${this.optionsRender('scopeVerticalScale2', this.scopeVerticalScales, 'Vertical:')}</div>
 	`;
 
     case 'displayStatus':
