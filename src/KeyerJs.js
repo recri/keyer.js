@@ -506,7 +506,8 @@ export class KeyerJs extends LitElement {
       if (fromBottom > 0) keyboard.scrollTop += cursor.offsetHeight;
     }
     if (this.keyer && this.keyer.scope && this.displayScope) {
-      this.keyer.scope.enable(isOn(this.displayScope), this.shadowRoot.querySelector("canvas"));
+      const canvas = this.shadowRoot.querySelector("canvas");
+      if (canvas) this.keyer.scope.enable(isOn(this.displayScope), canvas);
     }
   }
   
@@ -647,7 +648,8 @@ export class KeyerJs extends LitElement {
   scopeResize() {
     if (isOn(this.displayScope)) {
       this.keyer.scope.enable(false, null, null);
-      this.keyer.scope.enable(true, this.shadowRoot.querySelector("canvas"));
+      const canvas = this.shadowRoot.querySelector("canvas");
+      if (canvas) this.keyer.scope.enable(isOn(this.displayScope), canvas);
     }
   }
 

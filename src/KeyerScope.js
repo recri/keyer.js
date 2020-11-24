@@ -30,15 +30,9 @@ import { KeyerScopeChannel } from './KeyerScopeChannel.js';
 
 export class KeyerScope extends KeyerEvent {
 
-  addSource(name, node, asByte) { this._sources[name] = new KeyerScopeSource(name, node, asByte); }
-
-  addChannel(source, scale, offset, color, size) { 
-    this._nchannels += 1;
-    this._channels[this._nchannels] = new KeyerScopeChannel(this, source, scale, offset, color, size); 
-  }
-
   constructor(context) {
     super(context);
+    this.canvas = null;
     this._enabled = false;	// not displayed
     this._running = false;	// not capturing and plotting
     this._sources = {};		// sources available for channels
@@ -94,6 +88,13 @@ export class KeyerScope extends KeyerEvent {
     this.loop();
   }
   
+  addSource(name, node, asByte) { this._sources[name] = new KeyerScopeSource(name, node, asByte); }
+
+  addChannel(source, scale, offset, color, size) { 
+    this._nchannels += 1;
+    this._channels[this._nchannels] = new KeyerScopeChannel(this, source, scale, offset, color, size); 
+  }
+
   // run/stop behavior
   set running(v) { this._running = v; }
 
@@ -151,17 +152,17 @@ export class KeyerScope extends KeyerEvent {
     this.channels.forEach(ch => { this.channel(ch).enabled = v; });
     if (this._enabled !== v) {
       this._enabled = v;
-      if (this._canvas !== canvas) {
-	this._canvas = canvas;
-	if (this._canvas) {
-	  this._canvasCtx = canvas.getContext("2d");
+      if (this.canvas !== canvas) {
+	this.canvas = canvas;
+	if (this.canvas) {
+	  this.canvasCtx = canvas.getContext("2d");
 	  if (canvas.width !== canvas.clientWidth) {
 	    this.canvas.width = canvas.clientWidth;
-	    this._redraw = true;
+	    this.redraw = true;
 	  }
 	  if (canvas.height !== canvas.clientHeight) {
 	    this.canvas.height = canvas.clientHeight;
-	    this._redraw = true;
+	    this.redraw = true;
 	  }
 	}
       }
