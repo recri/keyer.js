@@ -26,9 +26,7 @@ import { Keyer } from './Keyer.js';
 //
 // prefix global constant functions and data
 //
-// menu indicators
-const hiddenMenuIndicator = html`<span>&#x23f5;</span>`;
-const shownMenuIndicator = html`<span>&#x23f7;</span>`;
+
 // const uncheckedCheckBox = html`<span>&#x2610;</span>`;
 // const checkedCheckBox = html`<span>&#x2611;</span>`;
 
@@ -67,7 +65,7 @@ const isShiftKey = (value) => shiftKeys.includes(value);
 // list of sampleRates
 const sampleRates = ['8000', '32000', '44100', '48000', '96000', '192000', '384000' ]
 const isSampleRate = (value) => sampleRates.includes(value);
-
+/*
     function deepEqual(object1, object2) {
       function isObject(object) {
 	return object != null && typeof object === 'object';
@@ -92,7 +90,7 @@ const isSampleRate = (value) => sampleRates.includes(value);
       }
       return true;
     }
-
+*/
 // application color scheme, from material design color tool
 // const colorPrimary = css`#1d62a7`;
 // const colorPLight = css`#5b8fd9`;
@@ -109,7 +107,7 @@ const isSampleRate = (value) => sampleRates.includes(value);
 //
 
 // default values for properties
-
+/*
 const defaults = {
   // properties that are local to this
   requestedSampleRate: '48000',
@@ -245,8 +243,11 @@ const properties = {
   finished: { type: Array },
   pending: { type: Array },
 };
-
-// property rendering database
+*/
+// property database
+// stores lit-element properties() values as .lit
+// stores default values as .value
+//
 const controls = {
   running: { 
     type: 'toggle', lit: { type: Boolean}, 
@@ -456,6 +457,7 @@ const controls = {
 
 export class KeyerJs extends LitElement {
 
+/*
   // declare default values
   static get defaults() { 
     if ( ! KeyerJs._defaults) {
@@ -479,7 +481,7 @@ export class KeyerJs extends LitElement {
     }
     return KeyerJs._defaults;
   }
-
+*/
   // declare LitElement properties
   static get properties() { 
     if ( ! KeyerJs._properties) {
@@ -487,9 +489,11 @@ export class KeyerJs extends LitElement {
       Object.keys(KeyerJs.controls)
 	.filter(x => 'lit' in KeyerJs.getControl(x))
 	.forEach(x => { KeyerJs._properties[x] = KeyerJs.getControl(x).lit });
+      /*
       if ( ! deepEqual(properties, KeyerJs._properties)) {
 	console.log('properties discrepancy');
       }
+      */
     }
     return KeyerJs._properties;
   }
@@ -497,6 +501,7 @@ export class KeyerJs extends LitElement {
   // declare the controls of the ui
   static get controls() { return controls; }
 
+/*
   static get listDefaults() {
     if (KeyerJs._listDefaults === undefined) KeyerJs._listDefaults = Array.from(Object.keys(KeyerJs.defaults));
     return KeyerJs._listDefaults;
@@ -515,7 +520,7 @@ export class KeyerJs extends LitElement {
   static getDefault(control) { return KeyerJs.defaults[control]; }
   
   static getProperty(control) { return KeyerJs.properties[control]; }
-  
+  */
   static getControl(control) {
     const c = KeyerJs.controls[control];
     if (c && typeof c === 'string')
@@ -663,9 +668,7 @@ export class KeyerJs extends LitElement {
 
   get inputEnvelope2() { return this.keyer.input.envelope2; }
 
-  //
   // scope properties
-  //
   set scopeRunning(v) { this.keyer.scope.running = v; }
   
   get scopeRunning() { return this.keyer.scope.running; }
@@ -789,7 +792,7 @@ export class KeyerJs extends LitElement {
   // and that default values are chosen from the same lists
   // also use the functions we define for this purpose
   validate() {
-
+    /*
     // check that KeyerJs.properties are reflected in KeyerJs.controls
     for (const k of KeyerJs.listDefaults) {
       // each element of defaults must have an entry in controls with a property: value
@@ -816,9 +819,10 @@ export class KeyerJs extends LitElement {
       // const p = KeyerJs.getProperty(k);
       // const d = KeyerJs.getDefault(k);
     // }
+    */
     for (const k of Object.keys(KeyerJs.properties))
-	 if (KeyerJs.properties[k].type === Boolean && this[k] !== true && this[k] !== false)
-	   console.log(`property '${k}' failed validate '${this[k]}' is not Boolean value`);
+      if (KeyerJs.properties[k].type === Boolean && this[k] !== true && this[k] !== false)
+	console.log(`property '${k}' failed validate '${this[k]}' is not Boolean value`);
     this.shiftKeys.forEach(x => isShiftKey(x) || console.log(`shiftKey ${x} failed isShiftKey`));
     this.sampleRates.forEach(x => isSampleRate(x) || console.log(`sampleRate ${x} failed isSampleRate`));
     ['straightKey', 'leftPaddleKey', 'rightPaddleKey'].
@@ -970,8 +974,6 @@ export class KeyerJs extends LitElement {
 
   controlSelect(control, e) { this.controlUpdate(control, this[control], e.target.value); }
   
-  controlMenuIndicator(control) { return ! this[control] ? hiddenMenuIndicator : shownMenuIndicator; }
-
   controlGet(control) { return this[control]; }
   
   scopeResize() {
@@ -1349,10 +1351,12 @@ export class KeyerJs extends LitElement {
   }
   
   headerRender(level, section, label) {
+    // menu indicators are right arrow and down arrow
+    const controlMenuIndicator = (control) => this[control] ? '\u23f7' : '\u23f5';
     return html`
 	<button class="h${level}"
 	  @click=${() => this.controlToggle(section)}>
-	    ${this.controlMenuIndicator(section)} ${label}
+	    ${controlMenuIndicator(section)} ${label}
 	</button}>`;
   }
   
