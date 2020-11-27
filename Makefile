@@ -10,5 +10,6 @@ commit::
 	git commit -a
 push::
 	git push origin main
+
 start-build::
 	npm run start:build

@@ -21,7 +21,8 @@ import { KeyerASKWorklet } from './KeyerASKWorklet.js';
 
 const gainLinear = (decibel) => 10 ** (decibel / 20);
 
-const gainDecibel = (linear) => Math.log10(linear) * 20;
+// not used
+// const gainDecibel = (linear) => Math.log10(linear) * 20;
 
 // translate keyup/keydown into keyed sidetone
 // this layer handles keying the oscillator
@@ -82,9 +83,9 @@ export class KeyerPlayer extends KeyerEvent {
 
   get pitch() { return this.oscillator.frequency.value; }
 
-  set gain(gain) { this.volume.gain.value = gainLinear(gain); }
+  set gain(gain) { this._gain = gain; this.volume.gain.value = gainLinear(gain); }
 
-  get gain() { return gainDecibel(this.volume.gain.value); }
+  get gain() { return this._gain; }
 
   set rise(ms) { this.ask.rise = ms; }
 

@@ -33,7 +33,7 @@ export class KeyerScope extends KeyerEvent {
   constructor(context) {
     super(context);
     this.canvas = null;
-    this._enabled = false;	// not displayed
+    this.enabled = false;	// not displayed
     this._running = false;	// not capturing and plotting
     this._sources = {};		// sources available for channels
     this.addSource('none', null, true); // the nil source
@@ -50,6 +50,8 @@ export class KeyerScope extends KeyerEvent {
     this._triggers = { 'none': 0, '+': 1, '-': -1 };
     this._trigger = '+';
     this._triggerChannel = 0;
+    
+    this.preTrigger = 32;	// samples before trigger value
     
     // hold after capture/trigger
     // needs to be continuously tuned?
@@ -84,8 +86,8 @@ export class KeyerScope extends KeyerEvent {
       '1FS/div': 1e+0, '2FS/div': 2e+0, '5FS/div': 5e+0
     };
 
-    // start the animation frame
-    this.loop();
+    // start the animation loop
+    this.loop(performance.now())
   }
   
   addSource(name, node, asByte) { this._sources[name] = new KeyerScopeSource(name, node, asByte); }
@@ -149,9 +151,10 @@ export class KeyerScope extends KeyerEvent {
 
   // enable called when displayed?
   enable(v, canvas) { 
+    console.log(`enable ${v} ${canvas}`);
     this.channels.forEach(ch => { this.channel(ch).enabled = v; });
-    if (this._enabled !== v) {
-      this._enabled = v;
+    if (this.enabled !== v) {
+      this.enabled = v;
       if (this.canvas !== canvas) {
 	this.canvas = canvas;
 	if (this.canvas) {
@@ -169,13 +172,31 @@ export class KeyerScope extends KeyerEvent {
     }
   }
   
-	      
+  findTrigger() {
+    const trigger = this.triggerValue;
+    const channel = this.triggerChannelValue;
+    if (trigger === 0) return 0; // no trigger
+    if ( ! channel) return 0;	 // no channel
+    let lastSample = channel.sample(0);
+    for (let i = 1; i < channel.size; i += 1) {
+      const nextSample = channel.sample(i);
+      if (nextSample !== lastSample)
+	if ((trigger === 1 && nextSample > lastSample) ||
+	    (trigger === -1 && nextSample < lastSample) ||
+	    (trigger === 2))
+	  return Math.max(0, i-this.preTrigger);
+      lastSample = nextSample;
+    }
+    return 0;
+  }
+  
   loop(step) {
     // enabled means displayed on screen
     if (this.enabled) {
       // running means collecting and displaying samples
       const capture = this.running && step >= this.holdOffTime;
       const redraw = capture || this.redraw;
+      console.log(`loop(...) enabled ${this.enabled} capture ${capture} redraw ${redraw}`);
       
       if (capture) {
 	// capture samples
@@ -205,10 +226,7 @@ export class KeyerScope extends KeyerEvent {
 	// first sample to draw
 	// either the beginning of the capture buffer
 	// or the trigger location in the capture buffer
-	const k0 = 
-	      this.trigger === 0 ?
-	      0 : 
-	      this.findTrigger(this.trigger, this.triggerChannel);
+	const k0 = this.findTrigger();
 
 	// end of samples to draw
 	const kmax = Math.min(ktotal, k0 + sWidth);
@@ -217,6 +235,8 @@ export class KeyerScope extends KeyerEvent {
 	this.canvasCtx.lineWidth = 1;
 	
 	this.channels.forEach(channel => {
+	  if ( ! channel.enabled) return;
+
 	  // let the units of the samples volts, so they range from 1V to -1V,
 	  // we compute (1-sample) to flip positive and negative,
 	  // to get 1/div we multiply by 50, 
@@ -230,10 +250,9 @@ export class KeyerScope extends KeyerEvent {
 	  
 	  this.canvasCtx.strokeStyle = channel.color;
 	  this.canvasCtx.beginPath();
-	  const s = channel.samples;
-	  this.canvasCtx.moveTo(x(k0), y(s[k0]));
+	  this.canvasCtx.moveTo(x(k0), y(channel.sample(k0)));
 	  for (let k = k0+1; k < this.size && k < kmax; k += 1)
-	    this.canvasCtx.lineTo(x(k), y(s[k]));
+	    this.canvasCtx.lineTo(x(k), y(channel.sample(k)));
 	  this.canvasCtx.stroke();
 	});
       }
