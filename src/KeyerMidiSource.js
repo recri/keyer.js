@@ -31,6 +31,7 @@ import { KeyerEvent } from './KeyerEvent.js';
 export class KeyerMidiSource extends KeyerEvent {
   constructor(context) {
     super(context);
+    this.midiAvailable = false;
     this.midiAccess = null; // global MIDIAccess object
     this.notesCache = [];   // device:notes received
     this.notesList = [];    // cache of device:notes list
@@ -100,12 +101,14 @@ export class KeyerMidiSource extends KeyerEvent {
   
   onMIDISuccess(midiAccess) {
     this.midiAccess = midiAccess;
+    this.midiAvailable = true;
     this.midiAccess.onstatechange = (event) => this.onStateChange(event);
     this.rebind();
   }
 
   onMIDIFailure() {
     this.midiAccess = null;
+
     this.rebind();
   }
 
@@ -115,7 +118,7 @@ export class KeyerMidiSource extends KeyerEvent {
         .requestMIDIAccess({ sysex: false })
         .then((...args) => this.onMIDISuccess(...args), (...args) => this.onMIDIFailure(...args));
     } else {
-      console.log("no navigator.requestMIDIAccess found");
+      // console.log("no navigator.requestMIDIAccess found");
     }
   }
 

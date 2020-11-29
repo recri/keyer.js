@@ -20,7 +20,7 @@ export class KeyerScopeChannel {
   constructor(scope, source, scale, offset, color, size) {
     this.scope = scope;
     this._analyser = this.scope.context.createAnalyser();
-    this.enabled = false;	// channel is prepared for capture
+    this.enable = false;	// channel capture is requested
     this.source = source;	// source name, subject to change
     this.verticalScale = scale;
     this.verticalOffset = offset;
@@ -32,14 +32,28 @@ export class KeyerScopeChannel {
   createSamples() {
     if ( ! this.source || this.source.asByte) {
       this.sample = (i) => (this._samples[i]/128) - 1;
-      this.capture = () => this.analyser.getByteTimeDomainData(this._samples)
-      return this._samples instanceof Uint8Array && this._samples.length === this._size ?
-	this._samples : new Uint8Array(this._size) ;
+      this.capture = () => {
+	if (this.enable) {
+	  this.t0 = this.analyser.currentTime;
+	  this.analyser.getByteTimeDomainData(this._samples)
+	  this.t1 = this.analyser.currentTime;
+	}
+      }
+      if (this._samples instanceof Uint8Array && this._samples.length === this._size)
+	return this._samples;
+      return new Uint8Array(this._size) ;
     }
     this.sample = (i) => this._samples[i]
-    this.capture = () => this.analyser.getFloatTimeDomainData(this._samples);
-    return this._samples instanceof Float32Array && this._samples.length === this._size ? 
-      this._samples : new Float32Array(this._size) ;
+    this.capture = () => {
+      if (this.enable) {
+	this.t0 = this.analyser.currentTime;
+	this.analyser.getFloatTimeDomainData(this._samples);
+	this.t1 = this.analyser.currentTime;
+      }
+    }
+    if (this._samples instanceof Float32Array && this._samples.length === this._size) 
+      return this._samples;
+    return new Float32Array(this._size) ;
   }
 
   set source(v) {
@@ -69,17 +83,9 @@ export class KeyerScopeChannel {
 
   get color() { return this._color; }
   
-  set enabled(v) { 
-    if ( ! v) {
-      this._enabled = v;
-    } else if (this.source === 'none') {
-      this._enabled = false;
-    } else {
-      this._enabled = v;
-    }
-  }
+  set enable(v) { this._enable = v; }
 
-  get enabled() { return this._enabled; }
+  get enable() { return this._enable; }
 
   set size(v) { 
     this._analyser.fftSize = v;

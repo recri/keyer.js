@@ -16,7 +16,6 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 // 
 
-/* eslint class-methods-use-this: ["error", { "exceptMethods": ["divBeforeInput","touchKeyRender"] }] */
 /* eslint no-param-reassign: ["error", { "props": false }] */
 
 import { LitElement, html, css } from 'lit-element';
@@ -27,70 +26,22 @@ import { Keyer } from './Keyer.js';
 // prefix global constant functions and data
 //
 
-// const uncheckedCheckBox = html`<span>&#x2610;</span>`;
-// const checkedCheckBox = html`<span>&#x2611;</span>`;
+// const straightKeyArrow = '\u23f7';
+// const leftKeyArrow = '\u23f4';
+// const rightKeyArrow = '\u23f5';
 
-// const straightKeyArrow = html`<span>&#x23f7;</span>`;
-// const leftKeyArrow = html`<span>&#x23f4;</span>`;
-// const rightKeyArrow = html`<span>&#x23f5;</span>`;
+const shownSymbol = '\u23f7';
+const hiddenSymbol = '\u23f5';
 
-const playSymbol = html`<span>&#x23f5;</span>`;
-const pauseSymbol = html`<span>&#x23f8;</span>`;
+const playSymbol = '\u23f5';
+const pauseSymbol = '\u23f8';
 
-// toggle between on and off
-const isOn = (onOff) => onOff === true;
-const isOff = (onOff) => onOff === false;
-const isOnOff = (onOff) => isOn(onOff) || isOff(onOff);
-// const toggleOnOff = (onOff) => isOnOff(onOff) ? ! onOff : console.log(`toggleOnOff '${onOff}' `);
+const uncheckedCheckBox = '\u2610';
+const checkedCheckBox = '\u2611';
 
 // always force default values, because I don't trust what's stored, yet
 const alwaysForceDefault = false;
 
-// parse JSON and return undefined on error
-const JSONparse = (value) => { try { return JSON.parse(value); } catch(e) { return undefined; } }
-
-// grab a value from localStorage or return the default value
-const controlDefault = (control, defaultValue, forceDefault) => {
-  const localValue = JSONparse(localStorage[control])
-  const value = forceDefault || alwaysForceDefault || localValue === undefined ? defaultValue : localValue;
-  localStorage[control] = JSON.stringify(value);
-  return value;
-}
-const controlSave = (control, newValue) => { localStorage[control] = JSON.stringify(newValue); }
-
-// list of left/right qualified shift keys
-const shiftKeys = ['None','ShiftLeft','ControlLeft','AltLeft','AltRight','ControlRight','ShiftRight'];
-const isShiftKey = (value) => shiftKeys.includes(value);
-
-// list of sampleRates
-const sampleRates = ['8000', '32000', '44100', '48000', '96000', '192000', '384000' ]
-const isSampleRate = (value) => sampleRates.includes(value);
-/*
-    function deepEqual(object1, object2) {
-      function isObject(object) {
-	return object != null && typeof object === 'object';
-      }
-      const keys1 = Object.keys(object1);
-      const keys2 = Object.keys(object2);
-
-      if (keys1.length !== keys2.length) {
-	return false;
-      }
-
-      for (const key of keys1) {
-	const val1 = object1[key];
-	const val2 = object2[key];
-	const areObjects = isObject(val1) && isObject(val2);
-	if (
-	  areObjects && !deepEqual(val1, val2) ||
-	    !areObjects && val1 !== val2
-	) {
-	  return false;
-	}
-      }
-      return true;
-    }
-*/
 // application color scheme, from material design color tool
 // const colorPrimary = css`#1d62a7`;
 // const colorPLight = css`#5b8fd9`;
@@ -100,150 +51,6 @@ const isSampleRate = (value) => sampleRates.includes(value);
 // const colorSDark =  css`#707070`;
 
 //
-// three property properties
-// maybe fold defaults into controls
-// could fold the lit-element properties in, too, 
-// and filter them out once at runtime.
-//
-
-// default values for properties
-/*
-const defaults = {
-  // properties that are local to this
-  requestedSampleRate: '48000',
-  displaySettings: true,
-  displayOutput: true,
-  displayAdvanced: false,
-  displayInputKey: false,
-  displayManualAdvanced: false,
-  displayMisc: false,
-  displayScope: false,
-  displayStatus: true,
-  displayAbout: false,
-  displayLicense: false,
-  displayColophon: false,
-  displayTouchStraight: false,
-  displayTouchPaddle: false,
-  // properties that delegate to this.keyer.output
-  pitch: 700,
-  gain: -26,
-  weight: 50,
-  ratio: 50,
-  compensation: 0,
-  rise: 4,
-  fall: 4,
-  envelope: 'hann',
-  envelope2: 'rectangular',
-  speed: 20,
-  // properties that delegate to this.keyer.input
-  paddleKeyer: 'nd7pa-b',
-  straightKey: 'ControlLeft',
-  straightMidi: 'None',
-  swapped: false,
-  leftPaddleKey: 'AltRight',
-  rightPaddleKey: 'ControlRight',
-  leftPaddleMidi: 'None',
-  rightPaddleMidi: 'None',
-  // properties that delegate to this.keyer.input
-  inputPitch: 700,
-  inputGain: -26,
-  inputWeight: 50,
-  inputRatio: 50,
-  inputCompensation: 0,
-  inputRise: 4,
-  inputFall: 4,
-  inputEnvelope: 'hann',
-  inputEnvelope2: 'rectangular',
-  inputSpeed: 20,
-  // properties that delegate to this.keyer.scope
-  scopeRunning: false,
-  scopeTimeScale: '10ms/div',
-  scopeTrigger: 'none',
-  scopeTriggerChannel: 'none',
-  scopeHold: '1s',
-  scopeSource1: 'none',
-  scopeVerticalScale1: '200mFS/div',
-  scopeSource2: 'none',
-  scopeVerticalScale2: '200mFS/div',
-}
-
-// lit-element property declarations
-
-const properties = {
-  // properties of keyer output
-  pitch: { type: Number },
-  gain: { type: Number },
-  speed: { type: Number },
-  weight: { type: Number },
-  ratio: { type: Number },
-  compensation: { type: Number },
-  rise: { type: Number },
-  fall: { type: Number },
-  envelope: { type: String },
-  envelope2: { type: String },
-  // properties of keyer input
-  swapped: { type: Boolean },
-  paddleKeyer: { type: String },
-  straightKey: { type: String },
-  leftPaddleKey: { type: String },
-  rightPaddleKey: { type: String },
-  straightMidi: { type: String },
-  leftPaddleMidi: { type: String },
-  rightPaddleMidi: { type: String },
-  // more propeties of keyer.input
-  inputPitch: { type: Number },
-  inputGain: { type: Number },
-  inputSpeed: { type: Number },
-  inputWeight: { type: Number },
-  inputRatio: { type: Number },
-  inputCompensation: { type: Number },
-  inputRise: { type: Number },
-  inputFall: { type: Number },
-  inputEnvelope: { type: String },
-  inputEnvelope2: { type: String },
-  // miscellaneous
-  requestedSampleRate: { type: Number },
-  // properties of scope
-  scopeRunning: { type: Boolean },
-  scopeTimeScale: { type: String },
-  scopeTrigger: { type: String },
-  scopeTriggerChannel: { type: String },
-  scopeHold: { type: String },
-  scopeSource1: { type: String },
-  scopeVerticalScale1: { type: String },
-  scopeSource2: { type: String },
-  scopeVerticalScale2: { type: String },
-  // properties read only from this.keyer.context
-  state: { type: String },
-  sampleRate: { type: Number },
-  currentTime: { type: Number },
-  baseLatency: { type: Number },
-  // properties that are local
-  displayTouchStraight: { type: Boolean },
-  displayTouchPaddle: { type: Boolean },
-  displaySettings: { type: Boolean },
-  displayStatus: { type: Boolean },
-  displayOutput: { type: Boolean },
-  displayAdvanced: { type: Boolean },
-  displayInputKey: { type: Boolean },
-  displayManualAdvanced: { type: Boolean },
-  displayMisc: { type: Boolean },
-  displayLicense: { type: Boolean },
-  displayScope: { type: Boolean },
-  displayAbout: { type: Boolean },
-  displayColophon: { type: Boolean },
-  // property computed
-  running: { type: Boolean },
-  // properties refreshed on notification
-  midiNames: { type: Array },
-  midiNotes: { type: Array },
-  paddleKeyers: { type: Array },
-  // display widget
-  content: { type: Object },
-  finished: { type: Array },
-  pending: { type: Array },
-};
-*/
 // property database
 // stores lit-element properties() values as .lit
 // stores default values as .value
@@ -252,34 +59,34 @@ const controls = {
   running: { 
     type: 'toggle', lit: { type: Boolean}, 
     label: '',  on: pauseSymbol, off: playSymbol,
-    title: ""
+    title: 'Run or pause the web audio rendering engine.'
   },
   displaySettings: {
     type: 'folder', lit: {type: Boolean}, value: true,
     label: 'Settings', level: 2, 
-    title: "Settings that control the behavior of keyer.js"
+    title: 'Settings that control the behavior of keyer.js.'
   },
-  displayOutput: { 
+  displayKeyboardSettings: { 
     type: 'folder', lit: { type: Boolean}, value: true,
     label: 'Keyboard Keyer', level: 3, 
-    title: "Speed, Pitch, Gain, and other settings for the keyboard keyer."
+    title: 'Settings for keyboard keying.'
   },
-  displayAdvanced: { 
+  displayAdvancedKeyboardSettings: { 
     type: 'folder', lit: { type: Boolean}, value: false,
     label: 'More Keyboard Keyer', level: 4, 
-    title: 'Weight, Ratio, Compensation, Rise, Fall, Envelope'
+    title: 'Additional settings for keyboard keying.'
   },
-  displayInputKey: {
+  displayManualSettings: {
     type: 'folder', lit: { type: Boolean}, value: false, 
     label: 'Manual Keyer', level: 3, 
-    title: "Settings for the keyer sounding characters keyed by hand."
+    title: 'Settings for manually keying.'
   },
-  displayManualAdvanced: {
+  displayAdvancedManualSettings: {
     type: 'folder', lit: { type: Boolean}, value: false, 
     label: 'More Manual Options', level: 4, 
-    title: 'Weight, Ratio, Compensation, Rise, Fall, Envelope'
+    title: 'Additional settings for manual keying.'
   },
-  displayMisc: {
+  displayMiscSettings: {
     type: 'folder', lit: { type: Boolean}, value: false, 
     label: 'More Options', level: 3, 
     title: "Other settings."
@@ -287,27 +94,27 @@ const controls = {
   displayScope: {
     type: 'folder', lit: { type: Boolean}, value: false,
     label: 'Scope', level: 2, 
-    title: "An oscilloscope for observing keyer.js"
+    title: 'An oscilloscope for observing keyer.js.'
   },
   displayStatus: {
     type: 'folder', lit: { type: Boolean}, value: true,
     label: 'Status', level: 2, 
-    title: "Status information about the operation of web audio"
+    title: 'Status information about the operation of web audio.'
   },
   displayAbout: {
     type: 'folder', lit: { type: Boolean}, value: false,
     label: 'About', level: 2, 
-    title: "What Keyer.js does and how it works."
+    title: 'What keyer.js does and how it works.'
   },
   displayLicense: { 
     type: 'folder', lit: { type: Boolean}, value: false,
     label: 'License', level: 2, 
-    title: "How Keyer.js is licensed."
+    title: 'How keyer.js is licensed.'
   },
   displayColophon: {
     type: 'folder', lit: { type: Boolean}, value: false,
     label: 'Colophon', level: 2, 
-    title: "How Keyer.js was built."
+    title: 'How Keyer.js was built.'
   },
   displayTouchStraight: { 
     lit: { type: Boolean }, value: false,
@@ -368,47 +175,52 @@ const controls = {
   shape: {
     label: 'Envelope', type: 'envelope',
     envelope1: 'envelope', envelope2: 'envelope2',
-    title: 'The overall window function for the keying envelope.'
+    title: 'The keying envelope is the product of two window functions.'
   },
   paddleKeyer: {
     type: 'options', lit: { type: String }, value: 'nd7pa-b',
     label: 'Keyer', options: 'paddleKeyers',
-    title: "The keyer that translates paddle events into key events."
+    title: 'The keyer that translates paddle events into key events.'
   },
-  swapped: {
+  paddleSwapped: {
     type: 'toggle', lit: { type: Boolean }, value: false,
-    label: 'Swapped', on: 'Swapped', off: 'Not Swapped',
-    title: "Should the paddles be swapped"
+    label: 'Swapped', on: 'true', off: 'false',
+    title: 'Should the paddles be swapped.'
+  },
+  paddleAdapter: {
+    type: 'options', lit: { type: String }, value: 'none',
+    label: 'Adapter', options: 'paddleAdapters',
+    title: 'A state machine which modifies input paddle state.'
   },
   straightKey: {
     type: 'options', lit: { type: String }, value: 'ControlLeft',
     label: 'Straight', options: 'shiftKeys',
-    title: "Keyboard key that activates the straight key."
+    title: 'Keyboard shift key that activates the straight key.'
   },
   leftPaddleKey: {
     type: 'options', lit: { type: String }, value: 'AltRight',
     label: 'Left', options: 'shiftKeys',
-    title: "Keyboard key that activates the left paddle."
+    title: 'Keyboard shift key that activates the left paddle.'
   },
   rightPaddleKey: {
     type: 'options', lit: { type: String }, value: 'ControlRight',
     label: 'Right', options: 'shiftKeys',
-    title: "Keyboard key that activates the right paddle."
+    title: 'Keyboard shift key that activates the right paddle.'
   },
   straightMidi: {
     type: 'options', lit: { type: String }, value: 'None', 
     label: 'Straight', options: 'midiNotes',
-    title: "MIDI note that activates the straight key."
+    title: 'MIDI note that activates the straight key.'
   },
   leftPaddleMidi: {
     type: 'options', lit: { type: String }, value: 'None',
     label: 'Left', options: 'midiNotes',
-    title: "MIDI note that activates the left paddle."
+    title: 'MIDI note that activates the left paddle.'
   },
   rightPaddleMidi: {
     type: 'options', lit: { type: String }, value: 'None',
     label: 'Right', options: 'midiNotes',
-    title: "MIDI note that activates the right paddle."
+    title: 'MIDI note that activates the right paddle.'
   },
   
   inputSpeed: 'speed',
@@ -425,102 +237,109 @@ const controls = {
   inputShape: {
     label: '', type: 'envelope',
     envelope1: 'inputEnvelope', envelope2: 'inputEnvelope2',
-    title: 'The overall window function for the keying envelope.'
+    title: 'The keying envelope is the product of two window functions.'
   },
   requestedSampleRate: {
     type: 'options', lit: { type: Number }, value: '48000',
     label: 'Requested sample rate', options: 'sampleRates',
     title: 'Request web audio to run at a specific sample rate.'
   },
-  scopeRunning: { value: false, lit: { type: Boolean } },
-  scopeTimeScale: { value: '10ms/div', lit: { type: String } },
-  scopeTrigger: { value: 'none', lit: { type: String } },
-  scopeTriggerChannel: { value: 'none', lit: { type: String } },
-  scopeHold: { value: '1s', lit: { type: String } },
-  scopeSource1: { value: 'none', lit: { type: String } },
-  scopeVerticalScale1: { value: '200mFS/div', lit: { type: String } },
-  scopeSource2: { value: 'none', lit: { type: String } },
-  scopeVerticalScale2: { value: '200mFS/div', lit: { type: String } },
+  scopeRunning: { 
+    type: 'toggle', lit: { type: Boolean }, value: false, 
+    label: '', on: 'Stop', off: 'Run',
+    title: 'Whether the scope is capturing and displaying samples.'
+  },
+  scopeTrigger: {
+    type: 'options', lit: { type: String }, value: 'none', 
+    label: 'Trigger', options: 'scopeTriggers',
+    title: 'Whether the scope is looking for a trigger transition.'
+  },
+  scopeTriggerChannel: { 
+    type: 'options', lit: { type: String }, value: 'none', 
+    label: 'Channel', options: 'scopeChannels',
+    title: 'The channel the scope examines for the trigger.'
+  },
+  scopeHold: {
+    type: 'options', lit: { type: String }, value: '1s',
+    label: 'Hold', options: 'scopeHolds',
+    title: 'The hold off time after a trigger.'
+  },
+  scopeTimeScale: { 
+    type: 'options', lit: { type: String }, value: '10ms/div',
+    label: 'Time', options: 'scopeTimeScales',
+    title: 'The amount of time represented on the scope horizontal scale.'
+  },
+  scopeEnable1: {
+    type: 'check', lit: { type: Boolean }, value: false,
+    label: 'ch1',
+    title: 'Whether this channel is enabled for capture.'
+  },
+  scopeSource1: {
+    type: 'options', lit: { type: String }, value: 'none',
+    label: 'Source', options: 'scopeSources',
+    title: 'The source of the signal on this channel'
+  },
+  scopeVerticalScale1: {
+    type: 'options', lit: { type: String }, value: '200mFS/div',
+    label: 'Vertical', options: 'scopeVerticalScales',
+    title: 'The vertical scale on this channel.'
+  },
+  scopeEnable2: {
+    type: 'check', lit: { type: Boolean }, value: false,
+    label: 'ch2',
+    title: 'Whether this channel is enabled.'
+  },
+  scopeSource2: 'scopeSource1',
+  scopeVerticalScale2: 'scopeVerticalScale1',
+
+  // read only context values
   state: { lit: { type: String } },
   sampleRate: { lit: { type: Number } },
-  currentTime: { lit: { type: Number } },
+  currentTime: { lit: { type: Number }  },
   baseLatency: { lit: { type: Number } },
-  midiNames: { lit: { type: Array } },
-  midiNotes: { lit: { type: Array } },
+  
+  // read only midi flag
+  midiAvailable: { lit: { type: Boolean } },
+  
+  // read only values supplying options lists
+  // most are constant, midiNotes changes
+  envelopes: { lit: { type: Array } },
   paddleKeyers: { lit: { type: Array } },
+  shiftKeys: { lit: { type: Array } },
+  midiNotes: { lit: { type: Array } },
+  sampleRates: { lit: { type: Array } },
+  scopeTriggers: { lit: { type: Array } },
+  scopeChannels: { lit: { type: Array } },
+  scopeHolds: { lit: { type: Array } },
+  scopeTimeScales: { lit: { type: Array } },
+  scopeSources: { lit: { type: Array } },
+  scopeVerticalScales: { lit: { type: Array } },
+
+  // tty window content
   content: { lit: { type: Object } },
   finished: { lit: { type: Array } },
   pending: { lit: { type: Array } },
-};
-/*
-*/
+}; 
 
 export class KeyerJs extends LitElement {
 
-/*
-  // declare default values
-  static get defaults() { 
-    if ( ! KeyerJs._defaults) {
-      KeyerJs._defaults = {};
-      Object.keys(KeyerJs.controls)
-	.filter(x => 'value' in KeyerJs.getControl(x))
-	.forEach(x => { KeyerJs._defaults[x] = KeyerJs.getControl(x).value });
-      if ( ! deepEqual(defaults, KeyerJs._defaults)) {
-	console.log('defaults discrepancy');
-	Object.keys(defaults)
-	  .forEach(x => { 
-	    if (defaults[x] !== KeyerJs._defaults[x])
-	      console.log(`${x}: ${defaults[x]} !== ${KeyerJs._defaults[x]}`)
-	  });
-	Object.keys(KeyerJs._defaults)
-	  .forEach(x => { 
-	    if (defaults[x] !== KeyerJs._defaults[x])
-	      console.log(`${x}: ${defaults[x]} !== ${KeyerJs._defaults[x]}`)
-	  });
-      }
-    }
-    return KeyerJs._defaults;
-  }
-*/
-  // declare LitElement properties
+  // declare the controls of the ui
+  static get controls() { return controls; }
+
+  // extract LitElement properties from controls
   static get properties() { 
     if ( ! KeyerJs._properties) {
       KeyerJs._properties = {};
       Object.keys(KeyerJs.controls)
 	.filter(x => 'lit' in KeyerJs.getControl(x))
 	.forEach(x => { KeyerJs._properties[x] = KeyerJs.getControl(x).lit });
-      /*
-      if ( ! deepEqual(properties, KeyerJs._properties)) {
-	console.log('properties discrepancy');
-      }
-      */
     }
     return KeyerJs._properties;
   }
 
-  // declare the controls of the ui
-  static get controls() { return controls; }
-
-/*
-  static get listDefaults() {
-    if (KeyerJs._listDefaults === undefined) KeyerJs._listDefaults = Array.from(Object.keys(KeyerJs.defaults));
-    return KeyerJs._listDefaults;
-  }
-
-  static get listProperties() {
-    if (KeyerJs._listProperties === undefined) KeyerJs._listProperties = Array.from(Object.keys(KeyerJs.properties));
-    return KeyerJs._listProperties;
-  }
-  
-  static get listControls() { 
-    if (KeyerJs._listControls === undefined) KeyerJs._listControls = Array.from(Object.keys(KeyerJs.controls));
-    return KeyerJs._listControls;
-  }
-  
-  static getDefault(control) { return KeyerJs.defaults[control]; }
-  
-  static getProperty(control) { return KeyerJs.properties[control]; }
-  */
+  // get the control object for a control
+  // implement single string value indicates
+  // indirect to the control named by the string
   static getControl(control) {
     const c = KeyerJs.controls[control];
     if (c && typeof c === 'string')
@@ -528,7 +347,9 @@ export class KeyerJs extends LitElement {
     return c;
   }
   
-  // properties of context
+  // property getters and setters
+
+  // properties of web audio context
   set running(v) { 
     // console.log(`set running = ${v}, running is ${this.running}`);
     if (v !== this._running) {
@@ -549,7 +370,19 @@ export class KeyerJs extends LitElement {
 
   get running() { return this._running; }
   
-  // keyer properties for keyboard keyer
+  get currentTime() { return this.keyer.currentTime; }
+
+  get sampleRate() { return this.keyer.sampleRate; }
+
+  get baseLatency() { return this.keyer.baseLatency; }
+
+  get state() { return this.keyer.context.state; }
+  
+  get midiAvailable() { return this.keyer.midiSource.midiAvailable; }
+  
+  get midiNotes() { return this.keyer.midiSource.notes; }
+  
+  // keyboard keyer properties
   set pitch(v) { this.keyer.output.pitch = v; }
 
   get pitch() { return this.keyer.output.pitch; }
@@ -593,9 +426,9 @@ export class KeyerJs extends LitElement {
   get envelopes() { return this.keyer.output.envelopes; }
   
   // keyer properties for manual keyer
-  set swapped(v) {  this.keyer.input.swapped = v; }
+  set paddleSwapped(v) {  this.keyer.input.swapped = v; }
 
-  get swapped() { return this.keyer.input.swapped; }
+  get paddleSwapped() { return this.keyer.input.swapped; }
 
   get paddleKeyers() { return this.keyer.input.keyers; }
 
@@ -603,6 +436,12 @@ export class KeyerJs extends LitElement {
 
   get paddleKeyer() { return this.keyer.input.keyer; }
 
+  get paddleAdapters() { return this.keyer.input.adapters; }
+
+  set paddleAdapter(v) { this.keyer.input.adapter = v; }
+
+  get paddleAdapter() { return this.keyer.input.adapter; }
+  
   set straightKey(v) { this.keyer.input.straightKey = v; }
 
   get straightKey() { return this.keyer.input.straightKey; }
@@ -627,7 +466,7 @@ export class KeyerJs extends LitElement {
 
   get rightPaddleMidi() { return this.keyer.input.rightPaddleMidi; }
 
-  // input keyer properties
+  // manual keyer properties
   set inputPitch(v) { this.keyer.input.pitch = v; }
 
   get inputPitch() { return this.keyer.input.pitch; }
@@ -701,9 +540,21 @@ export class KeyerJs extends LitElement {
 
   get scopeVerticalScales() { return this.keyer.scope.verticalScales; }
   
+  setScopeChannel(control, channel, value) { this.keyer.scope.channel(channel)[control] = value; }
+
+  getScopeChannel(control, channel) { return this.keyer.scope.channel(channel)[control]; }
+  
+  set scopeEnable1(v) { this.setScopeChannel('enable', 1, v); }
+  
+  get scopeEnable1() { return this.getScopeChannel('enable', 1); }
+  
   set scopeSource1(v) { this.keyer.scope.channel(1).source = v; }
 
   get scopeSource1() { return this.keyer.scope.channel(1).source; }
+  
+  set scopeEnable2(v) { this.keyer.scope.channel(2).enable = v; }
+  
+  get scopeEnable2() { return this.keyer.scope.channel(2).enable; }
   
   set scopeSource2(v) { this.keyer.scope.channel(2).source = v; }
 
@@ -717,15 +568,6 @@ export class KeyerJs extends LitElement {
 
   get scopeVerticalScale2() { return this.keyer.scope.channel(2).verticalScale; }
 
-  // properties from web audio context
-  get currentTime() { return this.keyer.currentTime; }
-
-  get sampleRate() { return this.keyer.sampleRate; }
-
-  get baseLatency() { return this.keyer.baseLatency; }
-
-  get state() { return this.keyer.context.state; }
-  
   constructor() {
     super();
     this.keyer = null;
@@ -733,15 +575,6 @@ export class KeyerJs extends LitElement {
     this.displayAbout = false;
     this.displayLicense = false;
     this.displayColophon = false;
-  }
-
-  controlSetDefaultValue(control, forceDefault) {
-    if ('value' in KeyerJs.getControl(control))
-      this[control] = controlDefault(control, KeyerJs.getControl(control).value, forceDefault);
-  }
-
-  controlSetDefaultValues(forceDefault) {
-    Object.keys(KeyerJs.controls).forEach(control => this.controlSetDefaultValue(control, forceDefault));
   }
 
   async start() {
@@ -763,8 +596,11 @@ export class KeyerJs extends LitElement {
     this.keyer = new Keyer(context);
 
     // load some constants into the instance
-    this.shiftKeys = shiftKeys;
-    this.sampleRates = sampleRates;
+    // shift keys which can be used as key simulators
+    // in truth, if I ignored repeats, then any key would work
+    this.shiftKeys = ['None','ShiftLeft','ControlLeft','AltLeft','AltRight','ControlRight','ShiftRight'];
+    // list of acceptable sample rates 
+    this.sampleRates = ['8000', '32000', '44100', '48000', '96000', '192000', '384000' ];
 
     // using localStorage to persist defaults between sessions
     // defaults set at top of file
@@ -781,8 +617,8 @@ export class KeyerJs extends LitElement {
     this.keyer.output.on('sent', ltr => this.onsent(ltr));
     this.keyer.output.on('unsent', ltr => this.onunsent(ltr));
     this.keyer.output.on('skipped', ltr => this.onskipped(ltr));
-    // this.keyer.midiSource.on('midi:names', () => this.onmidinames());
-    this.keyer.midiSource.on('midi:notes', () => this.onmidinotes());
+
+    this.keyer.midiSource.on('midi:notes', () => this.requestUpdate('midiNotes', []));
     
     document.addEventListener('keydown', (e) => this.keyer.input.keyboardKey(e, true));
     document.addEventListener('keyup', (e) => this.keyer.input.keyboardKey(e, false));
@@ -792,49 +628,11 @@ export class KeyerJs extends LitElement {
   // and that default values are chosen from the same lists
   // also use the functions we define for this purpose
   validate() {
-    /*
-    // check that KeyerJs.properties are reflected in KeyerJs.controls
-    for (const k of KeyerJs.listDefaults) {
-      // each element of defaults must have an entry in controls with a property: value
-      const d = KeyerJs.getDefault(k);
-      const c = KeyerJs.getControl(k);
-      if ( ! c || c.value !== d)
-	console.log(`${k}: { value: ${d} }`);
-    }
-    for (const k of KeyerJs.listProperties) {
-      // each element of properties must have an entry in controls with a property lit: value
-      const p = KeyerJs.getProperty(k);
-      const c = KeyerJs.getControl(k);
-      if ( ! c || ! c.lit || ! deepEqual(p, c.lit))
-	console.log(`${k}: { lit: { type: ${p.type} }`);
-      if (Object.keys(p).length !== 1) {
-	console.log(Object.keys(p));
-      }
-    }
-    // for (const k of KeyerJs.listControls) {
-      // each element of controls 
-      // that has a lit: property matches a value in properties
-      // that has a value: property matches a value in defaults
-      // const c = KeyerJs.getControl(k);
-      // const p = KeyerJs.getProperty(k);
-      // const d = KeyerJs.getDefault(k);
-    // }
-    */
     for (const k of Object.keys(KeyerJs.properties))
       if (KeyerJs.properties[k].type === Boolean && this[k] !== true && this[k] !== false)
 	console.log(`property '${k}' failed validate '${this[k]}' is not Boolean value`);
-    this.shiftKeys.forEach(x => isShiftKey(x) || console.log(`shiftKey ${x} failed isShiftKey`));
-    this.sampleRates.forEach(x => isSampleRate(x) || console.log(`sampleRate ${x} failed isSampleRate`));
-    ['straightKey', 'leftPaddleKey', 'rightPaddleKey'].
-      forEach(x => isShiftKey(this[x]) || console.log(`property '${x}' failed isShiftKey: ${this[x]}`));
-    ['requestedSampleRate'].forEach(x => isSampleRate(this[x]) || console.log(`property '${x}' failed isSampleRate '${this[x]}'`));
   }
 	       
-  // midi information events
-  onmidinames() { this.midiNames = this.keyer.midiSource.names; }
-
-  onmidinotes() { this.midiNotes = this.keyer.midiSource.notes; }
-  
   //
   // teletype window
   //
@@ -956,10 +754,30 @@ export class KeyerJs extends LitElement {
     this.updateContent()
   }
   
+  // control manipulation
+  controlSetDefaultValue(control, forceDefault) {
+    const JSONparse = (value) => { 
+      try { return JSON.parse(value); }
+      catch(e) { return undefined; }
+    }
+    const controlDefault = (defaultValue) => {
+      const localValue = JSONparse(localStorage[control]);
+      const value = forceDefault || alwaysForceDefault || localValue === undefined ? defaultValue : localValue;
+      localStorage[control] = JSON.stringify(value);
+      return value;
+    }
+    if ('value' in KeyerJs.getControl(control))
+      this[control] = controlDefault(KeyerJs.getControl(control).value);
+  }
+
+  controlSetDefaultValues(forceDefault) {
+    Object.keys(KeyerJs.controls).forEach(control => this.controlSetDefaultValue(control, forceDefault));
+  }
+
   controlUpdate(control, oldv, newv) {
     this[control] = newv;
     const c = KeyerJs.getControl(control);
-    if ('value' in c) controlSave(control, this[control]);
+    if ('value' in c) localStorage[control] = JSON.stringify(newv);
     if ('lit' in c) this.requestUpdate(control, oldv);
     switch (control) {
     case 'requestedSampleRate':
@@ -973,8 +791,6 @@ export class KeyerJs extends LitElement {
   controlToggle(control) { this.controlUpdate(control, this[control], ! this[control]); }
 
   controlSelect(control, e) { this.controlUpdate(control, this[control], e.target.value); }
-  
-  controlGet(control) { return this[control]; }
   
   scopeResize() {
     if (this.displayScope) {
@@ -999,14 +815,15 @@ export class KeyerJs extends LitElement {
         margin: 0;
         text-align: center;
       }
-      .h1 { font-size: 2em; margin: .33em 0 }
-      .h2 { font-size: 1.5em; margin: .38em 0 }
-      .h3 { font-size: 1.17em; margin: .42em 0 }
-      .h5 { font-size: .83em; margin: .75em 0 }
-      .h6 { font-size: .75em; margin: .84em 0 }
+      .h1 { font-size: 2em; margin: .33em 0; }
+      .h2 { font-size: 1.5em; margin: .38em 0; }
+      .h3 { font-size: 1.17em; margin: .42em 0; }
+      .h5 { font-size: .83em; margin: .75em 0; }
+      .h6 { font-size: .75em; margin: .84em 0; }
       .h1, .h2, .h3, .h4, .h5, .h6 { 
 	font-weight: bolder;
-	width: 50%;
+	width: 60%;
+	text-align: left;
       }
       main {
         flex-grow: 1;
@@ -1015,6 +832,9 @@ export class KeyerJs extends LitElement {
         margin-left: 5%;
         max-width: 90%;
         margin-top: 16px;
+      }
+      div.hidden, div.group.hidden {
+	display: none;
       }
       button, select, input {
         font-size: calc(10px + 2vmin);
@@ -1111,93 +931,8 @@ export class KeyerJs extends LitElement {
     `;
   }
 
-  sliderRender(control, min, max, step, label, unit) {
-    return html`
-	  <input
-	    type="range"
-	    name="${control}" 
-	    min="${min}"
-	    max="${max}"
-	    step="${step}"
-	    .value=${this[control]}
-	    @input=${(e) => this.controlSelect(control, e)}>
-	  <label for="${control}">${label} ${this[control]} (${unit})</label>`;
-  }
-
-  spinnerRender(control, min, max, step, label, unit, size) {
-    return html`
-	<label for="${control}">${label}
-	  <input
-	    type="number"
-	    name="${control}" 
-	    min="${min}"
-	    max="${max}"
-	    step="${step}"
-	    size="${size}"
-	    .value=${this[control]}
-	    @input=${(e) => this.controlSelect(control, e)}>
-	    (${unit})</label>`;
-  }
-
-  optionsRender(control, values, label) {
-    const options = values ? 
-	  values.map(x => html`<option .value=${x} ?selected=${x === this[control]}>${x}</option>`) :
-	  html``;
-    return html`
-	<label for="${control}">${label}
-	  <select
-	    name="${control}"
-	    .value=${this[control]} 
-	    @change=${(e) => this.controlSelect(control, e)}>
-	      ${options}
-	  </select>
-	</label>`;
-  }
-  
-  toggleRender(control, onLabel, offLabel) {
-    return html`
-	  <button
-	    role="switch" 
-	    aria-checked=${this[control]} 
-	    @click=${() => this.controlToggle(control)}>
-	    <span>${this[control] ? onLabel : offLabel}</span>
-	  </button>`;
-  }
-  
-  touchKeyRender() {
-    return html``;
-/*
-    if (this.inputKey === 'straight')
-      return html`
-	  <button class="key" @mousedown=${e => this.keyer.input.mouseKey(e,'straight',true)} 
-			      @mouseup=${e => this.keyer.input.mouseKey(e,'straight',false)}
-			      @touchstart=${e => this.keyer.input.touchKey(e,'straight',false)}
-			      @touchend=${e => this.keyer.input.touchKey(e,'straight',false)}
-		>${straightKeyArrow}</button>
-	`;
-    if (this.inputKey === 'paddle')
-      return html`
-	  <button class="key" @mousedown=${e => this.keyer.input.mouseKey(e,'left',true)}
-			      @mouseup=${e => this.keyer.input.mouseKey(e,'left',false)}
-			      @touchstart=${e => this.keyer.input.touchKey(e,'left',false)}
-			      @touchend=${e => this.keyer.input.touchKey(e,'left',false)}
-		>${leftKeyArrow}</button>
-	  <button class="key" @mousedown=${e => this.keyer.input.mouseKey(e,'right',true)}
-			      @mouseup=${e => this.keyer.input.mouseKey(e,'right',false)}
-			      @touchstart=${e => this.keyer.input.toucheKey(e,'right',false)}
-			      @touchend=${e => this.keyer.input.touchKey(e,'right',false)}
-		>${rightKeyArrow}</button>
-	`;
-    return html``;
-*/
-  }
-
-  // display a section of the user interface if it's enabled
+  // render a section of the user interface
   displayRender(control) {
-    if ( ! isOnOff(this[control]))
-      return html`<h1>Control ${control} is neither true nor false, ${this[control]}`;
-    if ( ! this[control])
-      return html``;
 
     switch (control) {
 
@@ -1205,58 +940,61 @@ export class KeyerJs extends LitElement {
 
     case 'displayTouchPaddle': return html``; // FIX.ME
 
-    case 'displayOutput': 
+    case 'displayKeyboardSettings': 
       return html`
-	${this.controlRender('speed')}
-	${this.controlRender('gain')}
-	${this.controlRender('pitch')}
-	${this.controlRender('displayAdvanced')}
+	${this.controlRender('speed')},
+	${this.controlRender('gain')},
+	${this.controlRender('pitch')},
+	${this.controlRender('displayAdvancedKeyboardSettings')}
 	`;
 
-    case 'displayAdvanced':
+    case 'displayAdvancedKeyboardSettings':
       return html`
-	${this.controlRender('weight')}
-	${this.controlRender('ratio')}
+	${this.controlRender('weight')},
+	${this.controlRender('ratio')},
 	${this.controlRender('compensation')}
 	<br/>
-	${this.controlRender('rise')}
+	${this.controlRender('rise')},
 	${this.controlRender('fall')}
 	<br/>
 	${this.controlRender('shape')}
       `;
-    case 'displayInputKey':
+    case 'displayManualSettings':
       return html`
 	<div class="group" title="Paddle options.">Paddles:
-	  ${this.controlRender('paddleKeyer')}
-	  ${this.controlRender('swapped')}
-	</div>
+	  ${this.controlRender('paddleKeyer')},
+	  ${this.controlRender('paddleSwapped')}
+	  ${this.controlRender('paddleAdapter')}
+	</div><br/>
 	<div class="group" title="Keyboard keys used for manual keying.">Keyboard:
-	  ${this.controlRender('straightKey')}
-	  ${this.controlRender('leftPaddleKey')}
+	  ${this.controlRender('straightKey')},
+	  ${this.controlRender('leftPaddleKey')},
 	  ${this.controlRender('rightPaddleKey')}
-        </div>
-	<div class="group" title="MIDI device notes used for manual keying.">MIDI:	
-	  ${this.controlRender('straightMidi')}
-	  ${this.controlRender('leftPaddleMidi')}
+        </div><br/>
+	<div class="group ${this.midiAvailable?'':' hidden'}" title="MIDI device notes used for manual keying.">MIDI:	
+	  ${this.controlRender('straightMidi')},
+	  ${this.controlRender('leftPaddleMidi')},
 	  ${this.controlRender('rightPaddleMidi')}
-        </div>
-	${this.controlRender('inputSpeed')}
-	${this.controlRender('inputGain')}
+        </div><br/>
+	${this.controlRender('inputSpeed')},
+	${this.controlRender('inputGain')},
 	${this.controlRender('inputPitch')}
-	${this.controlRender('displayManualAdvanced')}
+	${this.controlRender('displayAdvancedManualSettings')}
       `;
-    case 'displayManualAdvanced':
+
+    case 'displayAdvancedManualSettings':
       return html`
-	${this.controlRender('inputWeight')}
-	${this.controlRender('inputRatio')}
+	${this.controlRender('inputWeight')},
+	${this.controlRender('inputRatio')},
 	${this.controlRender('inputCompensation')}
 	<br/>
-	${this.controlRender('inputRise')}
+	${this.controlRender('inputRise')},
 	${this.controlRender('inputFall')}
 	<br/>
 	${this.controlRender('inputShape')}
       `;
-    case 'displayMisc':
+
+    case 'displayMiscSettings':
       return html`
 	${this.controlRender('requestedSampleRate')}
 	<br/>
@@ -1267,36 +1005,38 @@ export class KeyerJs extends LitElement {
 
     case 'displaySettings':
       return html`
-	${this.controlRender('displayOutput')}
-	${this.controlRender('displayInputKey')}
-	${this.controlRender('displayMisc')}
+	${this.controlRender('displayKeyboardSettings')}
+	${this.controlRender('displayManualSettings')}
+	${this.controlRender('displayMiscSettings')}
 	`;
 
     case 'displayScope':
       return html`
 	<div class="scope"><canvas @resize=${this.scopeResize}></canvas></div>
-	<div class="group">${this.toggleRender('scopeRunning', 'Stop', 'Run')}</div>
-	<div class="group">${this.optionsRender('scopeTrigger', this.scopeTriggers, 'Trigger:')}</div>
-	<div class="group">${this.optionsRender('scopeTriggerChannel', this.scopeChannels, 'Channel:')}</div>
-	<div class="group">${this.optionsRender('scopeHold', this.scopeHolds, 'Hold:')}</div>
+	${this.controlRender('scopeRunning')}
+	${this.controlRender('scopeTrigger')}
+	${this.controlRender('scopeTriggerChannel')}
+	${this.controlRender('scopeHold')}
 	<br/>
-	<div class="group">${this.optionsRender('scopeTimeScale', this.scopeTimeScales, 'Time:')}</div></br>
+	${this.controlRender('scopeTimeScale')}
 	<br/>
-	Ch1: 
-	<div class="group">${this.optionsRender('scopeSource1', this.scopeSources, 'Source:')}</div>
-	<div class="group">${this.optionsRender('scopeVerticalScale1', this.scopeVerticalScales, 'Vertical:')}</div>
+	${this.controlRender('scopeEnable1')} 
+	${this.controlRender('scopeSource1')}
+	${this.controlRender('scopeVerticalScale1')}
 	<br/>
-	Ch2: 
-	<div class="group">${this.optionsRender('scopeSource2', this.scopeSources, 'Source:')}</div>
-	<div class="group">${this.optionsRender('scopeVerticalScale2', this.scopeVerticalScales, 'Vertical:')}</div>
+	${this.controlRender('scopeEnable2')}
+	${this.controlRender('scopeSource2')}
+	${this.controlRender('scopeVerticalScale2')}
 	`;
 
     case 'displayStatus':
       return html`
+	State: ${this.state}<br/>
 	Sample rate: ${this.sampleRate}<br/>
 	Current time: ${this.currentTime.toFixed(3)}<br/>
-	Base latency: ${this.baseLatency.toFixed(3)}<br/>`;
-
+	Base latency: ${this.baseLatency.toFixed(3)}<br/>
+	Midi available: ${this.midiAvailable}<br/>`;
+      
     case 'displayAbout':
       return html`
 	<p>
@@ -1312,8 +1052,8 @@ export class KeyerJs extends LitElement {
 	  and other aspects of the prog.
 	</p><p>
 	  The <b>Status</b> panel shows the status of the web audio,
-	  the time since the system started, the sample rate, and the
-	  estimated latency.
+	  the time since the system started, the sample rate, the
+	  estimated latency, and whether MIDI is available.
 	</p><p>
 	  The <b>Scope</b> panel allows the wave forms of the keyer to be displayed.
 	</p><p>
@@ -1345,57 +1085,144 @@ export class KeyerJs extends LitElement {
 	</p>
 	`;
 
+    case 'displayColophon':
+      return html`
+	<p>
+	  keyer.js was written with emacs on a laptop running Ubuntu.
+	</p><p>
+	  The algorithms in keyer.js were developed for <a href="https://github.com/recri/keyer">keyer</a>,
+	  a collection of software defined radio software built using Jack, Tcl, and C.
+	</p><p>
+	  The polymer project, the PWA starter kit, open-wc, lit-element, lit-html, web audio, web MIDI.
+	</p><p>
+	  The source for <a href="https://github.com/recri/keyer.js">keyer.js</a>
+	</p>
+	`;
     default: 
       return html`<h1>There is no ${control} case in displayRender<h1>`;
     }
   }
-  
-  headerRender(level, section, label) {
-    // menu indicators are right arrow and down arrow
-    const controlMenuIndicator = (control) => this[control] ? '\u23f7' : '\u23f5';
-    return html`
-	<button class="h${level}"
-	  @click=${() => this.controlToggle(section)}>
-	    ${controlMenuIndicator(section)} ${label}
-	</button}>`;
-  }
-  
+
+  // render a user interface control element
   controlRender(control) {
     const ctl = KeyerJs.getControl(control);
     if ( ! ctl) return html`<h1>No controlRender for ${control}</h1>`;
     switch (ctl.type) {
+      // folder is a label button which shows or hides content
     case 'folder': {
-      const pclass = ctl.level === 2 ? 'panel' : 'subpanel';
+      const {level, label, title} = ctl;
+      const pclass = level === 2 ? 'panel' : 'subpanel';
+      const dclass = `${pclass} ${this[control] ? '' : 'hidden'}`;
       return html`
-	<div class="${pclass}" title="${ctl.title}">${this.headerRender(ctl.level, control, ctl.label)}</div>
-	<div class="${pclass}">${this.displayRender(control)}</div>
+	<div class="${pclass}" title="${title}">
+	  <button class="h${level}" @click=${() => this.controlToggle(control)}>
+	    ${this[control] ? shownSymbol : hiddenSymbol} ${label}
+	  </button}>
+	</div>
+	<div class="${dclass}">${this.displayRender(control)}</div>
       `;
     }
-    case 'spinner':
+      // slider adjusts a number between a min and a max by step
+    case 'slider': {
+      const {min, max, step, label, unit, title} = ctl;
       return html`
-	<div class="group" title="${ctl.title}">${this.spinnerRender(control, ctl.min, ctl.max, ctl.step, ctl.label, ctl.unit, ctl.size)}</div>
+	<div class="group" title="${title}">
+	  <input
+	    type="range"
+	    name="${control}" 
+	    min="${min}"
+	    max="${max}"
+	    step="${step}"
+	    .value=${this[control]}
+	    @input=${(e) => this.controlSelect(control, e)}>
+	  <label for="${control}">${label} ${this[control]} (${unit})</label>
+	</div>
       `;
-    case 'options':
+  }
+
+      // spinner adjusts a number between a min and a max by step
+    case 'spinner': {
+      const {min, max, step, label, unit, size, title} = ctl;
       return html`
-	<div class="group" title="${ctl.title}">${this.optionsRender(control, this[ctl.options], ctl.label)}</div>
+	<div class="group" title="${title}">
+	  <label for="${control}">${label}
+	    <input
+	      type="number"
+	      name="${control}" 
+	      min="${min}"
+	      max="${max}"
+	      step="${step}"
+	      size="${size}"
+	      .value=${this[control]}
+	      @input=${(e) => this.controlSelect(control, e)}>
+	    (${unit})
+	  </label>
+	</div>
       `;
-    case 'toggle':
+    }
+      // options displays a list of options for selection
+    case 'options': {
+      const {options, label, title} = ctl;
       return html`
-	<div class="group">${this.toggleRender(control, ctl.on, ctl.off)}</div>
-      `;
-    case 'envelope':
-      return html`
-	<div class="group" title="${ctl.title}"><label>${ctl.label}: 
-	  ${this.controlRender(ctl.envelope1)} * ${this.controlRender(ctl.envelope2)}
+	<div class="group" title="${title}"><label for="${control}">${label}
+	  <select
+	    name="${control}"
+	    .value=${this[control]} 
+	    @change=${(e) => this.controlSelect(control, e)}>
+	      ${this[options].map(x => html`<option .value=${x} ?selected=${x === this[control]}>${x}</option>`)}
+	  </select>
 	</label></div>
       `;
+    }
+      // a toggle button shows one of two labels
+    case 'toggle': {
+      const {label, on, off, title} = ctl;
+      return html`
+	<div class="group" title="${title}"><label for="${control}">${label}
+	  <button
+	    name="${control}"
+	    role="switch" 
+	    aria-checked=${this[control]} 
+	    @click=${() => this.controlToggle(control)}>
+	    ${this[control] ? on : off}
+	  </button></label></div>
+      `;
+    }
+      // an envelope shows two lists of envelope functions
+    case 'envelope': {
+      const {label, envelope1, envelope2, title} = ctl;
+      return html`
+	<div class="group" title="${title}"><label>${label}: 
+	  ${this.controlRender(envelope1)} * ${this.controlRender(envelope2)}
+	</label></div>
+      `;
+    }
+      // a check button shows a label with a filled or unfilled checkbox
+    case 'check': {
+      const {label, title} = ctl;
+      return html`
+	<div class="group" title="${title}"><button
+	    role="switch" 
+	    aria-checked=${this[control]} 
+	    @click=${() => this.controlToggle(control)}>
+	    ${this[control] ? checkedCheckBox : uncheckedCheckBox} ${label}
+	  </button></div>
+	`;
+    }
     default:
       return html`<h1>No controlRender for ${control} with type ${ctl.type}`;
     }
   }
   
-  renderMain() {
-    return html`
+  render() {
+    const startup = () => html`
+        <div>
+          <button class="start" @click=${this.start}><span>${playSymbol}</span></button>
+	  <br/>
+	  <h2>Press play to start the keyer.</h2>
+	  <p>Browsers shouldn't start audio without an user gesture.</p>
+	</div>`;
+    const main = () => html`
         <div class="keyboard" tabindex="0" @keydown=${this.ttyKeydown} @focus=${this.onfocus} @blur=${this.onblur}>${this.content}</div>
         <div class="panel">
 	  ${this.controlRender('running')}
@@ -1406,24 +1233,11 @@ export class KeyerJs extends LitElement {
 	${this.controlRender('displayScope')}
 	${this.controlRender('displayStatus')}
 	`;
-  }
-  
-  renderStartup() {
-    return html`
-        <div>
-          <button class="start" @click=${this.start}><span>${playSymbol}</span></button>
-	  <br/>
-	  <h2>Press play to start the keyer.</h2>
-	  <p>Browsers shouldn't start audio without an user gesture.</p>
-	</div>`;
-  }
-
-  render() {
     return html`
       <main>
         <div class="logo">${keyerLogo}</div>
         <div><h1>keyer.js</h1></div>
-	${this.keyer === null ? this.renderStartup() : this.renderMain()}
+	${this.keyer === null ? startup() : main()}
 	${this.controlRender('displayAbout')}
 	${this.controlRender('displayLicense')}
 	${this.controlRender('displayColophon')}

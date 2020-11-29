@@ -152,7 +152,6 @@ export class KeyerScope extends KeyerEvent {
   // enable called when displayed?
   enable(v, canvas) { 
     console.log(`enable ${v} ${canvas}`);
-    this.channels.forEach(ch => { this.channel(ch).enabled = v; });
     if (this.enabled !== v) {
       this.enabled = v;
       if (this.canvas !== canvas) {
@@ -194,13 +193,15 @@ export class KeyerScope extends KeyerEvent {
     // enabled means displayed on screen
     if (this.enabled) {
       // running means collecting and displaying samples
-      const capture = this.running && step >= this.holdOffTime;
+      const capture = this.running; // && step >= this.holdOffTime;
       const redraw = capture || this.redraw;
       console.log(`loop(...) enabled ${this.enabled} capture ${capture} redraw ${redraw}`);
       
       if (capture) {
 	// capture samples
-	this.channels.forEach(channel => channel.capture());
+	this.channels
+	  .filter(channel => channel.enable)
+	  .forEach(channel => channel.capture());
 	// set the delay for the next capture
 	this.holdOffTime = step + this.hold / 1000; // convert hold off time to milliseconds
       }
