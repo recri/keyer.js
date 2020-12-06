@@ -187,11 +187,6 @@ const controls = {
     label: 'Swapped', on: 'true', off: 'false',
     title: 'Should the paddles be swapped.'
   },
-  paddleAdapter: {
-    type: 'options', lit: { type: String }, value: 'none',
-    label: 'Adapter', options: 'paddleAdapters',
-    title: 'A state machine which modifies input paddle state.'
-  },
   straightKey: {
     type: 'options', lit: { type: String }, value: 'ControlLeft',
     label: 'Straight', options: 'shiftKeys',
@@ -436,12 +431,6 @@ export class KeyerJs extends LitElement {
 
   get paddleKeyer() { return this.keyer.input.keyer; }
 
-  get paddleAdapters() { return this.keyer.input.adapters; }
-
-  set paddleAdapter(v) { this.keyer.input.adapter = v; }
-
-  get paddleAdapter() { return this.keyer.input.adapter; }
-  
   set straightKey(v) { this.keyer.input.straightKey = v; }
 
   get straightKey() { return this.keyer.input.straightKey; }
@@ -544,17 +533,9 @@ export class KeyerJs extends LitElement {
 
   getScopeChannel(control, channel) { return this.keyer.scope.channel(channel)[control]; }
   
-  set scopeEnable1(v) { this.setScopeChannel('enable', 1, v); }
-  
-  get scopeEnable1() { return this.getScopeChannel('enable', 1); }
-  
   set scopeSource1(v) { this.keyer.scope.channel(1).source = v; }
 
   get scopeSource1() { return this.keyer.scope.channel(1).source; }
-  
-  set scopeEnable2(v) { this.keyer.scope.channel(2).enable = v; }
-  
-  get scopeEnable2() { return this.keyer.scope.channel(2).enable; }
   
   set scopeSource2(v) { this.keyer.scope.channel(2).source = v; }
 
@@ -962,22 +943,21 @@ export class KeyerJs extends LitElement {
     case 'displayManualSettings':
       return html`
 	<div class="group" title="Paddle options.">Paddles:
-	  ${this.controlRender('paddleKeyer')},
+	  ${this.controlRender('paddleKeyer')}
 	  ${this.controlRender('paddleSwapped')}
-	  ${this.controlRender('paddleAdapter')}
 	</div><br/>
 	<div class="group" title="Keyboard keys used for manual keying.">Keyboard:
-	  ${this.controlRender('straightKey')},
-	  ${this.controlRender('leftPaddleKey')},
+	  ${this.controlRender('straightKey')}
+	  ${this.controlRender('leftPaddleKey')}
 	  ${this.controlRender('rightPaddleKey')}
         </div><br/>
 	<div class="group ${this.midiAvailable?'':' hidden'}" title="MIDI device notes used for manual keying.">MIDI:	
-	  ${this.controlRender('straightMidi')},
-	  ${this.controlRender('leftPaddleMidi')},
+	  ${this.controlRender('straightMidi')}
+	  ${this.controlRender('leftPaddleMidi')}
 	  ${this.controlRender('rightPaddleMidi')}
         </div><br/>
-	${this.controlRender('inputSpeed')},
-	${this.controlRender('inputGain')},
+	${this.controlRender('inputSpeed')}
+	${this.controlRender('inputGain')}
 	${this.controlRender('inputPitch')}
 	${this.controlRender('displayAdvancedManualSettings')}
       `;
@@ -1020,11 +1000,11 @@ export class KeyerJs extends LitElement {
 	<br/>
 	${this.controlRender('scopeTimeScale')}
 	<br/>
-	${this.controlRender('scopeEnable1')} 
+	<b>ch1</b> 
 	${this.controlRender('scopeSource1')}
 	${this.controlRender('scopeVerticalScale1')}
 	<br/>
-	${this.controlRender('scopeEnable2')}
+	<b>ch2</b>
 	${this.controlRender('scopeSource2')}
 	${this.controlRender('scopeVerticalScale2')}
 	`;

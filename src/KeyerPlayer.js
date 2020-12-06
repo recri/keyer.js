@@ -144,8 +144,10 @@ export class KeyerPlayer extends KeyerEvent {
   }
 
   // straight key something on or off, right now
-  keyStraight(onOff) { this.key.offset.setValueAtTime(onOff ? 1 : 0, this.currentTime); }
+  set keyStraight(onOff) { this.key.offset.setValueAtTime(onOff ? 1 : 0, this.currentTime); }
 
+  get keyStraight() { return this.key.offset.value === 1; }
+  
   // play a dit or dah at the cursor
   // and the trailing inter-element space
   // return the cursor value at the end of the space

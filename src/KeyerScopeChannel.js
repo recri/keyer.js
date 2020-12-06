@@ -19,53 +19,80 @@ export class KeyerScopeChannel {
 
   constructor(scope, source, scale, offset, color, size) {
     this.scope = scope;
-    this._analyser = this.scope.context.createAnalyser();
-    this.enable = false;	// channel capture is requested
+    this.analyser = this.scope.context.createAnalyser();
     this.source = source;	// source name, subject to change
     this.verticalScale = scale;
     this.verticalOffset = offset;
     this.color = color;
     this.size = size;		// sample buffer size
     this._samples = this.createSamples();
+    this.captured = false;
+    // console.log(`scope ${scope}, source ${source}, scale ${scale}, offset ${offset}, color ${color}, size ${size}`);
+    // console.log(`this.size ${this.size}`);
   }
 
   createSamples() {
     if ( ! this.source || this.source.asByte) {
-      this.sample = (i) => (this._samples[i]/128) - 1;
+      // console.log(`uint8[]`);
+      if ( ! (this._samples instanceof Uint8Array) || this._samples.length !== this.size)
+	this._samples = new Uint8Array(this.size);
+      this.sample = (i) => ((this._samples[i]/128) - 1);
       this.capture = () => {
-	if (this.enable) {
-	  this.t0 = this.analyser.currentTime;
-	  this.analyser.getByteTimeDomainData(this._samples)
-	  this.t1 = this.analyser.currentTime;
+	this.t0 = this.scope.currentTime;
+	this.analyser.getByteTimeDomainData(this._samples)
+	this.t1 = this.scope.currentTime;
+	this.captured = true;
+      }
+    } else {
+      // console.log(`float32[]`);
+      if (! (this._samples instanceof Float32Array) || this._samples.length !== this.size) 
+	this._samples = new Float32Array(this.size);
+      this.sample = (i) => this._samples[i]
+      this.capture = () => {
+	this.t0 = this.scope.currentTime;
+	this.analyser.getFloatTimeDomainData(this._samples);
+	this.t1 = this.scope.currentTime;
+	// do the statistical summary and trigger identification
+	let last = this.sample(0);
+	this.min = last;
+	this.max = last;
+	this.pos = -1;
+	this.neg = -1;
+	this.any = -1;
+	for (let i = 1; i < this.size; i += 1) {
+	  const s = this.sample(i);
+	  this.min = Math.min(s, this.min);
+	  this.max = Math.max(s, this.max);
+	  if (this.pos === -1 && s > 0 && last <= 0) {
+	    this.pos = i;
+	    if (this.any === -1) this.any = this.pos;
+	  }
+	  if (this.neg === -1 && s < 0 && last >= 0) {
+	    this.neg = i;
+	    if (this.any === -1) this.any = this.neg;
+	  }
+	  last = s;
 	}
       }
-      if (this._samples instanceof Uint8Array && this._samples.length === this._size)
-	return this._samples;
-      return new Uint8Array(this._size) ;
     }
-    this.sample = (i) => this._samples[i]
-    this.capture = () => {
-      if (this.enable) {
-	this.t0 = this.analyser.currentTime;
-	this.analyser.getFloatTimeDomainData(this._samples);
-	this.t1 = this.analyser.currentTime;
-      }
-    }
-    if (this._samples instanceof Float32Array && this._samples.length === this._size) 
-      return this._samples;
-    return new Float32Array(this._size) ;
+    return this._samples;
   }
 
   set source(v) {
+    // console.log(`set source ${v}, when this.source ${this.source} and this.sourceValue ${this.sourceValue}`);
     if (this.sourceValue && this.sourceValue.node) this.sourceValue.node.disconnect(this.analyser);
     this._source = v;
+    // console.log(`set source ${v}, now when this.source ${this.source} and this.sourceValue ${this.sourceValue}`);
     if (this.sourceValue && this.sourceValue.node) this.sourceValue.node.connect(this.analyser);
     this._samples = this.createSamples();
+    // console.log(this.sourceValue);
   }
 
   get source() { return this._source; }
 
-  get sourceValue() { return this.scope.source[this._source]; }
+  get sourceValue() { return this.scope.source(this._source); }
+  
+  get enabled() { return this.source !== 'none'; }
   
   set verticalScale(v) { this._verticalScale = v; this.scope.redraw = true; }
 
@@ -83,19 +110,15 @@ export class KeyerScopeChannel {
 
   get color() { return this._color; }
   
-  set enable(v) { this._enable = v; }
-
-  get enable() { return this._enable; }
-
   set size(v) { 
-    this._analyser.fftSize = v;
+    this.analyser.fftSize = v;
     this._samples = this.createSamples();
   }
 
-  get size() { return this._analyser.fftSize; }
-  
+  get size() { return this.analyser.fftSize; }
+
 }
-// Local Variables: 
+// Loca Variables: 
 // mode: JavaScript
 // js-indent-level: 2
 // End:

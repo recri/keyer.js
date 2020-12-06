@@ -28,6 +28,7 @@ import { KeyerEvent } from './KeyerEvent.js';
 import { KeyerScopeSource } from './KeyerScopeSource.js';
 import { KeyerScopeChannel } from './KeyerScopeChannel.js';
 
+/* eslint no-nested-ternary: "off" */
 export class KeyerScope extends KeyerEvent {
 
   constructor(context) {
@@ -37,24 +38,23 @@ export class KeyerScope extends KeyerEvent {
     this._running = false;	// not capturing and plotting
     this._sources = {};		// sources available for channels
     this.addSource('none', null, true); // the nil source
-    this._channels = {};		// channels available for capture
-    this._nchannels = 0;
-    this.addChannel('none', '200mFS/div', 0.25, "rgb(0,0,0)", 2**12);		// channel 1
-    this.addChannel('none', '200mFS/div', 0.25, "rgb(0,0,0)", 2**12);		// channel 2
 
-    // this could be autoscaled according to the timeScale
-    this._sizes = { '512': 2**9, '1k': 2**10, '2k': 2**11, '4k': 2**12, '8k': 2**13, '16k': 2**14, '32k': 2**15 };
+
+    // this is autoscaled according to fill the scope window
+    this.sizeMin = 32;
+    this.sizeMax = 2**15;
     this._size = 2**11;
 
     // triggers
-    this._triggers = { 'none': 0, '+': 1, '-': -1 };
+    this._triggers = { 'none': 0, '+': 1, '-': -1, '*': 2 };
     this._trigger = '+';
-    this._triggerChannel = 0;
+    this._triggerChannel = 1;
     
+    // this could be configured usefully
     this.preTrigger = 32;	// samples before trigger value
     
     // hold after capture/trigger
-    // needs to be continuously tuned?
+    // needs continuous tuning?
     this._holds = {
       'none': 0,
       '100ms': 0.1, '200ms': 0.2, '500ms': 0.5,
@@ -76,6 +76,7 @@ export class KeyerScope extends KeyerEvent {
     this._timeScale = '10ms/div';
 
     // vertical scale, one per channel
+    // should autoscale
     this._verticalScales = {
       '1µFS/div': 1e-6, '2µFS/div': 2e-6, '5µFS/div': 5e-6,
       '10µFS/div': 1e-5, '20µFS/div': 2e-5, '50µFS/div': 5e-5,
@@ -86,28 +87,29 @@ export class KeyerScope extends KeyerEvent {
       '1FS/div': 1e+0, '2FS/div': 2e+0, '5FS/div': 5e+0
     };
 
-    // start the animation loop
-    this.loop(performance.now())
+    this._channels = {};		// channels available for capture
+    this._nchannels = 0;
+    this.addChannel('none', '200mFS/div', 50, "rgb(0,0,0)");		// channel 1
+    this.addChannel('none', '200mFS/div', 50, "rgb(0,0,0)");		// channel 2
+    this.addChannel('none', '200mFS/div', 50, "rgb(0,0,0)");		// channel 3
+    this.addChannel('none', '200mFS/div', 50, "rgb(0,0,0)");		// channel 4
   }
   
   addSource(name, node, asByte) { this._sources[name] = new KeyerScopeSource(name, node, asByte); }
 
-  addChannel(source, scale, offset, color, size) { 
+  addChannel(source, scale, offset, color) { 
     this._nchannels += 1;
-    this._channels[this._nchannels] = new KeyerScopeChannel(this, source, scale, offset, color, size); 
+    this._channels[this._nchannels] = new KeyerScopeChannel(this, source, scale, offset, color, this.size); 
   }
 
-  // run/stop behavior
-  set running(v) { this._running = v; }
-
-  get running() { return this._running; }
-  
   // sources for channels
   get sources() { return Array.from(Object.keys(this._sources)); }
 
   source(i) { return this._sources[i]; }
   
   // channels
+  get nchannels() { return this._nchannels; }
+  
   get channels() { return Array.from(Object.keys(this._channels)); }
   
   channel(i) { return this._channels[i]; }
@@ -128,14 +130,14 @@ export class KeyerScope extends KeyerEvent {
 
   get triggerChannelValue() { return this.channel(this.triggerChannel); }
   
-  // hold off between scans
+  // hold off between scans, converted to ms as holdValue.
   get holds() { return Array.from(Object.keys(this._holds)); }
 
   set hold(v) { this._hold = v; }
   
   get hold() { return this._hold; }
   
-  get holdValue() { return this._holds[this._hold]; }
+  get holdValue() { return this._holds[this._hold] * 1000; }
 
   // time scale determines the number of samples per pixel
   get timeScales() { return Array.from(Object.keys(this._timeScales)); }
@@ -149,9 +151,20 @@ export class KeyerScope extends KeyerEvent {
   // vertical scale 
   get verticalScales() { return Array.from(Object.keys(this._verticalScales)); }
 
+  // size of sample buffers
+  set size(v) { 
+    if (v >=  this.sizeMin && v <= this.sizeMax) {
+      this._size = v;
+      this.channels.forEach(i => { this.channel(i).size = this.size; });
+      this.redraw = true;
+    }
+  }
+
+  get size() { return this._size; }
+  
   // enable called when displayed?
   enable(v, canvas) { 
-    console.log(`enable ${v} ${canvas}`);
+    // console.log(`enable ${v} ${canvas}`);
     if (this.enabled !== v) {
       this.enabled = v;
       if (this.canvas !== canvas) {
@@ -165,52 +178,72 @@ export class KeyerScope extends KeyerEvent {
 	  if (canvas.height !== canvas.clientHeight) {
 	    this.canvas.height = canvas.clientHeight;
 	    this.redraw = true;
+	    this.channels.forEach(i => { this.channel(i).verticalOffset = this.canvas.height/2; });
 	  }
 	}
       }
     }
   }
   
+  // run/stop behavior
+  set running(v) { 
+    this._running = v;
+    // start the animation loop
+    if (v) {
+      this.holdOffTime = performance.now();
+      this.loop(this.holdOffTime);
+    }
+  }
+
+  get running() { return this._running; }
+  
   findTrigger() {
     const trigger = this.triggerValue;
     const channel = this.triggerChannelValue;
-    if (trigger === 0) return 0; // no trigger
-    if ( ! channel) return 0;	 // no channel
-    let lastSample = channel.sample(0);
-    for (let i = 1; i < channel.size; i += 1) {
-      const nextSample = channel.sample(i);
-      if (nextSample !== lastSample)
-	if ((trigger === 1 && nextSample > lastSample) ||
-	    (trigger === -1 && nextSample < lastSample) ||
-	    (trigger === 2))
-	  return Math.max(0, i-this.preTrigger);
-      lastSample = nextSample;
-    }
-    return 0;
+    const triggerSample = 
+	  (trigger === 0) ?	// no trigger
+	  0 : 
+	  ( ! channel) ?	// no trigger channel
+	  0 :
+	  (trigger === 1) ? 	// positive transition
+	  channel.pos :
+	  (trigger === -1) ?	// negative transition
+	  channel.neg :
+	  (trigger === 2) ?	// any transition
+	  channel.any :
+	  0;
+    // console.log(`findTrigger ${triggerSample}`);
+    return triggerSample > 0 ? triggerSample : 0;
   }
   
   loop(step) {
     // enabled means displayed on screen
     if (this.enabled) {
       // running means collecting and displaying samples
-      const capture = this.running; // && step >= this.holdOffTime;
+      // console.log(`run ${this.running} step ${step} holdOff ${this.holdOffTime} redraw ${this.redraw}`)
+      const capture = this.running && (step >= this.holdOffTime);
       const redraw = capture || this.redraw;
-      console.log(`loop(...) enabled ${this.enabled} capture ${capture} redraw ${redraw}`);
       
       if (capture) {
 	// capture samples
-	this.channels
-	  .filter(channel => channel.enable)
-	  .forEach(channel => channel.capture());
+	this.channels.forEach(i => {
+	  const channel = this.channel(i);
+	  if (channel.enabled)
+	    channel.capture();
+	});
 	// set the delay for the next capture
-	this.holdOffTime = step + this.hold / 1000; // convert hold off time to milliseconds
+	this.holdOffTime = step + this.holdValue;
+	// console.log(`set holdOffTime to ${this.holdOffTime}, ${this.holdOffTime-step} ms forward`);
       }
 
       if (redraw) {
+	this.redraw = false;
+	
 	// get the size of the canvas in pixels, 
 	// which has been hacked to be the size
 	// the canvas occupies on the screen
 	const {width, height} = this.canvas;
+	// console.log(`width ${width}, height ${height}`);
 
 	// ts converts sampleOffset to pixels to effect the time/division setting.
 	// we have sampleRate samp/sec, and 50px/div, and x sec/div,
@@ -223,6 +256,7 @@ export class KeyerScope extends KeyerEvent {
 
 	// number of samples buffered
 	const ktotal = this.size;
+	// console.log(`ts ${ts}, sWidth ${sWidth}, ktotal ${ktotal}`);
 
 	// first sample to draw
 	// either the beginning of the capture buffer
@@ -231,34 +265,44 @@ export class KeyerScope extends KeyerEvent {
 
 	// end of samples to draw
 	const kmax = Math.min(ktotal, k0 + sWidth);
-
+	// console.log(`kmax = ${kmax}`);
 	this.canvasCtx.clearRect(0, 0, width, height);
 	this.canvasCtx.lineWidth = 1;
 	
-	this.channels.forEach(channel => {
+	// autoscale and autoposition
+	this.channels.forEach(i => {
+	  const channel = this.channel(i)
 	  if ( ! channel.enabled) return;
 
-	  // let the units of the samples volts, so they range from 1V to -1V,
+	  // let the units of the samples be volts, so they range from 1V to -1V,
 	  // we compute (1-sample) to flip positive and negative,
 	  // to get 1/div we multiply by 50, 
 	  // to get 0.5/div we multiply by 100,
 	  // so vs = 50/(v/div)
 	  const vs = 50 / channel.verticalScaleValue;
-
+	  // console.log(`vs ${vs} channel.verticalScaleValue ${channel.verticalScaleValue} channel.verticalOffset ${channel.verticalOffset}`);
+	  
 	  // compute the x and y coordinates
 	  const x = (k) => (k-k0) * ts;
-	  const y = (s) => height/2 - s * vs + channel.verticalOffset;
+	  const y = (s) => height/2 - s * vs; //  + channel.verticalOffset
 	  
 	  this.canvasCtx.strokeStyle = channel.color;
 	  this.canvasCtx.beginPath();
 	  this.canvasCtx.moveTo(x(k0), y(channel.sample(k0)));
-	  for (let k = k0+1; k < this.size && k < kmax; k += 1)
-	    this.canvasCtx.lineTo(x(k), y(channel.sample(k)));
+	  for (let k = k0+1; k < this.size && k < kmax; k += 1) {
+	    const xk = x(k);
+	    const yk = y(channel.sample(k))
+	    this.canvasCtx.lineTo(xk, yk);
+	  }
 	  this.canvasCtx.stroke();
+	  // console.log(`drew ${minx}, ${miny} to ${maxx}, ${maxy}`);
 	});
+	// auto increase sample size to fill window
+	if (ktotal < k0 + sWidth && this.size < this.sizeMax)
+	  this.size *= 2;
       }
     }
-    // always loop on animation frame for the moment
-    requestAnimationFrame((tstep) => this.loop(tstep));
+    // loop on animation frame if running
+    if (this.running) requestAnimationFrame((tstep) => this.loop(tstep));
   }
 }

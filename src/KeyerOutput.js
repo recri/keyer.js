@@ -25,7 +25,7 @@ export class KeyerOutput extends KeyerPlayer {
   constructor(context) {
     super(context);
     // translation table
-    this.table = new KeyerTable();
+    this.table = new KeyerTable('itu');
     // initialize the pending queue
     this.idle = true;
     this.pending = [];
