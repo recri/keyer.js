@@ -148,6 +148,7 @@ class KeyerPaddleVk6phProcessor extends AudioWorkletProcessor {
   }
   
   clock(kdot, kdash, ticks) {
+    this.kdelay += ticks;
     switch(this.keyState) {
     case CHECK:		// check for key press
       if (this.mode === KEYER_STRAIGHT) { // Straight/External key or bug
@@ -171,11 +172,13 @@ class KeyerPaddleVk6phProcessor extends AudioWorkletProcessor {
       break;
     case PREDOT:	   // need to clear any pending dots or dashes
       this.keyState = SENDDOT;
+      this.kdelay = 0;
       this.dotMemory = 0;
       this.dashMemory = 0;
       break;
     case PREDASH:
       this.keyState = SENDDASH;
+      this.kdelay = 0;
       this.dotMemory = 0;
       this.dashMemory = 0;
       break;
@@ -187,8 +190,7 @@ class KeyerPaddleVk6phProcessor extends AudioWorkletProcessor {
 	this.kdelay = 0;
 	this.keyerOut = 0;
 	this.keyState = DOTDELAY; // add inter-character spacing of one dot length
-      } else
-	this.kdelay += ticks;
+      }
       // if Mode A and both paddels are relesed then clear dash memory
       if (!kdot && !kdash) {
 	if (this.mode === KEYER_MODE_A)
@@ -204,8 +206,7 @@ class KeyerPaddleVk6phProcessor extends AudioWorkletProcessor {
 	this.kdelay = 0;
 	this.keyerOut = 0;
 	this.keyState = DASHDELAY; // add inter-character spacing of one dot length
-      } else 
-	this.kdelay += ticks;
+      }
       // if Mode A and both padles are relesed then clear dot memory
       if (!kdot && !kdash) {
 	if (this.mode === KEYER_MODE_A)
@@ -216,26 +217,22 @@ class KeyerPaddleVk6phProcessor extends AudioWorkletProcessor {
       // add dot delay at end of the dot and check for dash memory, then check if paddle still held
     case DOTDELAY:
       if (this.kdelay >= this.perIes) {
-	this.kdelay = 0;
 	if(!kdot && this.mode === KEYER_STRAIGHT)   // just return if in bug mode
 	  this.keyState = CHECK;
 	else if (this.dashMemory) // dash has been set during the dot so service
 	  this.keyState = PREDASH;
 	else 
 	  this.keyState = DOTHELD; // dot is still active so service
-      } else
-	this.kdelay += ticks;
+      }
       this.dashMemory = kdash;	// set dash memory
       break;
     case DASHDELAY: // add dot delay at end of the dash and check for dot memory, then check if paddle still held
       if (this.kdelay >= this.perIes) {
-	this.kdelay = 0;
 	if (this.dotMemory) // dot has been set during the dash so service
 	  this.keyState = PREDOT;
 	else 
 	  this.keyState = DASHHELD; // dash is still active so service
-      } else
-	this.kdelay += ticks;
+      }
       this.dotMemory = kdot;	// set dot memory 
       break;
     case DOTHELD: // check if dot paddle is still held, if so repeat the dot. Else check if Letter space is required
@@ -246,6 +243,7 @@ class KeyerPaddleVk6phProcessor extends AudioWorkletProcessor {
       else if (this.spacing) { // Letter space enabled so clear any pending dots or dashes
 	this.dotMemory = 0;
 	this.dashMemory = 0;
+	this.kdelay = 0;
 	this.keyState = LETTERSPACE;
       } else
 	this.keyState = CHECK;
@@ -258,21 +256,20 @@ class KeyerPaddleVk6phProcessor extends AudioWorkletProcessor {
       else if (this.spacing) { // Letter space enabled so clear any pending dots or dashes
 	this.dotMemory = 0;
 	this.dashMemory = 0;
+	this.kdelay = 0;
 	this.keyState = LETTERSPACE;
       } else
 	this.keyState = CHECK;
       break;
     case LETTERSPACE: // Add remainder of letter space (3 x dot delay) to end of character and check if a paddle is pressed during this time.
       if (this.kdelay >= this.perIls-this.perIes) {
-	this.kdelay = 0;
 	if (this.dotMemory) // check if a dot or dash paddle was pressed during the delay.
 	  this.keyState = PREDOT;
 	else if (this.dashMemory)
 	  this.keyState = PREDASH;
 	else
 	  this.keyState = CHECK; // no memories set so restart
-      } else
-	this.kdelay += ticks;
+      }
       // save any key presses during the letter space delay
       this.dotMemory |= kdot;
       this.dashMemory |= kdash;

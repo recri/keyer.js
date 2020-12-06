@@ -104,7 +104,7 @@ export class KeyerScopeChannel {
 
   get verticalOffset() { return this._verticalOffset; }
 
-  get verticalOffsetValue() { return this.scope._verticalOffsets[this._verticalOffset]; }
+  get verticalOffsetValue() { return this._verticalOffset; }
   
   set color(v) { this._color = v; this.scope.redraw = true; }
 

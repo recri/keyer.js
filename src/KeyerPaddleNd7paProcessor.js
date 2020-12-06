@@ -117,13 +117,18 @@ class KeyerPaddleNd7paProcessor extends AudioWorkletProcessor {
       keyOut = 1; 
       if ( timerExpired ) {
 	this.timer = this.perIes;
-	this.keyerState = DIT_DLY; }  
+	this.keyerState = DIT_DLY;
+      }  
+      if (this.mode === 'A' && !ditOn && !dahOn)
+	this.dahPending = false;
     } else if (this.keyerState === DAH) {
       keyOut = 1; 
       if ( timerExpired ) {
 	this.timer = this.perIes;
 	this.keyerState = DAH_DLY;
       }  
+      if (this.mode === 'A' && !ditOn && !dahOn)
+	this.ditPending = false;
     } else if (this.keyerState === DIT_DLY) {
       keyOut = 0;  
       if ( timerExpired ) {
@@ -146,20 +151,18 @@ class KeyerPaddleNd7paProcessor extends AudioWorkletProcessor {
       }
     }
 
-    if (this.mode === 'B') {
-      // *****************  dit pending state machine   *********************
-      this.ditPending = this.ditPending ?
-	this.keyerState !== DIT :
-	(ditOn && ((this.keyerState === DAH && this.timer < this.perDah/3) ||
-		   (this.keyerState === DAH_DLY && this.timer > this.perIes/2)));
+    // not sure why these have these timing constraints, curtis mode B
+    // would be (ditOn && (this.keyerState === DAH || this.keyerState === DAH_DLY))
+    // *****************  dit pending state machine   *********************
+    this.ditPending = this.ditPending ?
+      this.keyerState !== DIT :
+      (ditOn && ((this.keyerState === DAH) || (this.keyerState === DAH_DLY)));
       
-      // ******************  dah pending state machine   *********************
-      this.dahPending = this.dahPending ?
-	this.keyerState !== DAH :
-	(dahOn && ((this.keyerState === DIT && this.timer < this.perDit/2) ||
-		   (this.keyerState === DIT_DLY && this.timer > this.perIes/2)));
+    // ******************  dah pending state machine   *********************
+    this.dahPending = this.dahPending ?
+      this.keyerState !== DAH :
+      (dahOn && ((this.keyerState === DIT) || (this.keyerState === DIT_DLY)));
 
-    }
     return keyOut;
   }
 }

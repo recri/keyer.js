@@ -264,11 +264,6 @@ const controls = {
     label: 'Time', options: 'scopeTimeScales',
     title: 'The amount of time represented on the scope horizontal scale.'
   },
-  scopeEnable1: {
-    type: 'check', lit: { type: Boolean }, value: false,
-    label: 'ch1',
-    title: 'Whether this channel is enabled for capture.'
-  },
   scopeSource1: {
     type: 'options', lit: { type: String }, value: 'none',
     label: 'Source', options: 'scopeSources',
@@ -276,16 +271,24 @@ const controls = {
   },
   scopeVerticalScale1: {
     type: 'options', lit: { type: String }, value: '200mFS/div',
-    label: 'Vertical', options: 'scopeVerticalScales',
+    label: 'Scale', options: 'scopeVerticalScales',
     title: 'The vertical scale on this channel.'
   },
-  scopeEnable2: {
-    type: 'check', lit: { type: Boolean }, value: false,
-    label: 'ch2',
-    title: 'Whether this channel is enabled.'
+  scopeVerticalOffset1: {
+    type: 'spinner', lit: { type: Number }, value: 0,
+    label: 'Offset', 
+    min: -4, max: 4, step: 0.1, unit: 'div', size: 4,
+    title: 'The vertical offset on this channel.'
   },
   scopeSource2: 'scopeSource1',
   scopeVerticalScale2: 'scopeVerticalScale1',
+  scopeVerticalOffset2: 'scopeVerticalOffset1',
+  scopeSource3: 'scopeSource1',
+  scopeVerticalScale3: 'scopeVerticalScale1',
+  scopeVerticalOffset3: 'scopeVerticalOffset1',
+  scopeSource4: 'scopeSource1',
+  scopeVerticalScale4: 'scopeVerticalScale1',
+  scopeVerticalOffset4: 'scopeVerticalOffset1',
 
   // read only context values
   state: { lit: { type: String } },
@@ -541,6 +544,14 @@ export class KeyerJs extends LitElement {
 
   get scopeSource2() { return this.keyer.scope.channel(2).source; }
 
+  set scopeSource3(v) { this.keyer.scope.channel(3).source = v; }
+
+  get scopeSource3() { return this.keyer.scope.channel(3).source; }
+  
+  set scopeSource4(v) { this.keyer.scope.channel(4).source = v; }
+
+  get scopeSource4() { return this.keyer.scope.channel(4).source; }
+
   set scopeVerticalScale1(v) { this.keyer.scope.channel(1).verticalScale = v; }
 
   get scopeVerticalScale1() { return this.keyer.scope.channel(1).verticalScale; }
@@ -548,6 +559,30 @@ export class KeyerJs extends LitElement {
   set scopeVerticalScale2(v) { this.keyer.scope.channel(2).verticalScale = v; }
 
   get scopeVerticalScale2() { return this.keyer.scope.channel(2).verticalScale; }
+
+  set scopeVerticalScale3(v) { this.keyer.scope.channel(3).verticalScale = v; }
+
+  get scopeVerticalScale3() { return this.keyer.scope.channel(3).verticalScale; }
+
+  set scopeVerticalScale4(v) { this.keyer.scope.channel(4).verticalScale = v; }
+
+  get scopeVerticalScale4() { return this.keyer.scope.channel(4).verticalScale; }
+
+  set scopeVerticalOffset1(v) { this.keyer.scope.channel(1).verticalOffset = v; }
+
+  get scopeVerticalOffset1() { return this.keyer.scope.channel(1).verticalOffset; }
+
+  set scopeVerticalOffset2(v) { this.keyer.scope.channel(2).verticalOffset = v; }
+
+  get scopeVerticalOffset2() { return this.keyer.scope.channel(2).verticalOffset; }
+
+  set scopeVerticalOffset3(v) { this.keyer.scope.channel(3).verticalOffset = v; }
+
+  get scopeVerticalOffset3() { return this.keyer.scope.channel(3).verticalOffset; }
+
+  set scopeVerticalOffset4(v) { this.keyer.scope.channel(4).verticalOffset = v; }
+
+  get scopeVerticalOffset4() { return this.keyer.scope.channel(4).verticalOffset; }
 
   constructor() {
     super();
@@ -1003,10 +1038,22 @@ export class KeyerJs extends LitElement {
 	<b>ch1</b> 
 	${this.controlRender('scopeSource1')}
 	${this.controlRender('scopeVerticalScale1')}
+	${this.controlRender('scopeVerticalOffset1')}
 	<br/>
 	<b>ch2</b>
 	${this.controlRender('scopeSource2')}
 	${this.controlRender('scopeVerticalScale2')}
+	${this.controlRender('scopeVerticalOffset2')}
+	<br/>
+	<b>ch3</b>
+	${this.controlRender('scopeSource3')}
+	${this.controlRender('scopeVerticalScale3')}
+	${this.controlRender('scopeVerticalOffset3')}
+	<br/>
+	<b>ch4</b>
+	${this.controlRender('scopeSource4')}
+	${this.controlRender('scopeVerticalScale4')}
+	${this.controlRender('scopeVerticalOffset4')}
 	`;
 
     case 'displayStatus':

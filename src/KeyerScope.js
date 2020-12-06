@@ -87,12 +87,14 @@ export class KeyerScope extends KeyerEvent {
       '1FS/div': 1e+0, '2FS/div': 2e+0, '5FS/div': 5e+0
     };
 
+    // vertical offset, one per channel
+    // <keyer-spinner min="-4" max="4" step="0.1" unit="div" size="4" input=${e => this.channel(1).updateControl(e)}></keyer-spinner>
     this._channels = {};		// channels available for capture
     this._nchannels = 0;
-    this.addChannel('none', '200mFS/div', 50, "rgb(0,0,0)");		// channel 1
-    this.addChannel('none', '200mFS/div', 50, "rgb(0,0,0)");		// channel 2
-    this.addChannel('none', '200mFS/div', 50, "rgb(0,0,0)");		// channel 3
-    this.addChannel('none', '200mFS/div', 50, "rgb(0,0,0)");		// channel 4
+    this.addChannel('none', '500mFS/div', 0, "rgb(0,0,0)");		// channel 1
+    this.addChannel('none', '500mFS/div', 0, "rgb(0,0,0)");		// channel 2
+    this.addChannel('none', '500mFS/div', 0, "rgb(0,0,0)");		// channel 3
+    this.addChannel('none', '500mFS/div', 0, "rgb(0,0,0)");		// channel 4
   }
   
   addSource(name, node, asByte) { this._sources[name] = new KeyerScopeSource(name, node, asByte); }
@@ -100,7 +102,7 @@ export class KeyerScope extends KeyerEvent {
   addChannel(source, scale, offset, color) { 
     this._nchannels += 1;
     this._channels[this._nchannels] = new KeyerScopeChannel(this, source, scale, offset, color, this.size); 
-  }
+ }
 
   // sources for channels
   get sources() { return Array.from(Object.keys(this._sources)); }
@@ -178,7 +180,6 @@ export class KeyerScope extends KeyerEvent {
 	  if (canvas.height !== canvas.clientHeight) {
 	    this.canvas.height = canvas.clientHeight;
 	    this.redraw = true;
-	    this.channels.forEach(i => { this.channel(i).verticalOffset = this.canvas.height/2; });
 	  }
 	}
       }
@@ -280,11 +281,10 @@ export class KeyerScope extends KeyerEvent {
 	  // to get 0.5/div we multiply by 100,
 	  // so vs = 50/(v/div)
 	  const vs = 50 / channel.verticalScaleValue;
-	  // console.log(`vs ${vs} channel.verticalScaleValue ${channel.verticalScaleValue} channel.verticalOffset ${channel.verticalOffset}`);
 	  
 	  // compute the x and y coordinates
 	  const x = (k) => (k-k0) * ts;
-	  const y = (s) => height/2 - s * vs; //  + channel.verticalOffset
+	  const y = (s) => height/2 - s * vs - channel.verticalOffset * 50;
 	  
 	  this.canvasCtx.strokeStyle = channel.color;
 	  this.canvasCtx.beginPath();
