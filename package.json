@@ -1,61 +1,94 @@
 {
+  "name": "keyer-js",
+  "description": "Webcomponent keyer-js following open-wc recommendations",
+  "license": "MIT",
+  "author": "keyer-js",
+  "version": "0.0.0",
+  "type": "module",
   "scripts": {
-    "lint:eslint": "eslint --ext .js,.html . --ignore-path .gitignore",
-    "format:eslint": "eslint --ext .js,.html . --fix --ignore-path .gitignore",
-    "lint:prettier": "prettier \"**/*.js\" --check --ignore-path .gitignore",
-    "format:prettier": "prettier \"**/*.js\" --write --ignore-path .gitignore",
-    "lint": "npm run lint:eslint",
-    "format": "npm run format:eslint",
-    "test": "web-test-runner --coverage",
-    "test:watch": "web-test-runner --watch",
-    "storybook": "start-storybook",
-    "storybook:build": "build-storybook",
-    "build": "rimraf dist && rollup -c rollup.config.js",
-    "start:build": "npm run build && web-dev-server --root-dir dist --app-index index.html --open --compatibility none",
-    "start": "web-dev-server --app-index index.html --node-resolve --open --watch"
+    "lint": "eslint --ext .ts,.html . --ignore-path .gitignore && prettier \"**/*.ts\" --check --ignore-path .gitignore",
+    "format": "eslint --ext .ts,.html . --fix --ignore-path .gitignore && prettier \"**/*.ts\" --write --ignore-path .gitignore",
+    "prepare": "husky",
+    "test": "tsc && wtr --coverage",
+    "test:watch": "tsc && concurrently -k -r \"tsc --watch --preserveWatchOutput\" \"wtr --watch\"",
+    "storybook": "tsc && npm run analyze -- --exclude dist && concurrently -k -r \"tsc --watch --preserveWatchOutput\" \"storybook dev -p 8080\"",
+    "storybook:build": "tsc && npm run analyze -- --exclude dist && storybook build",
+    "build": "rimraf dist && tsc && rollup -c rollup.config.js && npm run analyze -- --exclude dist",
+    "start:build": "web-dev-server --root-dir dist --app-index index.html --open",
+    "analyze": "cem analyze --litelement",
+    "start": "tsc && concurrently -k -r \"tsc --watch --preserveWatchOutput\" \"web-dev-server\""
+  },
+  "dependencies": {
+    "lit": "^3.1.4"
   },
   "devDependencies": {
-    "@open-wc/building-rollup": "^1.0.0",
-    "@open-wc/demoing-storybook": "^2.0.0",
-    "@open-wc/eslint-config": "^2.0.0",
-    "@open-wc/testing": "^2.0.0",
-    "@web/dev-server": "^0.0.12",
-    "@web/test-runner": "^0.7.41",
-    "deepmerge": "^4.2.2",
-    "eslint": "^6.1.0",
-    "eslint-config-prettier": "^6.14.0",
-    "husky": "^1.0.0",
-    "lint-staged": "^10.0.0",
-    "prettier": "^2.0.4",
-    "rimraf": "^2.6.3",
-    "rollup": "^2.32.1",
-    "rollup-plugin-copy": "^3.3.0"
+    "@custom-elements-manifest/analyzer": "^0.10.3",
+    "@open-wc/eslint-config": "^12.0.3",
+    "@open-wc/testing": "^4.0.0",
+    "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@storybook/addon-a11y": "^7.6.20",
+    "@storybook/addon-essentials": "^7.6.20",
+    "@storybook/addon-links": "^7.6.20",
+    "@storybook/web-components": "^7.6.20",
+    "@types/mocha": "^10.0.7",
+    "@typescript-eslint/eslint-plugin": "^7.16.0",
+    "@typescript-eslint/parser": "^7.16.0",
+    "@web/dev-server": "^0.4.6",
+    "@web/rollup-plugin-html": "^2.3.0",
+    "@web/rollup-plugin-import-meta-assets": "^2.2.1",
+    "@web/storybook-builder": "^0.1.16",
+    "@web/storybook-framework-web-components": "^0.1.2",
+    "@web/test-runner": "^0.18.2",
+    "babel-plugin-template-html-minifier": "^4.1.0",
+    "concurrently": "^8.2.2",
+    "deepmerge": "^4.3.1",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.7",
+    "prettier": "^3.3.2",
+    "rimraf": "^5.0.9",
+    "rollup": "^4.18.1",
+    "rollup-plugin-esbuild": "^6.1.1",
+    "rollup-plugin-workbox": "^8.1.0",
+    "storybook": "^7.6.20",
+    "tslib": "^2.6.3",
+    "typescript": "^5.5.3"
   },
   "eslintConfig": {
+    "parser": "@typescript-eslint/parser",
     "extends": [
-      "@open-wc/eslint-config",
-      "eslint-config-prettier"
-    ]
+      "@open-wc",
+      "prettier"
+    ],
+    "plugins": [
+      "@typescript-eslint"
+    ],
+    "rules": {
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "error"
+      ],
+      "import/no-unresolved": "off",
+      "import/extensions": [
+        "error",
+        "always",
+        {
+          "ignorePackages": true
+        }
+      ]
+    }
   },
   "prettier": {
     "singleQuote": true,
     "arrowParens": "avoid"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  },
   "lint-staged": {
-    "*.js": []
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ]
   },
-  "name": "keyer-js",
-  "version": "0.0.0",
-  "description": "Webcomponent keyer-js following open-wc recommendations",
-  "author": "Roger E Critchlow Jr",
-  "license": "GPL-3",
-  "dependencies": {
-    "lit-element": "^3.0.0-pre.1",
-    "lit-html": "^1.0.0"
-  }
+  "customElements": "custom-elements.json"
 }

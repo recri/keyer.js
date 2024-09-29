@@ -20,5 +20,5 @@
 /dist/
 /out-tsc/
 
-# emacs detritus
-*~
+storybook-static
+custom-elements.json
