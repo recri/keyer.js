@@ -16,6 +16,7 @@
     "rootDir": "./",
     "incremental": true,
     "skipLibCheck": true,
+      "pretty": false,
     "allowJs": true
   },
   "include": ["**/*"]

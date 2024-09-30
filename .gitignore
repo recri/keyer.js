@@ -22,3 +22,6 @@
 
 storybook-static
 custom-elements.json
+
+# emacs backups
+*~

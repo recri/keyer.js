@@ -1,8 +1,9 @@
 * Newer to do list
-[ ] migrate to typescript
+[x] migrate to typescript
 [ ] migrate to shoelace-style
 [ ] make keyboard window work on touch screen devices
-[ ] upgrade to current open-wc recommendations
+[x] upgrade to current open-wc recommendations
+[ ] migrate to AudioWorkletNode from ScriptProcessorNode
 * To do list for keyer.js
 ** [ ] light/dark themes
 ** [ ] pan the tones to specified directions in stereo

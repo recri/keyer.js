@@ -41,6 +41,7 @@ export class KeyerPlayer extends KeyerEvent {
     this.ratio = 50;
     this.compensation = 0;
     this.speed = 20;
+    this.farnsworth = 20;
     
     // initialize the key
     this.key = this.context.createConstantSource();

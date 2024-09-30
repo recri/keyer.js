@@ -27,9 +27,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="Description" content="Morse code web application.">
   <base href="/">
-  <link rel="icon" href="favicon.ico">
+  <link
+    rel="stylesheet"
+    href="/assets/themes/light.css"
+    />
+  <link
+    rel="stylesheet"
+    media="(prefers-color-scheme:light)"
+    href="/assets/themes/light.css"
+    />
+  <link
+    rel="stylesheet"
+    media="(prefers-color-scheme:dark)"
+    href="/assets/themes/dark.css"
+    onload="document.documentElement.classList.add('sl-theme-dark');"
+    />
+  <link rel="icon" href="/assets/favicon.ico">
   <!-- See https://goo.gl/OOhYW5 -->
-  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="manifest" href="/assets/manifest.json">
   <!-- See https://goo.gl/qRE0vM -->
   <meta name="theme-color" content="#1d62a7">
   <!-- Add to homescreen for Chrome on Android. Fallback for manifest.json -->
@@ -74,7 +89,7 @@
       Please enable JavaScript to view this website.
     </center>
   </noscript>
-  <script type="module" src="./src/keyer-js.js"></script>
+  <script type="module" src="./out-tsc/src/keyer-js.js"></script>
 </body>
 
 </html>

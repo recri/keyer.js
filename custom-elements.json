@@ -4,6 +4,60 @@
   "modules": [
     {
       "kind": "javascript-module",
+      "path": "stories/keyer-js.stories.js",
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "App"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "default",
+          "declaration": {
+            "module": "stories/keyer-js.stories.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "App",
+          "declaration": {
+            "name": "App",
+            "module": "stories/keyer-js.stories.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "stories/keyer-js.stories.ts",
+      "declarations": [
+        {
+          "kind": "variable",
+          "name": "App"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "default",
+          "declaration": {
+            "module": "stories/keyer-js.stories.ts"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "App",
+          "declaration": {
+            "name": "App",
+            "module": "stories/keyer-js.stories.ts"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
       "path": "src/Keyer.js",
       "declarations": [
         {
@@ -1893,6 +1947,54 @@
           "name": "KeyerInput",
           "members": [
             {
+              "kind": "field",
+              "name": "straightKey",
+              "type": {
+                "text": "string"
+              },
+              "default": "'ControlLeft'"
+            },
+            {
+              "kind": "field",
+              "name": "leftPaddleKey",
+              "type": {
+                "text": "string"
+              },
+              "default": "'AltRight'"
+            },
+            {
+              "kind": "field",
+              "name": "rightPaddleKey",
+              "type": {
+                "text": "string"
+              },
+              "default": "'ControlRight'"
+            },
+            {
+              "kind": "field",
+              "name": "straightMidi",
+              "type": {
+                "text": "string"
+              },
+              "default": "'None'"
+            },
+            {
+              "kind": "field",
+              "name": "leftPaddleMidi",
+              "type": {
+                "text": "string"
+              },
+              "default": "'None'"
+            },
+            {
+              "kind": "field",
+              "name": "rightPaddleMidi",
+              "type": {
+                "text": "string"
+              },
+              "default": "'None'"
+            },
+            {
               "kind": "method",
               "name": "createPaddleWorklet",
               "parameters": [
@@ -2252,6 +2354,18 @@
             {
               "kind": "method",
               "name": "cancel",
+              "inheritedFrom": {
+                "name": "KeyerPlayer",
+                "module": "out-tsc/src/KeyerPlayer.js"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "farnsworth",
+              "type": {
+                "text": "number"
+              },
+              "default": "20",
               "inheritedFrom": {
                 "name": "KeyerPlayer",
                 "module": "out-tsc/src/KeyerPlayer.js"
@@ -3476,6 +3590,18 @@
             },
             {
               "kind": "field",
+              "name": "farnsworth",
+              "type": {
+                "text": "number"
+              },
+              "default": "20",
+              "inheritedFrom": {
+                "name": "KeyerPlayer",
+                "module": "out-tsc/src/KeyerPlayer.js"
+              }
+            },
+            {
+              "kind": "field",
               "name": "key",
               "inheritedFrom": {
                 "name": "KeyerPlayer",
@@ -4032,6 +4158,14 @@
             {
               "kind": "method",
               "name": "cancel"
+            },
+            {
+              "kind": "field",
+              "name": "farnsworth",
+              "type": {
+                "text": "number"
+              },
+              "default": "20"
             },
             {
               "kind": "field",
@@ -5116,12 +5250,1310 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/keyer-js.js",
+      "path": "src/keyer-js.ts",
       "declarations": [
         {
           "kind": "class",
           "description": "",
           "name": "KeyerJs",
+          "members": [
+            {
+              "kind": "field",
+              "name": "_running",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false"
+            },
+            {
+              "kind": "field",
+              "name": "keyer",
+              "type": {
+                "text": "Keyer | null"
+              },
+              "default": "null"
+            },
+            {
+              "kind": "field",
+              "name": "keyboardFocused",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false"
+            },
+            {
+              "kind": "field",
+              "name": "running",
+              "attribute": "running"
+            },
+            {
+              "kind": "field",
+              "name": "displaySettings",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "true",
+              "attribute": "displaySettings"
+            },
+            {
+              "kind": "field",
+              "name": "displayKeyboardSettings",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "true",
+              "attribute": "displayKeyboardSettings"
+            },
+            {
+              "kind": "field",
+              "name": "displayAdvancedKeyboardSettings",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "attribute": "displayAdvancedKeyboardSettings"
+            },
+            {
+              "kind": "field",
+              "name": "displayManualSettings",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "attribute": "displayManualSettings"
+            },
+            {
+              "kind": "field",
+              "name": "displayAdvancedManualSettings",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "attribute": "displayAdvancedManualSettings"
+            },
+            {
+              "kind": "field",
+              "name": "displayMiscSettings",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "attribute": "displayMiscSettings"
+            },
+            {
+              "kind": "field",
+              "name": "displayScope",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "attribute": "displayScope"
+            },
+            {
+              "kind": "field",
+              "name": "displayStatus",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "true",
+              "attribute": "displayStatus"
+            },
+            {
+              "kind": "field",
+              "name": "displayAbout",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "attribute": "displayAbout"
+            },
+            {
+              "kind": "field",
+              "name": "displayLicense",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "attribute": "displayLicense"
+            },
+            {
+              "kind": "field",
+              "name": "displayColophon",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "attribute": "displayColophon"
+            },
+            {
+              "kind": "field",
+              "name": "displayTouchStraight",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "attribute": "displayTouchStraight"
+            },
+            {
+              "kind": "field",
+              "name": "displayTouchPaddle",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "attribute": "displayTouchPaddle"
+            },
+            {
+              "kind": "field",
+              "name": "speed",
+              "attribute": "speed"
+            },
+            {
+              "kind": "field",
+              "name": "gain",
+              "attribute": "gain"
+            },
+            {
+              "kind": "field",
+              "name": "pitch",
+              "attribute": "pitch"
+            },
+            {
+              "kind": "field",
+              "name": "farnsworth",
+              "attribute": "farnsworth"
+            },
+            {
+              "kind": "field",
+              "name": "weight",
+              "attribute": "weight"
+            },
+            {
+              "kind": "field",
+              "name": "ratio",
+              "attribute": "ratio"
+            },
+            {
+              "kind": "field",
+              "name": "compensation",
+              "attribute": "compensation"
+            },
+            {
+              "kind": "field",
+              "name": "rise",
+              "attribute": "rise"
+            },
+            {
+              "kind": "field",
+              "name": "fall",
+              "attribute": "fall"
+            },
+            {
+              "kind": "field",
+              "name": "envelope",
+              "attribute": "envelope"
+            },
+            {
+              "kind": "field",
+              "name": "envelope2",
+              "attribute": "envelope2"
+            },
+            {
+              "kind": "field",
+              "name": "paddleKeyers",
+              "readonly": true,
+              "attribute": "paddleKeyers"
+            },
+            {
+              "kind": "field",
+              "name": "paddleKeyer",
+              "attribute": "paddleKeyer"
+            },
+            {
+              "kind": "field",
+              "name": "paddleSwapped",
+              "attribute": "paddleSwapped"
+            },
+            {
+              "kind": "field",
+              "name": "straightKey",
+              "attribute": "straightKey"
+            },
+            {
+              "kind": "field",
+              "name": "leftPaddleKey",
+              "attribute": "leftPaddleKey"
+            },
+            {
+              "kind": "field",
+              "name": "rightPaddleKey",
+              "attribute": "rightPaddleKey"
+            },
+            {
+              "kind": "field",
+              "name": "straightMidi",
+              "attribute": "straightMidi"
+            },
+            {
+              "kind": "field",
+              "name": "leftPaddleMidi",
+              "attribute": "leftPaddleMidi"
+            },
+            {
+              "kind": "field",
+              "name": "rightPaddleMidi",
+              "attribute": "rightPaddleMidi"
+            },
+            {
+              "kind": "field",
+              "name": "inputSpeed",
+              "attribute": "inputSpeed"
+            },
+            {
+              "kind": "field",
+              "name": "inputGain",
+              "attribute": "inputGain"
+            },
+            {
+              "kind": "field",
+              "name": "inputPitch",
+              "attribute": "inputPitch"
+            },
+            {
+              "kind": "field",
+              "name": "inputFarnsworth",
+              "attribute": "inputFarnsworth"
+            },
+            {
+              "kind": "field",
+              "name": "inputWeight",
+              "attribute": "inputWeight"
+            },
+            {
+              "kind": "field",
+              "name": "inputRatio",
+              "attribute": "inputRatio"
+            },
+            {
+              "kind": "field",
+              "name": "inputCompensation",
+              "attribute": "inputCompensation"
+            },
+            {
+              "kind": "field",
+              "name": "inputRise",
+              "attribute": "inputRise"
+            },
+            {
+              "kind": "field",
+              "name": "inputFall",
+              "attribute": "inputFall"
+            },
+            {
+              "kind": "field",
+              "name": "envelopes",
+              "readonly": true,
+              "attribute": "envelopes"
+            },
+            {
+              "kind": "field",
+              "name": "inputEnvelope",
+              "attribute": "inputEnvelope"
+            },
+            {
+              "kind": "field",
+              "name": "inputEnvelope2",
+              "attribute": "inputEnvelope2"
+            },
+            {
+              "kind": "field",
+              "name": "requestedSampleRate",
+              "type": {
+                "text": "string"
+              },
+              "default": "'48000'",
+              "attribute": "requestedSampleRate"
+            },
+            {
+              "kind": "field",
+              "name": "scopeRunning",
+              "attribute": "scopeRunning"
+            },
+            {
+              "kind": "field",
+              "name": "scopeTriggers",
+              "readonly": true,
+              "attribute": "scopeTriggers"
+            },
+            {
+              "kind": "field",
+              "name": "scopeTrigger",
+              "attribute": "scopeTrigger"
+            },
+            {
+              "kind": "field",
+              "name": "scopeTriggerChannel",
+              "attribute": "scopeTriggerChannel"
+            },
+            {
+              "kind": "field",
+              "name": "scopeChannels",
+              "readonly": true,
+              "attribute": "scopeChannels"
+            },
+            {
+              "kind": "field",
+              "name": "scopeHold",
+              "attribute": "scopeHold"
+            },
+            {
+              "kind": "field",
+              "name": "scopeHolds",
+              "readonly": true,
+              "attribute": "scopeHolds"
+            },
+            {
+              "kind": "field",
+              "name": "scopeTimeScale",
+              "attribute": "scopeTimeScale"
+            },
+            {
+              "kind": "field",
+              "name": "scopeTimeScales",
+              "readonly": true,
+              "attribute": "scopeTimeScales"
+            },
+            {
+              "kind": "field",
+              "name": "scopeSources",
+              "readonly": true,
+              "attribute": "scopeSources"
+            },
+            {
+              "kind": "field",
+              "name": "scopeSource1",
+              "attribute": "scopeSource1"
+            },
+            {
+              "kind": "field",
+              "name": "scopeVerticalScale1",
+              "attribute": "scopeVerticalScale1"
+            },
+            {
+              "kind": "field",
+              "name": "scopeVerticalOffset1",
+              "attribute": "scopeVerticalOffset1"
+            },
+            {
+              "kind": "field",
+              "name": "scopeSource2",
+              "attribute": "scopeSource2"
+            },
+            {
+              "kind": "field",
+              "name": "scopeVerticalScale2",
+              "attribute": "scopeVerticalScale2"
+            },
+            {
+              "kind": "field",
+              "name": "scopeVerticalOffset2",
+              "attribute": "scopeVerticalOffset2"
+            },
+            {
+              "kind": "field",
+              "name": "scopeSource3",
+              "attribute": "scopeSource3"
+            },
+            {
+              "kind": "field",
+              "name": "scopeVerticalScale3",
+              "attribute": "scopeVerticalScale3"
+            },
+            {
+              "kind": "field",
+              "name": "scopeVerticalOffset3",
+              "attribute": "scopeVerticalOffset3"
+            },
+            {
+              "kind": "field",
+              "name": "scopeSource4",
+              "attribute": "scopeSource4"
+            },
+            {
+              "kind": "field",
+              "name": "scopeVerticalScale4",
+              "attribute": "scopeVerticalScale4"
+            },
+            {
+              "kind": "field",
+              "name": "scopeVerticalOffset4",
+              "attribute": "scopeVerticalOffset4"
+            },
+            {
+              "kind": "field",
+              "name": "state",
+              "readonly": true,
+              "attribute": "state"
+            },
+            {
+              "kind": "field",
+              "name": "sampleRate",
+              "readonly": true,
+              "attribute": "sampleRate"
+            },
+            {
+              "kind": "field",
+              "name": "currentTime",
+              "readonly": true,
+              "attribute": "currentTime"
+            },
+            {
+              "kind": "field",
+              "name": "baseLatency",
+              "readonly": true,
+              "attribute": "baseLatency"
+            },
+            {
+              "kind": "field",
+              "name": "midiAvailable",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "attribute": "midiAvailable"
+            },
+            {
+              "kind": "field",
+              "name": "shiftKeys",
+              "type": {
+                "text": "array"
+              },
+              "default": "['None','ShiftLeft','ControlLeft','AltLeft','AltRight','ControlRight','ShiftRight']",
+              "attribute": "shiftKeys"
+            },
+            {
+              "kind": "field",
+              "name": "midiNotes",
+              "type": {
+                "text": "array"
+              },
+              "default": "[]",
+              "attribute": "midiNotes"
+            },
+            {
+              "kind": "field",
+              "name": "sampleRates",
+              "type": {
+                "text": "array"
+              },
+              "default": "['8000', '32000', '44100', '48000', '96000', '192000', '384000' ]",
+              "attribute": "sampleRates"
+            },
+            {
+              "kind": "field",
+              "name": "scopeVerticalScales",
+              "readonly": true,
+              "attribute": "scopeVerticalScales"
+            },
+            {
+              "kind": "field",
+              "name": "content",
+              "type": {
+                "text": "HTMLTemplateResult"
+              },
+              "default": "html``",
+              "attribute": "content"
+            },
+            {
+              "kind": "field",
+              "name": "finished",
+              "type": {
+                "text": "any[]"
+              },
+              "default": "[]",
+              "attribute": "finished"
+            },
+            {
+              "kind": "field",
+              "name": "pending",
+              "type": {
+                "text": "string[]"
+              },
+              "default": "[]",
+              "attribute": "pending"
+            },
+            {
+              "kind": "field",
+              "name": "controls",
+              "static": true,
+              "readonly": true
+            },
+            {
+              "kind": "method",
+              "name": "getControl",
+              "static": true,
+              "parameters": [
+                {
+                  "name": "control",
+                  "type": {
+                    "text": "string"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "setScopeChannel",
+              "parameters": [
+                {
+                  "name": "control",
+                  "type": {
+                    "text": "string"
+                  }
+                },
+                {
+                  "name": "channel",
+                  "type": {
+                    "text": "number"
+                  }
+                },
+                {
+                  "name": "value",
+                  "type": {
+                    "text": "number | string"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "getScopeChannel",
+              "parameters": [
+                {
+                  "name": "control",
+                  "type": {
+                    "text": "string"
+                  }
+                },
+                {
+                  "name": "channel",
+                  "type": {
+                    "text": "number"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "start"
+            },
+            {
+              "kind": "method",
+              "name": "onFocus"
+            },
+            {
+              "kind": "method",
+              "name": "onBlur"
+            },
+            {
+              "kind": "method",
+              "name": "processFinished"
+            },
+            {
+              "kind": "method",
+              "name": "blinkenCursen"
+            },
+            {
+              "kind": "method",
+              "name": "updateContent"
+            },
+            {
+              "kind": "method",
+              "name": "appendFinished",
+              "parameters": [
+                {
+                  "name": "tag",
+                  "type": {
+                    "text": "string"
+                  }
+                },
+                {
+                  "name": "text",
+                  "type": {
+                    "text": "string"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "onkeyed",
+              "parameters": [
+                {
+                  "name": "ltr",
+                  "type": {
+                    "text": "string"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "ttyKeydown",
+              "parameters": [
+                {
+                  "name": "e",
+                  "type": {
+                    "text": "KeyboardEvent"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "clear"
+            },
+            {
+              "kind": "method",
+              "name": "cancel"
+            },
+            {
+              "kind": "method",
+              "name": "onsent",
+              "parameters": [
+                {
+                  "name": "ltr",
+                  "type": {
+                    "text": "string"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "onunsent",
+              "parameters": [
+                {
+                  "name": "ltr",
+                  "type": {
+                    "text": "string"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "onskipped",
+              "parameters": [
+                {
+                  "name": "ltr",
+                  "type": {
+                    "text": "string"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "controlSetDefaultValue",
+              "parameters": [
+                {
+                  "name": "control",
+                  "type": {
+                    "text": "string"
+                  }
+                },
+                {
+                  "name": "forceDefault",
+                  "type": {
+                    "text": "boolean"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "controlSetDefaultValues",
+              "parameters": [
+                {
+                  "name": "forceDefault",
+                  "type": {
+                    "text": "boolean"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "controlUpdate",
+              "parameters": [
+                {
+                  "name": "control",
+                  "type": {
+                    "text": "string"
+                  }
+                },
+                {
+                  "name": "oldv",
+                  "type": {
+                    "text": "number|string|boolean"
+                  }
+                },
+                {
+                  "name": "newv",
+                  "type": {
+                    "text": "number|string|boolean"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "controlToggle",
+              "parameters": [
+                {
+                  "name": "control",
+                  "type": {
+                    "text": "string"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "controlSelect",
+              "parameters": [
+                {
+                  "name": "control",
+                  "type": {
+                    "text": "string"
+                  }
+                },
+                {
+                  "name": "e",
+                  "type": {
+                    "text": "Event"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "scopeResize"
+            },
+            {
+              "kind": "method",
+              "name": "displayRender",
+              "return": {
+                "type": {
+                  "text": "HTMLTemplateResult"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "control",
+                  "type": {
+                    "text": "string"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "controlRender",
+              "return": {
+                "type": {
+                  "text": "HTMLTemplateResult"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "control",
+                  "type": {
+                    "text": "string"
+                  }
+                }
+              ]
+            }
+          ],
+          "attributes": [
+            {
+              "name": "running",
+              "fieldName": "running"
+            },
+            {
+              "name": "displaySettings",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "true",
+              "fieldName": "displaySettings"
+            },
+            {
+              "name": "displayKeyboardSettings",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "true",
+              "fieldName": "displayKeyboardSettings"
+            },
+            {
+              "name": "displayAdvancedKeyboardSettings",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "displayAdvancedKeyboardSettings"
+            },
+            {
+              "name": "displayManualSettings",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "displayManualSettings"
+            },
+            {
+              "name": "displayAdvancedManualSettings",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "displayAdvancedManualSettings"
+            },
+            {
+              "name": "displayMiscSettings",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "displayMiscSettings"
+            },
+            {
+              "name": "displayScope",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "displayScope"
+            },
+            {
+              "name": "displayStatus",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "true",
+              "fieldName": "displayStatus"
+            },
+            {
+              "name": "displayAbout",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "displayAbout"
+            },
+            {
+              "name": "displayLicense",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "displayLicense"
+            },
+            {
+              "name": "displayColophon",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "displayColophon"
+            },
+            {
+              "name": "displayTouchStraight",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "displayTouchStraight"
+            },
+            {
+              "name": "displayTouchPaddle",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "displayTouchPaddle"
+            },
+            {
+              "name": "speed",
+              "fieldName": "speed"
+            },
+            {
+              "name": "gain",
+              "fieldName": "gain"
+            },
+            {
+              "name": "pitch",
+              "fieldName": "pitch"
+            },
+            {
+              "name": "farnsworth",
+              "fieldName": "farnsworth"
+            },
+            {
+              "name": "weight",
+              "fieldName": "weight"
+            },
+            {
+              "name": "ratio",
+              "fieldName": "ratio"
+            },
+            {
+              "name": "compensation",
+              "fieldName": "compensation"
+            },
+            {
+              "name": "rise",
+              "fieldName": "rise"
+            },
+            {
+              "name": "fall",
+              "fieldName": "fall"
+            },
+            {
+              "name": "envelope",
+              "fieldName": "envelope"
+            },
+            {
+              "name": "envelope2",
+              "fieldName": "envelope2"
+            },
+            {
+              "name": "paddleKeyers",
+              "readonly": true,
+              "fieldName": "paddleKeyers"
+            },
+            {
+              "name": "paddleKeyer",
+              "fieldName": "paddleKeyer"
+            },
+            {
+              "name": "paddleSwapped",
+              "fieldName": "paddleSwapped"
+            },
+            {
+              "name": "straightKey",
+              "fieldName": "straightKey"
+            },
+            {
+              "name": "leftPaddleKey",
+              "fieldName": "leftPaddleKey"
+            },
+            {
+              "name": "rightPaddleKey",
+              "fieldName": "rightPaddleKey"
+            },
+            {
+              "name": "straightMidi",
+              "fieldName": "straightMidi"
+            },
+            {
+              "name": "leftPaddleMidi",
+              "fieldName": "leftPaddleMidi"
+            },
+            {
+              "name": "rightPaddleMidi",
+              "fieldName": "rightPaddleMidi"
+            },
+            {
+              "name": "inputSpeed",
+              "fieldName": "inputSpeed"
+            },
+            {
+              "name": "inputGain",
+              "fieldName": "inputGain"
+            },
+            {
+              "name": "inputPitch",
+              "fieldName": "inputPitch"
+            },
+            {
+              "name": "inputFarnsworth",
+              "fieldName": "inputFarnsworth"
+            },
+            {
+              "name": "inputWeight",
+              "fieldName": "inputWeight"
+            },
+            {
+              "name": "inputRatio",
+              "fieldName": "inputRatio"
+            },
+            {
+              "name": "inputCompensation",
+              "fieldName": "inputCompensation"
+            },
+            {
+              "name": "inputRise",
+              "fieldName": "inputRise"
+            },
+            {
+              "name": "inputFall",
+              "fieldName": "inputFall"
+            },
+            {
+              "name": "envelopes",
+              "readonly": true,
+              "fieldName": "envelopes"
+            },
+            {
+              "name": "inputEnvelope",
+              "fieldName": "inputEnvelope"
+            },
+            {
+              "name": "inputEnvelope2",
+              "fieldName": "inputEnvelope2"
+            },
+            {
+              "name": "requestedSampleRate",
+              "type": {
+                "text": "string"
+              },
+              "default": "'48000'",
+              "fieldName": "requestedSampleRate"
+            },
+            {
+              "name": "scopeRunning",
+              "fieldName": "scopeRunning"
+            },
+            {
+              "name": "scopeTriggers",
+              "readonly": true,
+              "fieldName": "scopeTriggers"
+            },
+            {
+              "name": "scopeTrigger",
+              "fieldName": "scopeTrigger"
+            },
+            {
+              "name": "scopeTriggerChannel",
+              "fieldName": "scopeTriggerChannel"
+            },
+            {
+              "name": "scopeChannels",
+              "readonly": true,
+              "fieldName": "scopeChannels"
+            },
+            {
+              "name": "scopeHold",
+              "fieldName": "scopeHold"
+            },
+            {
+              "name": "scopeHolds",
+              "readonly": true,
+              "fieldName": "scopeHolds"
+            },
+            {
+              "name": "scopeTimeScale",
+              "fieldName": "scopeTimeScale"
+            },
+            {
+              "name": "scopeTimeScales",
+              "readonly": true,
+              "fieldName": "scopeTimeScales"
+            },
+            {
+              "name": "scopeSources",
+              "readonly": true,
+              "fieldName": "scopeSources"
+            },
+            {
+              "name": "scopeSource1",
+              "fieldName": "scopeSource1"
+            },
+            {
+              "name": "scopeVerticalScale1",
+              "fieldName": "scopeVerticalScale1"
+            },
+            {
+              "name": "scopeVerticalOffset1",
+              "fieldName": "scopeVerticalOffset1"
+            },
+            {
+              "name": "scopeSource2",
+              "fieldName": "scopeSource2"
+            },
+            {
+              "name": "scopeVerticalScale2",
+              "fieldName": "scopeVerticalScale2"
+            },
+            {
+              "name": "scopeVerticalOffset2",
+              "fieldName": "scopeVerticalOffset2"
+            },
+            {
+              "name": "scopeSource3",
+              "fieldName": "scopeSource3"
+            },
+            {
+              "name": "scopeVerticalScale3",
+              "fieldName": "scopeVerticalScale3"
+            },
+            {
+              "name": "scopeVerticalOffset3",
+              "fieldName": "scopeVerticalOffset3"
+            },
+            {
+              "name": "scopeSource4",
+              "fieldName": "scopeSource4"
+            },
+            {
+              "name": "scopeVerticalScale4",
+              "fieldName": "scopeVerticalScale4"
+            },
+            {
+              "name": "scopeVerticalOffset4",
+              "fieldName": "scopeVerticalOffset4"
+            },
+            {
+              "name": "state",
+              "readonly": true,
+              "fieldName": "state"
+            },
+            {
+              "name": "sampleRate",
+              "readonly": true,
+              "fieldName": "sampleRate"
+            },
+            {
+              "name": "currentTime",
+              "readonly": true,
+              "fieldName": "currentTime"
+            },
+            {
+              "name": "baseLatency",
+              "readonly": true,
+              "fieldName": "baseLatency"
+            },
+            {
+              "name": "midiAvailable",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "midiAvailable"
+            },
+            {
+              "name": "shiftKeys",
+              "type": {
+                "text": "array"
+              },
+              "default": "['None','ShiftLeft','ControlLeft','AltLeft','AltRight','ControlRight','ShiftRight']",
+              "fieldName": "shiftKeys"
+            },
+            {
+              "name": "midiNotes",
+              "type": {
+                "text": "array"
+              },
+              "default": "[]",
+              "fieldName": "midiNotes"
+            },
+            {
+              "name": "sampleRates",
+              "type": {
+                "text": "array"
+              },
+              "default": "['8000', '32000', '44100', '48000', '96000', '192000', '384000' ]",
+              "fieldName": "sampleRates"
+            },
+            {
+              "name": "scopeVerticalScales",
+              "readonly": true,
+              "fieldName": "scopeVerticalScales"
+            },
+            {
+              "name": "content",
+              "type": {
+                "text": "HTMLTemplateResult"
+              },
+              "default": "html``",
+              "fieldName": "content"
+            },
+            {
+              "name": "finished",
+              "type": {
+                "text": "any[]"
+              },
+              "default": "[]",
+              "fieldName": "finished"
+            },
+            {
+              "name": "pending",
+              "type": {
+                "text": "string[]"
+              },
+              "default": "[]",
+              "fieldName": "pending"
+            }
+          ],
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit-element"
+          },
+          "tagName": "keyer-js",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "KeyerJs",
+          "declaration": {
+            "name": "KeyerJs",
+            "module": "src/keyer-js.ts"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "keyer-js",
+          "declaration": {
+            "name": "KeyerJs",
+            "module": "src/keyer-js.ts"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/keyer-logo.js",
+      "declarations": [
+        {
+          "kind": "variable",
+          "name": "keyerLogo",
+          "default": "html` <svg width=\"512px\" height=\"128px\" viewBox=\"0 192 512 128\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\"> <g id=\"Page-1\" stroke=\"#1d62a7\" stroke-width=\"16\" fill=\"none\" fill-rule=\"evenodd\"> <line x1=\"384\" y1=\"224\" x2=\"448\" y2=\"224\" id=\"knob\"></line> <line x1=\"64\" y1=\"288\" x2=\"320\" y2=\"288\" id=\"base\" ></line> <polyline points=\"64,224 320,224 371.2,274 422.4,274\" id=\"key\"></polyline> <ellipse cx=\"148.5\" cy=\"224\" rx=\"16\" ry=\"16\" fill=\"#1d62a7\" stroke=\"#ffffff\" stroke-width=\"1\" id=\"hinge\"></ellipse> </g> </svg> `"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "keyerLogo",
+          "declaration": {
+            "name": "keyerLogo",
+            "module": "src/keyer-logo.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "out-tsc/dist/C1ySWGME.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "",
+          "name": "m",
           "members": [
             {
               "kind": "field",
@@ -5135,7 +6567,7 @@
               "static": true,
               "parameters": [
                 {
-                  "name": "control"
+                  "name": "e"
                 }
               ]
             },
@@ -5350,13 +6782,13 @@
               "name": "setScopeChannel",
               "parameters": [
                 {
-                  "name": "control"
+                  "name": "e"
                 },
                 {
-                  "name": "channel"
+                  "name": "t"
                 },
                 {
-                  "name": "value"
+                  "name": "s"
                 }
               ]
             },
@@ -5365,10 +6797,10 @@
               "name": "getScopeChannel",
               "parameters": [
                 {
-                  "name": "control"
+                  "name": "e"
                 },
                 {
-                  "name": "channel"
+                  "name": "t"
                 }
               ]
             },
@@ -5453,10 +6885,10 @@
               "name": "appendFinished",
               "parameters": [
                 {
-                  "name": "tag"
+                  "name": "e"
                 },
                 {
-                  "name": "text"
+                  "name": "t"
                 }
               ]
             },
@@ -5465,7 +6897,7 @@
               "name": "onkeyed",
               "parameters": [
                 {
-                  "name": "ltr"
+                  "name": "e"
                 }
               ]
             },
@@ -5491,7 +6923,7 @@
               "name": "onsent",
               "parameters": [
                 {
-                  "name": "ltr"
+                  "name": "e"
                 }
               ]
             },
@@ -5500,7 +6932,7 @@
               "name": "onunsent",
               "parameters": [
                 {
-                  "name": "ltr"
+                  "name": "e"
                 }
               ]
             },
@@ -5509,7 +6941,7 @@
               "name": "onskipped",
               "parameters": [
                 {
-                  "name": "ltr"
+                  "name": "e"
                 }
               ]
             },
@@ -5518,10 +6950,10 @@
               "name": "controlSetDefaultValue",
               "parameters": [
                 {
-                  "name": "control"
+                  "name": "e"
                 },
                 {
-                  "name": "forceDefault"
+                  "name": "t"
                 }
               ]
             },
@@ -5530,7 +6962,7 @@
               "name": "controlSetDefaultValues",
               "parameters": [
                 {
-                  "name": "forceDefault"
+                  "name": "e"
                 }
               ]
             },
@@ -5539,13 +6971,13 @@
               "name": "controlUpdate",
               "parameters": [
                 {
-                  "name": "control"
+                  "name": "e"
                 },
                 {
-                  "name": "oldv"
+                  "name": "t"
                 },
                 {
-                  "name": "newv"
+                  "name": "s"
                 }
               ]
             },
@@ -5554,7 +6986,7 @@
               "name": "controlToggle",
               "parameters": [
                 {
-                  "name": "control"
+                  "name": "e"
                 }
               ]
             },
@@ -5563,10 +6995,10 @@
               "name": "controlSelect",
               "parameters": [
                 {
-                  "name": "control"
+                  "name": "e"
                 },
                 {
-                  "name": "e"
+                  "name": "t"
                 }
               ]
             },
@@ -5579,7 +7011,7 @@
               "name": "displayRender",
               "parameters": [
                 {
-                  "name": "control"
+                  "name": "e"
                 }
               ]
             },
@@ -5588,7 +7020,7 @@
               "name": "controlRender",
               "parameters": [
                 {
-                  "name": "control"
+                  "name": "e"
                 }
               ]
             },
@@ -5606,7 +7038,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": "false"
+              "default": "!1"
             },
             {
               "kind": "field",
@@ -5614,7 +7046,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": "false"
+              "default": "!1"
             },
             {
               "kind": "field",
@@ -5622,12 +7054,12 @@
               "type": {
                 "text": "boolean"
               },
-              "default": "false"
+              "default": "!1"
             }
           ],
           "superclass": {
-            "name": "LitElement",
-            "package": "lit-element"
+            "name": "I",
+            "module": "out-tsc/dist/C1ySWGME.js"
           },
           "tagName": "keyer-js",
           "customElement": true
@@ -5635,97 +7067,26 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "KeyerJs",
-          "declaration": {
-            "name": "KeyerJs",
-            "module": "src/keyer-js.js"
-          }
-        },
-        {
           "kind": "custom-element-definition",
           "name": "keyer-js",
           "declaration": {
-            "name": "KeyerJs",
-            "module": "src/keyer-js.js"
+            "name": "m",
+            "module": "out-tsc/dist/C1ySWGME.js"
           }
         }
       ]
     },
     {
       "kind": "javascript-module",
-      "path": "src/keyer-logo.js",
-      "declarations": [
-        {
-          "kind": "variable",
-          "name": "keyerLogo",
-          "default": "html` <svg width=\"512px\" height=\"128px\" viewBox=\"0 192 512 128\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\"> <g id=\"Page-1\" stroke=\"#1d62a7\" stroke-width=\"16\" fill=\"none\" fill-rule=\"evenodd\"> <line x1=\"384\" y1=\"224\" x2=\"448\" y2=\"224\" id=\"knob\"></line> <line x1=\"64\" y1=\"288\" x2=\"320\" y2=\"288\" id=\"base\" ></line> <polyline points=\"64,224 320,224 371.2,274 422.4,274\" id=\"key\"></polyline> <ellipse cx=\"148.5\" cy=\"224\" rx=\"16\" ry=\"16\" fill=\"#1d62a7\" stroke=\"#ffffff\" stroke-width=\"1\" id=\"hinge\"></ellipse> </g> </svg> `"
-        }
-      ],
-      "exports": [
-        {
-          "kind": "js",
-          "name": "keyerLogo",
-          "declaration": {
-            "name": "keyerLogo",
-            "module": "src/keyer-logo.js"
-          }
-        }
-      ]
+      "path": "out-tsc/dist/sw.js",
+      "declarations": [],
+      "exports": []
     },
     {
       "kind": "javascript-module",
-      "path": "stories/keyer-js.stories.js",
-      "declarations": [
-        {
-          "kind": "function",
-          "name": "App"
-        }
-      ],
-      "exports": [
-        {
-          "kind": "js",
-          "name": "default",
-          "declaration": {
-            "module": "stories/keyer-js.stories.js"
-          }
-        },
-        {
-          "kind": "js",
-          "name": "App",
-          "declaration": {
-            "name": "App",
-            "module": "stories/keyer-js.stories.js"
-          }
-        }
-      ]
-    },
-    {
-      "kind": "javascript-module",
-      "path": "stories/keyer-js.stories.ts",
-      "declarations": [
-        {
-          "kind": "variable",
-          "name": "App"
-        }
-      ],
-      "exports": [
-        {
-          "kind": "js",
-          "name": "default",
-          "declaration": {
-            "module": "stories/keyer-js.stories.ts"
-          }
-        },
-        {
-          "kind": "js",
-          "name": "App",
-          "declaration": {
-            "name": "App",
-            "module": "stories/keyer-js.stories.ts"
-          }
-        }
-      ]
+      "path": "out-tsc/dist/workbox-36c6ae8a.js",
+      "declarations": [],
+      "exports": []
     },
     {
       "kind": "javascript-module",
@@ -7714,6 +9075,54 @@
             },
             {
               "kind": "field",
+              "name": "straightKey",
+              "type": {
+                "text": "string"
+              },
+              "default": "'ControlLeft'"
+            },
+            {
+              "kind": "field",
+              "name": "leftPaddleKey",
+              "type": {
+                "text": "string"
+              },
+              "default": "'AltRight'"
+            },
+            {
+              "kind": "field",
+              "name": "rightPaddleKey",
+              "type": {
+                "text": "string"
+              },
+              "default": "'ControlRight'"
+            },
+            {
+              "kind": "field",
+              "name": "straightMidi",
+              "type": {
+                "text": "string"
+              },
+              "default": "'None'"
+            },
+            {
+              "kind": "field",
+              "name": "leftPaddleMidi",
+              "type": {
+                "text": "string"
+              },
+              "default": "'None'"
+            },
+            {
+              "kind": "field",
+              "name": "rightPaddleMidi",
+              "type": {
+                "text": "string"
+              },
+              "default": "'None'"
+            },
+            {
+              "kind": "field",
               "name": "left"
             },
             {
@@ -7977,6 +9386,18 @@
             {
               "kind": "method",
               "name": "cancel",
+              "inheritedFrom": {
+                "name": "KeyerPlayer",
+                "module": "out-tsc/src/KeyerPlayer.js"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "farnsworth",
+              "type": {
+                "text": "number"
+              },
+              "default": "20",
               "inheritedFrom": {
                 "name": "KeyerPlayer",
                 "module": "out-tsc/src/KeyerPlayer.js"
@@ -9201,6 +10622,18 @@
             },
             {
               "kind": "field",
+              "name": "farnsworth",
+              "type": {
+                "text": "number"
+              },
+              "default": "20",
+              "inheritedFrom": {
+                "name": "KeyerPlayer",
+                "module": "out-tsc/src/KeyerPlayer.js"
+              }
+            },
+            {
+              "kind": "field",
               "name": "key",
               "inheritedFrom": {
                 "name": "KeyerPlayer",
@@ -9757,6 +11190,14 @@
             {
               "kind": "method",
               "name": "cancel"
+            },
+            {
+              "kind": "field",
+              "name": "farnsworth",
+              "type": {
+                "text": "number"
+              },
+              "default": "20"
             },
             {
               "kind": "field",
@@ -10826,532 +12267,14 @@
       "path": "out-tsc/src/keyer-js.js",
       "declarations": [
         {
-          "kind": "class",
-          "description": "",
-          "name": "KeyerJs",
-          "members": [
-            {
-              "kind": "field",
-              "name": "controls",
-              "static": true,
-              "readonly": true
-            },
-            {
-              "kind": "method",
-              "name": "getControl",
-              "static": true,
-              "parameters": [
-                {
-                  "name": "control"
-                }
-              ]
-            },
-            {
-              "kind": "field",
-              "name": "running"
-            },
-            {
-              "kind": "field",
-              "name": "currentTime",
-              "readonly": true
-            },
-            {
-              "kind": "field",
-              "name": "sampleRate",
-              "readonly": true
-            },
-            {
-              "kind": "field",
-              "name": "baseLatency",
-              "readonly": true
-            },
-            {
-              "kind": "field",
-              "name": "state",
-              "readonly": true
-            },
-            {
-              "kind": "field",
-              "name": "midiAvailable",
-              "readonly": true
-            },
-            {
-              "kind": "field",
-              "name": "midiNotes",
-              "readonly": true
-            },
-            {
-              "kind": "field",
-              "name": "pitch"
-            },
-            {
-              "kind": "field",
-              "name": "gain"
-            },
-            {
-              "kind": "field",
-              "name": "speed"
-            },
-            {
-              "kind": "field",
-              "name": "weight"
-            },
-            {
-              "kind": "field",
-              "name": "ratio"
-            },
-            {
-              "kind": "field",
-              "name": "compensation"
-            },
-            {
-              "kind": "field",
-              "name": "rise"
-            },
-            {
-              "kind": "field",
-              "name": "fall"
-            },
-            {
-              "kind": "field",
-              "name": "envelope"
-            },
-            {
-              "kind": "field",
-              "name": "envelope2"
-            },
-            {
-              "kind": "field",
-              "name": "envelopes",
-              "readonly": true
-            },
-            {
-              "kind": "field",
-              "name": "paddleSwapped"
-            },
-            {
-              "kind": "field",
-              "name": "paddleKeyers",
-              "readonly": true
-            },
-            {
-              "kind": "field",
-              "name": "paddleKeyer"
-            },
-            {
-              "kind": "field",
-              "name": "straightKey"
-            },
-            {
-              "kind": "field",
-              "name": "leftPaddleKey"
-            },
-            {
-              "kind": "field",
-              "name": "rightPaddleKey"
-            },
-            {
-              "kind": "field",
-              "name": "straightMidi"
-            },
-            {
-              "kind": "field",
-              "name": "leftPaddleMidi"
-            },
-            {
-              "kind": "field",
-              "name": "rightPaddleMidi"
-            },
-            {
-              "kind": "field",
-              "name": "inputPitch"
-            },
-            {
-              "kind": "field",
-              "name": "inputGain"
-            },
-            {
-              "kind": "field",
-              "name": "inputSpeed"
-            },
-            {
-              "kind": "field",
-              "name": "inputWeight"
-            },
-            {
-              "kind": "field",
-              "name": "inputRatio"
-            },
-            {
-              "kind": "field",
-              "name": "inputCompensation"
-            },
-            {
-              "kind": "field",
-              "name": "inputRise"
-            },
-            {
-              "kind": "field",
-              "name": "inputFall"
-            },
-            {
-              "kind": "field",
-              "name": "inputEnvelope"
-            },
-            {
-              "kind": "field",
-              "name": "inputEnvelope2"
-            },
-            {
-              "kind": "field",
-              "name": "scopeRunning"
-            },
-            {
-              "kind": "field",
-              "name": "scopeTimeScale"
-            },
-            {
-              "kind": "field",
-              "name": "scopeTimeScales",
-              "readonly": true
-            },
-            {
-              "kind": "field",
-              "name": "scopeTriggers",
-              "readonly": true
-            },
-            {
-              "kind": "field",
-              "name": "scopeTrigger"
-            },
-            {
-              "kind": "field",
-              "name": "scopeChannels",
-              "readonly": true
-            },
-            {
-              "kind": "field",
-              "name": "scopeTriggerChannel"
-            },
-            {
-              "kind": "field",
-              "name": "scopeHolds",
-              "readonly": true
-            },
-            {
-              "kind": "field",
-              "name": "scopeHold"
-            },
-            {
-              "kind": "field",
-              "name": "scopeSources",
-              "readonly": true
-            },
-            {
-              "kind": "field",
-              "name": "scopeVerticalScales",
-              "readonly": true
-            },
-            {
-              "kind": "method",
-              "name": "setScopeChannel",
-              "parameters": [
-                {
-                  "name": "control"
-                },
-                {
-                  "name": "channel"
-                },
-                {
-                  "name": "value"
-                }
-              ]
-            },
-            {
-              "kind": "method",
-              "name": "getScopeChannel",
-              "parameters": [
-                {
-                  "name": "control"
-                },
-                {
-                  "name": "channel"
-                }
-              ]
-            },
-            {
-              "kind": "field",
-              "name": "scopeSource1"
-            },
-            {
-              "kind": "field",
-              "name": "scopeSource2"
-            },
-            {
-              "kind": "field",
-              "name": "scopeSource3"
-            },
-            {
-              "kind": "field",
-              "name": "scopeSource4"
-            },
-            {
-              "kind": "field",
-              "name": "scopeVerticalScale1"
-            },
-            {
-              "kind": "field",
-              "name": "scopeVerticalScale2"
-            },
-            {
-              "kind": "field",
-              "name": "scopeVerticalScale3"
-            },
-            {
-              "kind": "field",
-              "name": "scopeVerticalScale4"
-            },
-            {
-              "kind": "field",
-              "name": "scopeVerticalOffset1"
-            },
-            {
-              "kind": "field",
-              "name": "scopeVerticalOffset2"
-            },
-            {
-              "kind": "field",
-              "name": "scopeVerticalOffset3"
-            },
-            {
-              "kind": "field",
-              "name": "scopeVerticalOffset4"
-            },
-            {
-              "kind": "method",
-              "name": "start"
-            },
-            {
-              "kind": "method",
-              "name": "validate"
-            },
-            {
-              "kind": "method",
-              "name": "onfocus"
-            },
-            {
-              "kind": "method",
-              "name": "onblur"
-            },
-            {
-              "kind": "method",
-              "name": "processFinished"
-            },
-            {
-              "kind": "method",
-              "name": "blinkenCursen"
-            },
-            {
-              "kind": "method",
-              "name": "updateContent"
-            },
-            {
-              "kind": "method",
-              "name": "appendFinished",
-              "parameters": [
-                {
-                  "name": "tag"
-                },
-                {
-                  "name": "text"
-                }
-              ]
-            },
-            {
-              "kind": "method",
-              "name": "onkeyed",
-              "parameters": [
-                {
-                  "name": "ltr"
-                }
-              ]
-            },
-            {
-              "kind": "method",
-              "name": "ttyKeydown",
-              "parameters": [
-                {
-                  "name": "e"
-                }
-              ]
-            },
-            {
-              "kind": "method",
-              "name": "clear"
-            },
-            {
-              "kind": "method",
-              "name": "cancel"
-            },
-            {
-              "kind": "method",
-              "name": "onsent",
-              "parameters": [
-                {
-                  "name": "ltr"
-                }
-              ]
-            },
-            {
-              "kind": "method",
-              "name": "onunsent",
-              "parameters": [
-                {
-                  "name": "ltr"
-                }
-              ]
-            },
-            {
-              "kind": "method",
-              "name": "onskipped",
-              "parameters": [
-                {
-                  "name": "ltr"
-                }
-              ]
-            },
-            {
-              "kind": "method",
-              "name": "controlSetDefaultValue",
-              "parameters": [
-                {
-                  "name": "control"
-                },
-                {
-                  "name": "forceDefault"
-                }
-              ]
-            },
-            {
-              "kind": "method",
-              "name": "controlSetDefaultValues",
-              "parameters": [
-                {
-                  "name": "forceDefault"
-                }
-              ]
-            },
-            {
-              "kind": "method",
-              "name": "controlUpdate",
-              "parameters": [
-                {
-                  "name": "control"
-                },
-                {
-                  "name": "oldv"
-                },
-                {
-                  "name": "newv"
-                }
-              ]
-            },
-            {
-              "kind": "method",
-              "name": "controlToggle",
-              "parameters": [
-                {
-                  "name": "control"
-                }
-              ]
-            },
-            {
-              "kind": "method",
-              "name": "controlSelect",
-              "parameters": [
-                {
-                  "name": "control"
-                },
-                {
-                  "name": "e"
-                }
-              ]
-            },
-            {
-              "kind": "method",
-              "name": "scopeResize"
-            },
-            {
-              "kind": "method",
-              "name": "displayRender",
-              "parameters": [
-                {
-                  "name": "control"
-                }
-              ]
-            },
-            {
-              "kind": "method",
-              "name": "controlRender",
-              "parameters": [
-                {
-                  "name": "control"
-                }
-              ]
-            },
-            {
-              "kind": "field",
-              "name": "keyer",
-              "type": {
-                "text": "null"
-              },
-              "default": "null"
-            },
-            {
-              "kind": "field",
-              "name": "displayAbout",
-              "type": {
-                "text": "boolean"
-              },
-              "default": "false"
-            },
-            {
-              "kind": "field",
-              "name": "displayLicense",
-              "type": {
-                "text": "boolean"
-              },
-              "default": "false"
-            },
-            {
-              "kind": "field",
-              "name": "displayColophon",
-              "type": {
-                "text": "boolean"
-              },
-              "default": "false"
-            }
-          ],
-          "superclass": {
-            "name": "LitElement",
-            "package": "lit-element"
-          },
-          "tagName": "keyer-js",
-          "customElement": true
+          "kind": "variable",
+          "name": "KeyerJs"
         }
       ],
       "exports": [
         {
           "kind": "js",
           "name": "KeyerJs",
-          "declaration": {
-            "name": "KeyerJs",
-            "module": "out-tsc/src/keyer-js.js"
-          }
-        },
-        {
-          "kind": "custom-element-definition",
-          "name": "keyer-js",
           "declaration": {
             "name": "KeyerJs",
             "module": "out-tsc/src/keyer-js.js"

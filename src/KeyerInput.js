@@ -21,6 +21,14 @@ import { KeyerPaddleWorklet } from './KeyerPaddleWorklet.js';
 
 // translate keyup/keydown into keyed oscillator sidetone
 export class KeyerInput extends KeyerPlayer {
+
+  straightKey = 'ControlLeft';
+  leftPaddleKey = 'AltRight';
+  rightPaddleKey = 'ControlRight';
+  straightMidi = 'None';
+  leftPaddleMidi = 'None';
+  rightPaddleMidi = 'None';
+
   constructor(context) {
     super(context);
 
