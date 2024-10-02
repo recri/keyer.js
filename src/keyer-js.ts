@@ -26,8 +26,9 @@ import '@shoelace-style/shoelace/dist/components/select/select.js';
 import '@shoelace-style/shoelace/dist/components/option/option.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/icon-button/icon-button.js';
-import '@shoelace-style/shoelace/dist/components/divider/divider.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
+import '@shoelace-style/shoelace/dist/components/divider/divider.js';
+import '@shoelace-style/shoelace/dist/components/input/input.js';
 
 import { keyerLogo } from './keyer-logo.js';
 import { Keyer } from './Keyer.js';
@@ -63,6 +64,11 @@ const alwaysForceDefault = false;
 // const colorSecondary = css`#9e9e9e`;
 // const colorSLight = css`#cfcfcf`;
 // const colorSDark =  css`#707070`;
+/* eslint-disable prefer-regex-literals */
+const morseRegExp = new RegExp('^[A-Za-z0-9.,?/*+!@$&()-=+"\':; ]$');
+/* eslint-enable prefer-regex-literals */
+
+const isMorse = (c: string) => morseRegExp.test(c);
 
 //
 // property database
@@ -408,9 +414,32 @@ export class KeyerJs extends LitElement {
 
   keyboardFocused: boolean = false;
 
-  @property({ type: Array }) sections: string[];
+  static startSections = ['start', 'about', 'license', 'colophon'];
 
-  @property({ type: Array }) selected: string[];
+  static startSelected = ['start', 'about'];
+
+  static runSections = [
+    'entry',
+    'touchButtons',
+    'keyboardSettings',
+    'advancedKeyboardSettings',
+    'manualSettings',
+    'advancedManualSettings',
+    'miscSettings',
+    'scope',
+    'status',
+    'controls',
+    'locals',
+    'about',
+    'license',
+    'colophon',
+  ];
+
+  static runSelected = ['entry', 'keyboardSettings'];
+
+  @property({ type: Array }) sections: string[] = KeyerJs.startSections;
+
+  @property({ type: Array }) selected: string[] = KeyerJs.startSelected;
 
   // top level state
   @property({ type: Boolean })
@@ -428,8 +457,8 @@ export class KeyerJs extends LitElement {
         this.keyer!.context.resume();
         // this cures need to twiddle the gain to get iambic keying to work
         // I wish I understood why
-        this.gain += 1;
-        this.gain -= 1;
+        // this.gain += 1;
+        // this.gain -= 1;
       } else {
         this.keyer!.context.suspend();
       }
@@ -452,7 +481,11 @@ export class KeyerJs extends LitElement {
 
   @property({ type: Number })
   set gain(v) {
-    if (this.keyer) this.keyer!.output.gain = v;
+    if (this.keyer) {
+      this.keyer!.output.gain = v;
+      // console.log(`setting gain to ${v}`);
+      // console.trace();
+    }
   }
 
   get gain() {
@@ -668,7 +701,10 @@ export class KeyerJs extends LitElement {
 
   @property({ type: Number })
   set inputGain(v) {
-    if (this.keyer) this.keyer!.input.gain = v;
+    if (this.keyer) {
+      this.keyer!.input.gain = v;
+      // console.log(`setting inputGain to ${v}`);
+    }
   }
 
   get inputGain() {
@@ -1102,8 +1138,8 @@ export class KeyerJs extends LitElement {
     this._running = false;
     this.keyer = null;
     // only initialize the properties neede for startup
-    this.sections = ['start', 'about', 'license', 'colophon'];
-    this.selected = ['start', 'about'];
+    this.sections = KeyerJs.startSections;
+    this.selected = KeyerJs.startSelected;
   }
 
   async start() {
@@ -1127,21 +1163,8 @@ export class KeyerJs extends LitElement {
     this.keyer = new Keyer(context);
 
     // set the section lists
-    this.sections = [
-      'entry',
-      'touch',
-      'keyboardSettings',
-      'advancedKeyboardSettings',
-      'manualSettings',
-      'advancedManualSettings',
-      'miscSettings',
-      'scope',
-      'status',
-      'about',
-      'license',
-      'colophon',
-    ];
-    this.selected = ['entry', 'keyboardSettings'];
+    this.sections = KeyerJs.runSections;
+    this.selected = KeyerJs.runSelected;
 
     // load some constants into the instance
 
@@ -1253,10 +1276,7 @@ export class KeyerJs extends LitElement {
     // console.log(`ttyKeydown '${e.key}'`);
     if (e.isComposing || e.altKey || e.metaKey || e.ctrlKey) {
       // log.textContent = `keydown code ${e.code} key ${e.key} CAMS ${e.ctrlKey} ${e.altKey} ${e.metaKey} ${e.shiftKey}`;
-    } else if (
-      e.key.length === 1 &&
-      /^[A-Za-z0-9.,?/*+!@$&()-=+"':; ]$/.test(e.key)
-    ) {
+    } else if (isMorse(e.key)) {
       this.pending.push(e.key);
       this.keyer!.output.send(e.key);
       this.updateContent();
@@ -1354,13 +1374,7 @@ export class KeyerJs extends LitElement {
     const c = KeyerJs.getControl(control);
     if ('value' in c) localStorage[control] = JSON.stringify(newv);
     if ('lit' in c) this.requestUpdate(control, oldv);
-    switch (control) {
-      case 'requestedSampleRate':
-        this.start();
-        break;
-      default:
-        break;
-    }
+    if (control === 'requestedSampleRate') this.start();
   }
 
   controlToggle(control: string) {
@@ -1564,69 +1578,75 @@ export class KeyerJs extends LitElement {
       // slider adjusts a number between a min and a max by step
       case 'slider': {
         const { min, max, step, label, unit, title } = ctl;
-        return html`
-          <div class="group" title="${title}">
-            <input
+        return html` <div
+          class="group slider"
+          title="${title}"
+          style="display: flex; flex-flow: column;"
+        >
+          <div class="slider-header">${label}</div>
+          <div class="slider-main">
+            <sl-input
               type="range"
               name="${control}"
               min="${min}"
               max="${max}"
               step="${step}"
               .value=${(this as Map)[control]}
-              @input=${(e: Event) => this.controlSelect(control, e)}
-            />
-            <label for="${control}"
-              >${label} ${(this as Map)[control]} (${unit})</label
-            >
+              @sl-input=${(e: Event) => this.controlSelect(control, e)}
+            ></sl-input>
           </div>
-        `;
+          <div class="slider-unit">${unit}</div>
+        </div>`;
       }
 
       // spinner adjusts a number between a min and a max by step
       case 'spinner': {
-        const { min, max, step, label, unit, size, title } = ctl;
-        return html`
-          <div class="group" title="${title}">
-            <label for="${control}"
-              >${label}
-              <input
-                type="number"
-                name="${control}"
-                min="${min}"
-                max="${max}"
-                step="${step}"
-                size="${size}"
-                .value=${(this as Map)[control]}
-                @input=${(e: Event) => this.controlSelect(control, e)}
-              />
-              (${unit})
-            </label>
+        const { min, max, step, label, unit, title } = ctl; // , size
+        return html` <div
+          class="group spinner"
+          title="${title}"
+          style="display: flex; flex-flow: column;"
+        >
+          <div class="slider-header">${label}</div>
+          <div class="slider-main">
+            <sl-input
+              type="number"
+              name="${control}"
+              min="${min}"
+              max="${max}"
+              step="${step}"
+              .value=${(this as Map)[control]}
+              @sl-input=${(e: Event) => this.controlSelect(control, e)}
+            ></sl-input>
           </div>
-        `;
+          <div class="slider-unit">(${unit})</div>
+        </div>`;
       }
       // options displays a list of options for selection
       case 'options': {
         const { options, label, title } = ctl;
         return html`
-          <div class="group" title="${title}">
-            <label for="${control}"
-              >${label}
-              <select
-                name="${control}"
-                .value=${(this as Map)[control]}
-                @change=${(e: Event) => this.controlSelect(control, e)}
-              >
-                ${(this as Map)[options].map(
-                  (x: string) =>
-                    html`<option
-                      .value=${x}
-                      ?selected=${x === (this as Map)[control]}
-                    >
-                      ${x}
-                    </option>`,
-                )}
-              </select>
-            </label>
+          <div class="group options" title="${title}">
+            <div>
+              <label for="${control}"
+                >${label}
+                <select
+                  name="${control}"
+                  value="${(this as Map)[control]}"
+                  @change=${(e: Event) => this.controlSelect(control, e)}
+                >
+                  ${(this as Map)[options].map(
+                    (x: string) =>
+                      html`<option
+                        .value=${x}
+                        ?selected=${x === (this as Map)[control]}
+                      >
+                        ${x}
+                      </option>`,
+                  )}
+                </select>
+              </label>
+            </div>
           </div>
         `;
       }
@@ -1685,9 +1705,26 @@ export class KeyerJs extends LitElement {
   }
 
   onSelectInput(e: Event) {
-    const { value } = e.target;
+    const { value } = e.target as Map;
     // console.log(`onSelectInput choose '${value}'`);
     this.selected = value;
+  }
+
+  isShown(control: string) {
+    return this.selected.includes(control) ? 'shown' : 'hidden';
+  }
+
+  section(control: string) {
+    return `section ${control} ${this.isShown(control)}`;
+  }
+
+  // use the mouse translations, so they also work with mice
+  mouseDown(e: MouseEvent) {
+    console.log(`mouseDown ${(e.target as Map).name} in ${this}`);
+  }
+
+  mouseUp(e: MouseEvent) {
+    console.log(`mouseUp ${(e.target as Map).name} in ${this}`);
   }
 
   render() {
@@ -1699,8 +1736,8 @@ export class KeyerJs extends LitElement {
       </div>
 
       <main>
+        <hr />
         <div class="selector">
-          <sl-divider></sl-divider>
           <sl-select
             name="section"
             title="Select the component(s) of the keyer to control."
@@ -1714,13 +1751,11 @@ export class KeyerJs extends LitElement {
             )}
           </sl-select>
         </div>
-
         <div
-          class="section start ${selected.includes('start')
-            ? 'shown'
-            : 'hidden'}"
+          class="${this.section('start')}"
           title="Browsers shouldn't start audio without an user gesture."
         >
+          <hr />
           <button class="start" @click=${this.start}>
             <span>${playSymbol}</span>
           </button>
@@ -1728,14 +1763,11 @@ export class KeyerJs extends LitElement {
           <h2>Press play to start the keyer.</h2>
           <p></p>
         </div>
-
         <div
-          class="section entry ${selected.includes('entry')
-            ? 'shown'
-            : 'hidden'}"
+          class="${this.section('entry')}"
           title="Keyboard entry area for typing characters to send."
         >
-          <sl-divider></sl-divider>
+          <hr />
           <div
             class="subsection keyboard"
             tabindex="0"
@@ -1749,99 +1781,115 @@ export class KeyerJs extends LitElement {
             class="subsection panel"
             title="Controls for the keyboard entry area."
           >
-            <sl-divider></sl-divider>
             ${this.controlRender('running')}
             <button @click=${this.clear}><span>Clear</span></button>
             <button @click=${this.cancel}><span>Cancel</span></button>
           </div>
         </div>
-
         <div
-          class="section keyboardSettings ${selected.includes(
-            'keyboardSettings',
-          )
-            ? 'shown'
-            : 'hidden'}"
-          title="Basic settings for keyboard keying"
+          class="${this.section('touchButtons')}"
+          title="Touch panel buttons keying characters to send."
         >
-          <sl-divider></sl-divider>
-          ${this.controlRender('speed')}, ${this.controlRender('gain')},
-          ${this.controlRender('pitch')},
+          <hr />
+          <div style="display: flex; flex-flow: row nowrap;">
+            ${['KEY', 'DIT', 'DAH'].map(
+              label =>
+                html`<sl-button
+                  name="${label}"
+                  pill
+                  size="large"
+                  @mousedown=${this.mouseDown}
+                  @mouseup=${this.mouseUp}
+                  @touchstart=${this.mouseDown}
+                  @touchend=${this.mouseUp}
+                >
+                  ${label}
+                </sl-button>`,
+            )}
+          </div>
         </div>
-
         <div
-          class="section advancedKeyboardSettings ${selected.includes(
-            'advancedKeyboardSettings',
-          )
-            ? 'shown'
-            : 'hidden'}"
+          class="${this.section('keyboardSettings')}"
+          title="Basic settings for keyboard keying."
+        >
+          <hr />
+          <div style="display: flex; flex-flow: row nowrap;">
+            ${this.controlRender('speed')} ${this.controlRender('gain')}
+            ${this.controlRender('pitch')}
+          </div>
+        </div>
+        <div
+          class="${this.section('advancedKeyboardSettings')}"
           title="Timing and envelope settings for keyboard keying."
         >
-          <sl-divider></sl-divider>
-          ${this.controlRender('weight')}, ${this.controlRender('ratio')},
-          ${this.controlRender('compensation')}
-          <br />
-          ${this.controlRender('rise')}, ${this.controlRender('fall')}
-          <br />
+          <hr />
+          <div style="display: flex; flex-flow: row nowrap;">
+            ${this.controlRender('weight')} ${this.controlRender('ratio')}
+            ${this.controlRender('compensation')}
+          </div>
+          <div style="display: flex; flex-flow: row nowrap;">
+            ${this.controlRender('rise')} ${this.controlRender('fall')}
+          </div>
           ${this.controlRender('shape')}
         </div>
-
         <div
-          class="section manualSettings ${selected.includes('manualSettings')
-            ? 'shown'
-            : 'hidden'}"
+          class="${this.section('manualSettings')}"
           title="Basic settings for manually keying"
         >
-          <sl-divider></sl-divider>
-          <div class="group" title="Paddle options.">
-            Paddles: ${this.controlRender('paddleKeyer')}
+          <hr />
+          <div style="display: flex; flex-flow: row nowrap;">
+            ${this.controlRender('inputSpeed')}
+            ${this.controlRender('inputGain')}
+            ${this.controlRender('inputPitch')}
+          </div>
+          <div
+            class="group paddle-options"
+            title="Paddle options."
+            style="display: flex; flex-flow: row nowrap;"
+          >
+            ${this.controlRender('paddleKeyer')}
             ${this.controlRender('paddleSwapped')}
           </div>
           <br />
-          <div class="group" title="Keyboard keys used for manual keying.">
-            Keyboard: ${this.controlRender('straightKey')}
+          <div
+            class="group keybd-keys"
+            style="display: flex; flex-flow: row nowrap"
+            title="Keyboard keys used for manual keying."
+          >
+            ${this.controlRender('straightKey')}
             ${this.controlRender('leftPaddleKey')}
             ${this.controlRender('rightPaddleKey')}
           </div>
           <br />
           <div
-            class="group ${this.midiAvailable ? '' : ' hidden'}"
+            class="group midi-notes ${this.midiAvailable ? '' : ' hidden'}"
+            style="display: flex; flex-flow: row nowrap"
             title="MIDI device notes used for manual keying."
           >
-            MIDI: ${this.controlRender('straightMidi')}
+            ${this.controlRender('straightMidi')}
             ${this.controlRender('leftPaddleMidi')}
             ${this.controlRender('rightPaddleMidi')}
           </div>
           <br />
-          ${this.controlRender('inputSpeed')} ${this.controlRender('inputGain')}
-          ${this.controlRender('inputPitch')}
         </div>
-
         <div
-          class="section advancedManualSettings ${selected.includes(
-            'advancedManualSettings',
-          )
-            ? 'shown'
-            : 'hidden'}"
+          class="${this.section('advancedManualSettings')}"
           title="Additional settings for manual keying."
         >
-          <sl-divider></sl-divider>
-          ${this.controlRender('inputWeight')},
-          ${this.controlRender('inputRatio')},
-          ${this.controlRender('inputCompensation')}
-          <br />
-          ${this.controlRender('inputRise')}, ${this.controlRender('inputFall')}
-          <br />
+          <hr />
+          <div style="display: flex; flex-flow: row nowrap;">
+            ${this.controlRender('inputWeight')}
+            ${this.controlRender('inputRatio')}
+            ${this.controlRender('inputCompensation')}
+          </div>
+          <div style="display: flex; flex-flow: row nowrap;">
+            ${this.controlRender('inputRise')}
+            ${this.controlRender('inputFall')}
+          </div>
           ${this.controlRender('inputShape')}
         </div>
-
-        <div
-          class="section miscSettings ${selected.includes('miscSettings')
-            ? 'shown'
-            : 'hidden'}"
-          title="Other settings."
-        >
-          <sl-divider></sl-divider>
+        <div class="${this.section('miscSettings')}" title="Other settings.">
+          <hr />
           ${this.controlRender('requestedSampleRate')}
           <br />
           <label
@@ -1851,14 +1899,11 @@ export class KeyerJs extends LitElement {
             </button>
           </label>
         </div>
-
         <div
-          class="section scope ${selected.includes('scope')
-            ? 'shown'
-            : 'hidden'}"
+          class="${this.section('scope')}"
           title="An oscilloscope for observing keyer.js."
         >
-          <sl-divider></sl-divider>
+          <hr />
           <div class="scope"><canvas @resize=${this.scopeResize}></canvas></div>
           ${this.controlRender('scopeRunning')}
           ${this.controlRender('scopeTrigger')}
@@ -1889,9 +1934,7 @@ export class KeyerJs extends LitElement {
         </div>
 
         <div
-          class="section status ${selected.includes('status')
-            ? 'shown'
-            : 'hidden'}"
+          class="${this.section('status')}"
           title="Status information about the operation of web audio."
         >
           State: ${this.state}<br />
@@ -1900,14 +1943,32 @@ export class KeyerJs extends LitElement {
           Base latency: ${this.baseLatency.toFixed(3)}<br />
           Midi available: ${this.midiAvailable}<br />
         </div>
-
+        <hr />
         <div
-          class="section about ${selected.includes('about')
-            ? 'shown'
-            : 'hidden'}"
+          class="${this.section('controls')}"
+          title="The names and default values of controls."
+        >
+          ${Object.keys(KeyerJs.controls).map(
+            control =>
+              html`<div>
+                ${control} - ${KeyerJs.getControl(control).value}
+              </div>`,
+          )}
+        </div>
+        <hr />
+        <div
+          class="${this.section('locals')}"
+          title="The names and locally stored values of controls."
+        >
+          ${Object.keys(KeyerJs.controls).map(
+            control => html`<div>${control} - ${localStorage[control]}</div>`,
+          )}
+        </div>
+        <hr />
+        <div
+          class="${this.section('about')}"
           title="What keyer.js does and how it works."
         >
-          <sl-divider></sl-divider>
           <p>
             <b>Keyer.js</b> implements a morse code keyer in a web page. The
             text window translates typed text into morse code which plays on the
@@ -1932,14 +1993,11 @@ export class KeyerJs extends LitElement {
           <p>This <b>About</b> panel gives a brief introduction to the app.</p>
           <p>The <b>License</b> panel describes the licenscing of the app.</p>
         </div>
-
+        <hr />
         <div
-          class="section license ${selected.includes('license')
-            ? 'shown'
-            : 'hidden'}"
+          class="${this.section('license')}"
           title="You have the right to use and modify this software."
         >
-          <sl-divider></sl-divider>
           <p>keyer.js - a progressive web app for morse code</p>
           <p>
             Copyright (c) 2020 Roger E Critchlow Jr, Charlestown, MA, USA<br />
@@ -1963,14 +2021,11 @@ export class KeyerJs extends LitElement {
             <a href="https://www.gnu.org/licenses/">gnu.org/licenses</a>.
           </p>
         </div>
-
+        <hr />
         <div
-          class="section colophon ${selected.includes('colophon')
-            ? 'shown'
-            : 'hidden'}"
+          class="${this.section('colophon')}"
           title="How Keyer.js was built."
         >
-          <sl-divider></sl-divider>
           <p>keyer.js was written with emacs on a laptop running Ubuntu.</p>
           <p>
             The algorithms in keyer.js were developed for
@@ -1986,8 +2041,8 @@ export class KeyerJs extends LitElement {
             <a href="https://github.com/recri/keyer.js">keyer.js</a>
           </p>
         </div>
+        <hr />
       </main>
-
       <div class="app-footer">
         🚽 Made with thanks to
         <a
