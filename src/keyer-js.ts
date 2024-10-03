@@ -72,6 +72,149 @@ const isMorse = (c: string) => morseRegExp.test(c);
 
 //
 // property database
+// stores section information
+//
+// these are the 'sections' in the user interface
+const sections = () => [
+  {
+    name: 'start',
+    title: 'Browsers should not start audio without an user gesture.',
+    inStart: true,
+    inRun: false,
+    inDiag: false,
+  },
+  {
+    name: 'entry',
+    title: 'Keyboard entry area for typing characters to send.',
+    inStart: false,
+    inRun: true,
+    inDiag: false,
+  },
+  {
+    name: 'touch',
+    title: 'Touch panel buttons keying characters to send.',
+    inStart: false,
+    inRun: true,
+    inDiag: false,
+  },
+  {
+    name: 'basic',
+    title: 'Basic settings for keying.',
+    inStart: false,
+    inRun: true,
+    inDiag: false,
+  },
+  {
+    name: 'timing',
+    title: 'Timing settings for keying.',
+    inStart: false,
+    inRun: true,
+    inDiag: false,
+  },
+  {
+    name: 'envelope',
+    title: 'Keying envelope settings.',
+    inStart: false,
+    inRun: true,
+    inDiag: false,
+  },
+  {
+    name: 'paddle',
+    title: 'Basic settings for manually keying',
+    inStart: false,
+    inRun: true,
+    inDiag: false,
+  },
+  {
+    name: 'misc',
+    title: 'Other settings.',
+    inStart: false,
+    inRun: true,
+    inDiag: false,
+  },
+  {
+    name: 'about',
+    title: 'What keyer.js does and how it works.',
+    inStart: true,
+    inRun: true,
+    inDiag: false,
+  },
+  {
+    name: 'license',
+    title: 'You have the right to use and modify this software.',
+    inStart: true,
+    inRun: true,
+    inDiag: false,
+  },
+  {
+    name: 'colophon',
+    title: 'How Keyer.js was built.',
+    inStart: true,
+    inRun: true,
+    inDiag: false,
+  },
+  {
+    name: 'scope',
+    title: 'An oscilloscope for observing keyer.js.',
+    inStart: false,
+    inRun: false,
+    inDiag: true,
+  },
+  {
+    name: 'status',
+    title: 'Status information about the operation of web audio.',
+    inStart: false,
+    inRun: false,
+    inDiag: true,
+  },
+  {
+    name: 'controls',
+    title: 'The names and default values of controls.',
+    inStart: false,
+    inRun: false,
+    inDiag: true,
+  },
+  {
+    name: 'locals',
+    title: 'The names and locally stored values of controls.',
+    inStart: false,
+    inRun: false,
+    inDiag: true,
+  },
+];
+
+// this is the list of section names active in 'start' state
+const startSections = () =>
+  sections()
+    .filter(s => s.inStart)
+    .map(s => s.name);
+
+// this is the list of sections active in 'run' state
+const runSections = () =>
+  sections()
+    .filter(s => s.inRun)
+    .map(s => s.name);
+
+/* eslint-disable @typescript-eslint/no-unused-vars */
+// this is the list of diagnostic sections
+const diagSections = () =>
+  sections()
+    .filter(s => s.inDiag)
+    .map(s => s.name);
+/* eslint-enable @typescript-eslint/no-unused-vars */
+
+// access the section object with secion.name === name
+const section = (name: string) => sections().filter(s => name === s.name)[0];
+
+// get the section title with section.name
+const sectionTitle = (name: string) => section(name).title;
+
+const startInitialSelected = () => ['start', 'about'];
+
+const runInitialSelected = () => ['entry', 'basic'];
+
+//
+// property database
 // stores lit-element properties() values as .lit
 // stores default values as .value
 //
@@ -96,7 +239,18 @@ const controls: Map = {
     size: 4,
     title: 'The speed of the characters in words/minute (WPM).',
   },
-  farnsworth: 'speed',
+  farnsworth: {
+    type: 'spinner',
+    lit: { type: Number },
+    value: 20,
+    label: 'Farns',
+    min: 10,
+    max: 150,
+    step: 1,
+    unit: 'WPM',
+    size: 4,
+    title: 'The speed of letter and word spacing in words/minute (WPM).',
+  },
   gain: {
     type: 'spinner',
     lit: { type: Number },
@@ -149,7 +303,7 @@ const controls: Map = {
     type: 'spinner',
     lit: { type: Number },
     value: 0,
-    label: 'Compensation',
+    label: 'Comp',
     min: -15,
     max: 15,
     step: 0.1,
@@ -270,25 +424,6 @@ const controls: Map = {
     title: 'MIDI note that activates the right paddle.',
   },
 
-  inputSpeed: 'speed',
-  inputFarnsworth: 'speed',
-  inputPitch: 'pitch',
-  inputGain: 'gain',
-  inputWeight: 'weight',
-  inputRatio: 'ratio',
-  inputCompensation: 'compensation',
-  inputRise: 'rise',
-  inputFall: 'fall',
-  inputEnvelope: 'envelope',
-  inputEnvelope2: 'envelope2',
-
-  inputShape: {
-    label: '',
-    type: 'envelope',
-    envelope1: 'inputEnvelope',
-    envelope2: 'inputEnvelope2',
-    title: 'The keying envelope is the product of two window functions.',
-  },
   requestedSampleRate: {
     type: 'options',
     lit: { type: Number },
@@ -405,6 +540,14 @@ const controls: Map = {
   pending: { lit: { type: Array } },
 };
 
+// get the control object for a control
+// implement single string value indicates
+// indirect to the control named by the string
+const getControl = (control: string) => {
+  const c = controls[control];
+  return c && typeof c === 'string' ? controls[c] : c;
+};
+
 @customElement('keyer-js')
 export class KeyerJs extends LitElement {
   // miscellany
@@ -414,32 +557,9 @@ export class KeyerJs extends LitElement {
 
   keyboardFocused: boolean = false;
 
-  static startSections = ['start', 'about', 'license', 'colophon'];
+  @property({ type: Array }) sections: string[] = startSections();
 
-  static startSelected = ['start', 'about'];
-
-  static runSections = [
-    'entry',
-    'touchButtons',
-    'keyboardSettings',
-    'advancedKeyboardSettings',
-    'manualSettings',
-    'advancedManualSettings',
-    'miscSettings',
-    'scope',
-    'status',
-    'controls',
-    'locals',
-    'about',
-    'license',
-    'colophon',
-  ];
-
-  static runSelected = ['entry', 'keyboardSettings'];
-
-  @property({ type: Array }) sections: string[] = KeyerJs.startSections;
-
-  @property({ type: Array }) selected: string[] = KeyerJs.startSelected;
+  @property({ type: Array }) selected: string[] = startInitialSelected();
 
   // top level state
   @property({ type: Boolean })
@@ -470,13 +590,14 @@ export class KeyerJs extends LitElement {
   // principal keyer controls
   @property({ type: Number })
   set speed(v) {
-    if (this.keyer) this.keyer!.output.speed = v;
+    if (this.keyer) {
+      this.keyer!.output.speed = v;
+      this.keyer!.input.speed = v;
+    }
   }
 
   get speed() {
-    return this.keyer
-      ? this.keyer!.output.speed
-      : KeyerJs.getControl('speed').value;
+    return this.keyer ? this.keyer!.output.speed : getControl('speed').value;
   }
 
   @property({ type: Number })
@@ -485,112 +606,129 @@ export class KeyerJs extends LitElement {
       this.keyer!.output.gain = v;
       // console.log(`setting gain to ${v}`);
       // console.trace();
+      this.keyer!.input.gain = v;
+      // console.log(`setting inputGain to ${v}`);
     }
   }
 
   get gain() {
-    return this.keyer
-      ? this.keyer!.output.gain
-      : KeyerJs.getControl('gain').value;
+    return this.keyer ? this.keyer!.output.gain : getControl('gain').value;
   }
 
   @property({ type: Number })
   set pitch(v) {
-    if (this.keyer) this.keyer!.output.pitch = v;
+    if (this.keyer) {
+      this.keyer!.output.pitch = v;
+      this.keyer!.input.pitch = v;
+    }
   }
 
   get pitch() {
-    return this.keyer
-      ? this.keyer!.output.pitch
-      : KeyerJs.getControl('pitch').value;
+    return this.keyer ? this.keyer!.output.pitch : getControl('pitch').value;
   }
 
   @property({ type: Number })
   set farnsworth(v) {
-    if (this.keyer) this.keyer!.output.farnsworth = v;
+    if (this.keyer) {
+      this.keyer!.output.farnsworth = v;
+      this.keyer!.input.farnsworth = v;
+    }
   }
 
   get farnsworth() {
     return this.keyer
       ? this.keyer!.output.farnsworth
-      : KeyerJs.getControl('farnsworth').value;
+      : getControl('farnsworth').value;
   }
 
   @property({ type: Number })
   set weight(v) {
-    if (this.keyer) this.keyer!.output.weight = v;
+    if (this.keyer) {
+      this.keyer!.output.weight = v;
+      this.keyer!.input.weight = v;
+    }
   }
 
   get weight() {
-    return this.keyer
-      ? this.keyer!.output.weight
-      : KeyerJs.getControl('weight').value;
+    return this.keyer ? this.keyer!.output.weight : getControl('weight').value;
   }
 
   @property({ type: Number })
   set ratio(v) {
-    if (this.keyer) this.keyer!.output.ratio = v;
+    if (this.keyer) {
+      this.keyer!.output.ratio = v;
+      this.keyer!.input.ratio = v;
+    }
   }
 
   get ratio() {
-    return this.keyer
-      ? this.keyer!.output.ratio
-      : KeyerJs.getControl('ratio').value;
+    return this.keyer ? this.keyer!.output.ratio : getControl('ratio').value;
   }
 
   @property({ type: Number })
   set compensation(v) {
-    if (this.keyer) this.keyer!.output.compensation = v;
+    if (this.keyer) {
+      this.keyer!.output.compensation = v;
+      this.keyer!.input.compensation = v;
+    }
   }
 
   get compensation() {
     return this.keyer
       ? this.keyer!.output.compensation
-      : KeyerJs.getControl('compensation').value;
+      : getControl('compensation').value;
   }
 
   @property({ type: Number })
   set rise(v) {
-    if (this.keyer) this.keyer!.output.rise = v;
+    if (this.keyer) {
+      this.keyer!.output.rise = v;
+      this.keyer!.input.rise = v;
+    }
   }
 
   get rise() {
-    return this.keyer
-      ? this.keyer!.output.rise
-      : KeyerJs.getControl('rise').value;
+    return this.keyer ? this.keyer!.output.rise : getControl('rise').value;
   }
 
   @property({ type: Number })
   set fall(v) {
-    if (this.keyer) this.keyer!.output.fall = v;
+    if (this.keyer) {
+      this.keyer!.output.fall = v;
+      this.keyer!.input.fall = v;
+    }
   }
 
   get fall() {
-    return this.keyer
-      ? this.keyer!.output.fall
-      : KeyerJs.getControl('fall').value;
+    return this.keyer ? this.keyer!.output.fall : getControl('fall').value;
   }
 
   @property({ type: String })
   set envelope(v) {
-    if (this.keyer) this.keyer!.output.envelope = v;
+    if (this.keyer) {
+      this.keyer!.output.envelope = v;
+      this.keyer!.input.envelope = v;
+    }
   }
 
   get envelope() {
     return this.keyer
       ? this.keyer!.output.envelope
-      : KeyerJs.getControl('envelope').value;
+      : getControl('envelope').value;
   }
 
   @property({ type: String })
   set envelope2(v) {
-    if (this.keyer) this.keyer!.output.envelope2 = v;
+    if (this.keyer) {
+      this.keyer!.output.envelope2 = v;
+      this.keyer!.input.envelope2 = v;
+    }
   }
 
   get envelope2() {
     return this.keyer
       ? this.keyer!.output.envelope2
-      : KeyerJs.getControl('envelope2').value;
+      : getControl('envelope2').value;
   }
 
   // iambic keyer
@@ -607,7 +745,7 @@ export class KeyerJs extends LitElement {
   get paddleKeyer() {
     return this.keyer
       ? this.keyer!.input.keyer
-      : KeyerJs.getControl('paddleKeyer').value;
+      : getControl('paddleKeyer').value;
   }
 
   @property({ type: Boolean })
@@ -618,7 +756,7 @@ export class KeyerJs extends LitElement {
   get paddleSwapped() {
     return this.keyer
       ? this.keyer!.input.swapped
-      : KeyerJs.getControl('paddleSwapped').value;
+      : getControl('paddleSwapped').value;
   }
 
   @property({ type: String })
@@ -629,7 +767,7 @@ export class KeyerJs extends LitElement {
   get straightKey() {
     return this.keyer
       ? this.keyer!.input.straightKey
-      : KeyerJs.getControl('straightKey').value;
+      : getControl('straightKey').value;
   }
 
   @property({ type: String })
@@ -640,7 +778,7 @@ export class KeyerJs extends LitElement {
   get leftPaddleKey() {
     return this.keyer
       ? this.keyer!.input.leftPaddleKey
-      : KeyerJs.getControl('leftPaddleKey').value;
+      : getControl('leftPaddleKey').value;
   }
 
   @property({ type: String })
@@ -651,7 +789,7 @@ export class KeyerJs extends LitElement {
   get rightPaddleKey() {
     return this.keyer
       ? this.keyer!.input.rightPaddleKey
-      : KeyerJs.getControl('rightPaddleKey').value;
+      : getControl('rightPaddleKey').value;
   }
 
   @property({ type: String })
@@ -662,7 +800,7 @@ export class KeyerJs extends LitElement {
   get straightMidi() {
     return this.keyer
       ? this.keyer!.input.straightMidi
-      : KeyerJs.getControl('straightMidi').value;
+      : getControl('straightMidi').value;
   }
 
   @property({ type: String })
@@ -673,7 +811,7 @@ export class KeyerJs extends LitElement {
   get leftPaddleMidi() {
     return this.keyer
       ? this.keyer!.input.leftPaddleMidi
-      : KeyerJs.getControl('leftPaddleMidi').value;
+      : getControl('leftPaddleMidi').value;
   }
 
   @property({ type: String })
@@ -684,9 +822,10 @@ export class KeyerJs extends LitElement {
   get rightPaddleMidi() {
     return this.keyer
       ? this.keyer!.input.rightPaddleMidi
-      : KeyerJs.getControl('rightPaddleMidi').value;
+      : getControl('rightPaddleMidi').value;
   }
 
+  /*
   // input keyer minimum properties
   @property({ type: Number })
   set inputSpeed(v) {
@@ -696,7 +835,7 @@ export class KeyerJs extends LitElement {
   get inputSpeed() {
     return this.keyer
       ? this.keyer!.input.speed
-      : KeyerJs.getControl('inputSpeed').value;
+      : getControl('inputSpeed').value;
   }
 
   @property({ type: Number })
@@ -710,7 +849,7 @@ export class KeyerJs extends LitElement {
   get inputGain() {
     return this.keyer
       ? Math.round(this.keyer!.input.gain)
-      : KeyerJs.getControl('inputGain').value;
+      : getControl('inputGain').value;
   }
 
   @property({ type: Number })
@@ -721,7 +860,7 @@ export class KeyerJs extends LitElement {
   get inputPitch() {
     return this.keyer
       ? this.keyer!.input.pitch
-      : KeyerJs.getControl('inputPitch').value;
+      : getControl('inputPitch').value;
   }
 
   @property({ type: Number })
@@ -732,7 +871,7 @@ export class KeyerJs extends LitElement {
   get inputFarnsworth() {
     return this.keyer
       ? this.keyer!.input.farnsworth
-      : KeyerJs.getControl('inputFarnsworth').value;
+      : getControl('inputFarnsworth').value;
   }
 
   @property({ type: Number })
@@ -743,7 +882,7 @@ export class KeyerJs extends LitElement {
   get inputWeight() {
     return this.keyer
       ? this.keyer!.input.weight
-      : KeyerJs.getControl('inputWeight').value;
+      : getControl('inputWeight').value;
   }
 
   @property({ type: Number })
@@ -754,7 +893,7 @@ export class KeyerJs extends LitElement {
   get inputRatio() {
     return this.keyer
       ? this.keyer!.input.ratio
-      : KeyerJs.getControl('inputRatio').value;
+      : getControl('inputRatio').value;
   }
 
   @property({ type: Number })
@@ -765,7 +904,7 @@ export class KeyerJs extends LitElement {
   get inputCompensation() {
     return this.keyer
       ? this.keyer!.input.compensation
-      : KeyerJs.getControl('inputCompensation').value;
+      : getControl('inputCompensation').value;
   }
 
   @property({ type: Number })
@@ -776,7 +915,7 @@ export class KeyerJs extends LitElement {
   get inputRise() {
     return this.keyer
       ? this.keyer!.input.rise
-      : KeyerJs.getControl('inputRise').value;
+      : getControl('inputRise').value;
   }
 
   @property({ type: Number })
@@ -787,7 +926,7 @@ export class KeyerJs extends LitElement {
   get inputFall() {
     return this.keyer
       ? this.keyer!.input.fall
-      : KeyerJs.getControl('inputFall').value;
+      : getControl('inputFall').value;
   }
 
   @property({ type: Array })
@@ -803,7 +942,7 @@ export class KeyerJs extends LitElement {
   get inputEnvelope() {
     return this.keyer
       ? this.keyer!.input.envelope
-      : KeyerJs.getControl('inputEnvelope').value;
+      : getControl('inputEnvelope').value;
   }
 
   @property({ type: String })
@@ -814,9 +953,9 @@ export class KeyerJs extends LitElement {
   get inputEnvelope2() {
     return this.keyer
       ? this.keyer!.input.envelope2
-      : KeyerJs.getControl('inputEnvelope2').value;
+      : getControl('inputEnvelope2').value;
   }
-
+*/
   // miscellany
   @property({ type: Number }) requestedSampleRate = '48000';
 
@@ -843,7 +982,7 @@ export class KeyerJs extends LitElement {
   get scopeTrigger() {
     return this.keyer
       ? this.keyer!.scope.trigger
-      : KeyerJs.getControl('scopeTrigger').value;
+      : getControl('scopeTrigger').value;
   }
 
   @property({ type: String })
@@ -854,7 +993,7 @@ export class KeyerJs extends LitElement {
   get scopeTriggerChannel() {
     return this.keyer
       ? this.keyer!.scope.triggerChannel
-      : KeyerJs.getControl('scopeTriggerChannel').value;
+      : getControl('scopeTriggerChannel').value;
   }
 
   @property({ type: Array })
@@ -868,9 +1007,7 @@ export class KeyerJs extends LitElement {
   }
 
   get scopeHold() {
-    return this.keyer
-      ? this.keyer!.scope.hold
-      : KeyerJs.getControl('scopeHold').value;
+    return this.keyer ? this.keyer!.scope.hold : getControl('scopeHold').value;
   }
 
   @property({ type: Array })
@@ -886,7 +1023,7 @@ export class KeyerJs extends LitElement {
   get scopeTimeScale() {
     return this.keyer
       ? this.keyer!.scope.timeScale
-      : KeyerJs.getControl('scopeTimeScale').value;
+      : getControl('scopeTimeScale').value;
   }
 
   @property({ type: Array })
@@ -908,7 +1045,7 @@ export class KeyerJs extends LitElement {
   get scopeSource1() {
     return this.keyer
       ? this.keyer!.scope.channel(1).source
-      : KeyerJs.getControl('scopeSource1').value;
+      : getControl('scopeSource1').value;
   }
 
   @property({ type: String })
@@ -919,7 +1056,7 @@ export class KeyerJs extends LitElement {
   get scopeVerticalScale1() {
     return this.keyer
       ? this.keyer!.scope.channel(1).verticalScale
-      : KeyerJs.getControl('scopeVerticalScale1').value;
+      : getControl('scopeVerticalScale1').value;
   }
 
   @property({ type: Number })
@@ -930,7 +1067,7 @@ export class KeyerJs extends LitElement {
   get scopeVerticalOffset1() {
     return this.keyer
       ? this.keyer!.scope.channel(1).verticalOffset
-      : KeyerJs.getControl('scopeVerticalOffset1').value;
+      : getControl('scopeVerticalOffset1').value;
   }
 
   @property({ type: String })
@@ -941,7 +1078,7 @@ export class KeyerJs extends LitElement {
   get scopeSource2() {
     return this.keyer
       ? this.keyer!.scope.channel(2).source
-      : KeyerJs.getControl('scopeSource2').value;
+      : getControl('scopeSource2').value;
   }
 
   @property({ type: String })
@@ -952,7 +1089,7 @@ export class KeyerJs extends LitElement {
   get scopeVerticalScale2() {
     return this.keyer
       ? this.keyer!.scope.channel(2).verticalScale
-      : KeyerJs.getControl('scopeVerticalScale2').value;
+      : getControl('scopeVerticalScale2').value;
   }
 
   @property({ type: Number })
@@ -963,7 +1100,7 @@ export class KeyerJs extends LitElement {
   get scopeVerticalOffset2() {
     return this.keyer
       ? this.keyer!.scope.channel(2).verticalOffset
-      : KeyerJs.getControl('scopeVerticalOffset2').value;
+      : getControl('scopeVerticalOffset2').value;
   }
 
   @property({ type: String })
@@ -974,7 +1111,7 @@ export class KeyerJs extends LitElement {
   get scopeSource3() {
     return this.keyer
       ? this.keyer!.scope.channel(3).source
-      : KeyerJs.getControl('scopeSource3').value;
+      : getControl('scopeSource3').value;
   }
 
   @property({ type: String })
@@ -985,7 +1122,7 @@ export class KeyerJs extends LitElement {
   get scopeVerticalScale3() {
     return this.keyer
       ? this.keyer!.scope.channel(3).verticalScale
-      : KeyerJs.getControl('scopeVerticalScale3').value;
+      : getControl('scopeVerticalScale3').value;
   }
 
   @property({ type: Number })
@@ -996,7 +1133,7 @@ export class KeyerJs extends LitElement {
   get scopeVerticalOffset3() {
     return this.keyer
       ? this.keyer!.scope.channel(3).verticalOffset
-      : KeyerJs.getControl('scopeVerticalOffset3').value;
+      : getControl('scopeVerticalOffset3').value;
   }
 
   @property({ type: String })
@@ -1007,7 +1144,7 @@ export class KeyerJs extends LitElement {
   get scopeSource4() {
     return this.keyer
       ? this.keyer!.scope.channel(4).source
-      : KeyerJs.getControl('scopeSource4').value;
+      : getControl('scopeSource4').value;
   }
 
   @property({ type: String })
@@ -1018,7 +1155,7 @@ export class KeyerJs extends LitElement {
   get scopeVerticalScale4() {
     return this.keyer
       ? this.keyer!.scope.channel(4).verticalScale
-      : KeyerJs.getControl('scopeVerticalScale4').value;
+      : getControl('scopeVerticalScale4').value;
   }
 
   @property({ type: Number })
@@ -1029,7 +1166,7 @@ export class KeyerJs extends LitElement {
   get scopeVerticalOffset4() {
     return this.keyer
       ? this.keyer!.scope.channel(4).verticalOffset
-      : KeyerJs.getControl('scopeVerticalOffset4').value;
+      : getControl('scopeVerticalOffset4').value;
   }
 
   // read only keyer.context values
@@ -1095,31 +1232,6 @@ export class KeyerJs extends LitElement {
 
   @property({ type: Array }) pending: string[] = [];
 
-  // declare the controls of the ui
-  static get controls() {
-    return controls;
-  }
-
-  // extract LitElement properties from controls
-  //    static get properties() {
-  //	if ( ! KeyerJs._properties) {
-  //	    KeyerJs._properties = {};
-  //	    Object.keys(KeyerJs.controls)
-  //		.filter(x => 'lit' in KeyerJs.getControl(x))
-  //		.forEach(x => { KeyerJs._properties[x] = KeyerJs.getControl(x).lit });
-  //	}
-  //	return KeyerJs._properties;
-  //    }
-
-  // get the control object for a control
-  // implement single string value indicates
-  // indirect to the control named by the string
-  static getControl(control: string) {
-    const c = KeyerJs.controls[control];
-    if (c && typeof c === 'string') return KeyerJs.controls[c];
-    return c;
-  }
-
   // property getters and setters
   // keyer properties for manual keyer
   // manual keyer properties
@@ -1138,8 +1250,8 @@ export class KeyerJs extends LitElement {
     this._running = false;
     this.keyer = null;
     // only initialize the properties neede for startup
-    this.sections = KeyerJs.startSections;
-    this.selected = KeyerJs.startSelected;
+    this.sections = startSections();
+    this.selected = startInitialSelected();
   }
 
   async start() {
@@ -1163,8 +1275,8 @@ export class KeyerJs extends LitElement {
     this.keyer = new Keyer(context);
 
     // set the section lists
-    this.sections = KeyerJs.runSections;
-    this.selected = KeyerJs.runSelected;
+    this.sections = runSections();
+    this.selected = runInitialSelected();
 
     // load some constants into the instance
 
@@ -1334,6 +1446,33 @@ export class KeyerJs extends LitElement {
     }
   }
 
+  // use the mouse translations, so they also work with mice
+  mouseDown(e: MouseEvent) {
+    console.log(`mouseDown ${(e.target as Map).name} in ${this}`);
+    const type = (e.target as Map).name;
+    this.keyer!.input.mouseKey(e, type, true);
+  }
+
+  mouseUp(e: MouseEvent) {
+    console.log(`mouseUp ${(e.target as Map).name} in ${this}`);
+    const type = (e.target as Map).name;
+    this.keyer!.input.mouseKey(e, type, false);
+  }
+
+  touchDown(e: TouchEvent) {
+    e.preventDefault();
+    console.log(`mouseDown ${(e.target as Map).name} in ${this}`);
+    const type = (e.target as Map).name;
+    this.keyer!.input.mouseKey(e, type, true);
+  }
+
+  touchUp(e: TouchEvent) {
+    e.preventDefault();
+    console.log(`mouseUp ${(e.target as Map).name} in ${this}`);
+    const type = (e.target as Map).name;
+    this.keyer!.input.mouseKey(e, type, false);
+  }
+
   // control manipulation
   controlSetDefaultValue(control: string, forceDefault: boolean) {
     const JSONparse = (value: string) => {
@@ -1352,15 +1491,13 @@ export class KeyerJs extends LitElement {
       localStorage[control] = JSON.stringify(value);
       return value;
     };
-    if ('value' in KeyerJs.getControl(control)) {
-      (this as Map)[control] = controlDefault(
-        KeyerJs.getControl(control).value,
-      );
+    if ('value' in getControl(control)) {
+      (this as Map)[control] = controlDefault(getControl(control).value);
     }
   }
 
   controlSetDefaultValues(forceDefault: boolean) {
-    Object.keys(KeyerJs.controls).forEach(control =>
+    Object.keys(controls).forEach(control =>
       this.controlSetDefaultValue(control, forceDefault),
     );
   }
@@ -1371,7 +1508,7 @@ export class KeyerJs extends LitElement {
     newv: number | string | boolean,
   ) {
     (this as Map)[control] = newv;
-    const c = KeyerJs.getControl(control);
+    const c = getControl(control);
     if ('value' in c) localStorage[control] = JSON.stringify(newv);
     if ('lit' in c) this.requestUpdate(control, oldv);
     if (control === 'requestedSampleRate') this.start();
@@ -1572,7 +1709,7 @@ export class KeyerJs extends LitElement {
 
   // render a user interface control element
   controlRender(control: string): HTMLTemplateResult {
-    const ctl = KeyerJs.getControl(control);
+    const ctl = getControl(control);
     if (!ctl) return html`<h1>No controlRender for ${control}</h1>`;
     switch (ctl.type) {
       // slider adjusts a number between a min and a max by step
@@ -1669,8 +1806,9 @@ export class KeyerJs extends LitElement {
           </div>
         `;
       }
-      // an envelope shows two lists of envelope functions
-      case 'envelope': {
+      // a shape shows two lists of envelope functions
+      // which are multiplied together to provide a final envelop
+      case 'shape': {
         const { label, envelope1, envelope2, title } = ctl;
         return html`
           <div class="group" title="${title}">
@@ -1710,21 +1848,12 @@ export class KeyerJs extends LitElement {
     this.selected = value;
   }
 
-  isShown(control: string) {
+  sectionIsShown(control: string) {
     return this.selected.includes(control) ? 'shown' : 'hidden';
   }
 
-  section(control: string) {
-    return `section ${control} ${this.isShown(control)}`;
-  }
-
-  // use the mouse translations, so they also work with mice
-  mouseDown(e: MouseEvent) {
-    console.log(`mouseDown ${(e.target as Map).name} in ${this}`);
-  }
-
-  mouseUp(e: MouseEvent) {
-    console.log(`mouseUp ${(e.target as Map).name} in ${this}`);
+  sectionClasses(control: string) {
+    return `section ${control} ${this.sectionIsShown(control)}`;
   }
 
   render() {
@@ -1736,8 +1865,8 @@ export class KeyerJs extends LitElement {
       </div>
 
       <main>
-        <hr />
         <div class="selector">
+          <hr />
           <sl-select
             name="section"
             title="Select the component(s) of the keyer to control."
@@ -1746,14 +1875,17 @@ export class KeyerJs extends LitElement {
             multiple
           >
             ${this.sections.map(
-              section =>
-                html` <sl-option value="${section}"> ${section} </sl-option>`,
+              sect =>
+                html` <sl-option value="${sect}" title="${sectionTitle(sect)}">
+                  ${sect}
+                </sl-option>`,
             )}
           </sl-select>
         </div>
+
         <div
-          class="${this.section('start')}"
-          title="Browsers shouldn't start audio without an user gesture."
+          class="${this.sectionClasses('start')}"
+          title="${sectionTitle('start')}"
         >
           <hr />
           <button class="start" @click=${this.start}>
@@ -1763,9 +1895,10 @@ export class KeyerJs extends LitElement {
           <h2>Press play to start the keyer.</h2>
           <p></p>
         </div>
+
         <div
-          class="${this.section('entry')}"
-          title="Keyboard entry area for typing characters to send."
+          class="${this.sectionClasses('entry')}"
+          title="${sectionTitle('entry')}"
         >
           <hr />
           <div
@@ -1787,12 +1920,12 @@ export class KeyerJs extends LitElement {
           </div>
         </div>
         <div
-          class="${this.section('touchButtons')}"
-          title="Touch panel buttons keying characters to send."
+          class="${this.sectionClasses('touch')}"
+          title="${sectionTitle('touch')}"
         >
           <hr />
           <div style="display: flex; flex-flow: row nowrap;">
-            ${['KEY', 'DIT', 'DAH'].map(
+            ${['straight', 'left', 'right'].map(
               label =>
                 html`<sl-button
                   name="${label}"
@@ -1809,39 +1942,45 @@ export class KeyerJs extends LitElement {
           </div>
         </div>
         <div
-          class="${this.section('keyboardSettings')}"
-          title="Basic settings for keyboard keying."
+          class="${this.sectionClasses('basic')}"
+          title="${sectionTitle('basic')}"
         >
           <hr />
           <div style="display: flex; flex-flow: row nowrap;">
             ${this.controlRender('speed')} ${this.controlRender('gain')}
-            ${this.controlRender('pitch')}
+            ${this.controlRender('pitch')} ${this.controlRender('farnsworth')}
           </div>
         </div>
+
         <div
-          class="${this.section('advancedKeyboardSettings')}"
-          title="Timing and envelope settings for keyboard keying."
+          class="${this.sectionClasses('timing')}"
+          title="${sectionTitle('timing')}"
         >
           <hr />
           <div style="display: flex; flex-flow: row nowrap;">
-            ${this.controlRender('weight')} ${this.controlRender('ratio')}
-            ${this.controlRender('compensation')}
+            <div style="display: flex; flex-flow: row nowrap;">
+              ${this.controlRender('weight')} ${this.controlRender('ratio')}
+              ${this.controlRender('compensation')}
+            </div>
           </div>
+        </div>
+
+        <div
+          class="${this.sectionClasses('envelope')}"
+          title="${sectionTitle('envelope')}"
+        >
+          <hr />
           <div style="display: flex; flex-flow: row nowrap;">
             ${this.controlRender('rise')} ${this.controlRender('fall')}
           </div>
           ${this.controlRender('shape')}
         </div>
+
         <div
-          class="${this.section('manualSettings')}"
-          title="Basic settings for manually keying"
+          class="${this.sectionClasses('paddle')}"
+          title="${sectionTitle('paddle')}"
         >
           <hr />
-          <div style="display: flex; flex-flow: row nowrap;">
-            ${this.controlRender('inputSpeed')}
-            ${this.controlRender('inputGain')}
-            ${this.controlRender('inputPitch')}
-          </div>
           <div
             class="group paddle-options"
             title="Paddle options."
@@ -1850,7 +1989,6 @@ export class KeyerJs extends LitElement {
             ${this.controlRender('paddleKeyer')}
             ${this.controlRender('paddleSwapped')}
           </div>
-          <br />
           <div
             class="group keybd-keys"
             style="display: flex; flex-flow: row nowrap"
@@ -1860,38 +1998,23 @@ export class KeyerJs extends LitElement {
             ${this.controlRender('leftPaddleKey')}
             ${this.controlRender('rightPaddleKey')}
           </div>
-          <br />
           <div
             class="group midi-notes ${this.midiAvailable ? '' : ' hidden'}"
-            style="display: flex; flex-flow: row nowrap"
             title="MIDI device notes used for manual keying."
+            style="display: flex; flex-flow: row nowrap"
           >
             ${this.controlRender('straightMidi')}
             ${this.controlRender('leftPaddleMidi')}
             ${this.controlRender('rightPaddleMidi')}
           </div>
-          <br />
         </div>
+
         <div
-          class="${this.section('advancedManualSettings')}"
-          title="Additional settings for manual keying."
+          class="${this.sectionClasses('misc')}"
+          title="${sectionTitle('misc')}"
         >
           <hr />
-          <div style="display: flex; flex-flow: row nowrap;">
-            ${this.controlRender('inputWeight')}
-            ${this.controlRender('inputRatio')}
-            ${this.controlRender('inputCompensation')}
-          </div>
-          <div style="display: flex; flex-flow: row nowrap;">
-            ${this.controlRender('inputRise')}
-            ${this.controlRender('inputFall')}
-          </div>
-          ${this.controlRender('inputShape')}
-        </div>
-        <div class="${this.section('miscSettings')}" title="Other settings.">
-          <hr />
           ${this.controlRender('requestedSampleRate')}
-          <br />
           <label
             >Reset default values:
             <button @click=${() => this.controlSetDefaultValues(true)}>
@@ -1899,9 +2022,90 @@ export class KeyerJs extends LitElement {
             </button>
           </label>
         </div>
+
         <div
-          class="${this.section('scope')}"
-          title="An oscilloscope for observing keyer.js."
+          class="${this.sectionClasses('about')}"
+          title="${sectionTitle('about')}"
+        >
+          <hr />
+          <p>
+            <b>Keyer.js</b> implements a morse code keyer in a web page. The
+            text window translates typed text into morse code which plays on the
+            browser's audio output. Keyboard keys and MIDI notes can be
+            interpreted as switch closures for directly keying morse. Directly
+            keyed input is played on the browser's audio output and decoded into
+            the text window.
+          </p>
+          <p>
+            The <b>Settings</b> panel controls the generated morse code and
+            other aspects of the prog.
+          </p>
+          <p>
+            The <b>Status</b> panel shows the status of the web audio, the time
+            since the system started, the sample rate, the estimated latency,
+            and whether MIDI is available.
+          </p>
+          <p>
+            The <b>Scope</b> panel allows the wave forms of the keyer to be
+            displayed.
+          </p>
+          <p>This <b>About</b> panel gives a brief introduction to the app.</p>
+          <p>The <b>License</b> panel describes the licenscing of the app.</p>
+        </div>
+
+        <div
+          class="${this.sectionClasses('license')}"
+          title="${sectionTitle('license')}"
+        >
+          <hr />
+          <p>keyer.js - a progressive web app for morse code</p>
+          <p>
+            Copyright (c) 2020 Roger E Critchlow Jr, Charlestown, MA, USA<br />
+            Copyright (c) 2024 Roger E Critchlow Jr, Las Cruces, NM, USA
+          </p>
+          <p>
+            This program is free software: you can redistribute it and/or modify
+            it under the terms of the GNU General Public License as published by
+            the Free Software Foundation, either version 3 of the License, or
+            (at your option) any later version.
+          </p>
+          <p>
+            This program is distributed in the hope that it will be useful, but
+            WITHOUT ANY WARRANTY; without even the implied warranty of
+            MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+            General Public License for more details.
+          </p>
+          <p>
+            You should have received a copy of the GNU General Public License
+            along with this program. If not, see
+            <a href="https://www.gnu.org/licenses/">gnu.org/licenses</a>.
+          </p>
+        </div>
+
+        <div
+          class="${this.sectionClasses('colophon')}"
+          title="${sectionTitle('colophon')}"
+        >
+          <hr />
+          <p>keyer.js was written with emacs on a laptop running Ubuntu.</p>
+          <p>
+            The algorithms in keyer.js were developed for
+            <a href="https://github.com/recri/keyer">keyer</a>, a collection of
+            software defined radio software built using Jack, Tcl, and C.
+          </p>
+          <p>
+            The polymer project, the PWA starter kit, open-wc, lit-element,
+            lit-html, web audio, web MIDI.
+          </p>
+          <p>
+            The source for
+            <a href="https://github.com/recri/keyer.js">keyer.js</a>
+          </p>
+        </div>
+
+        <div
+          class="${this.sectionClasses('scope')}"
+          title="${sectionTitle('scope')}"
         >
           <hr />
           <div class="scope"><canvas @resize=${this.scopeResize}></canvas></div>
@@ -1934,116 +2138,40 @@ export class KeyerJs extends LitElement {
         </div>
 
         <div
-          class="${this.section('status')}"
-          title="Status information about the operation of web audio."
+          class="${this.sectionClasses('status')}"
+          title="${sectionTitle('status')}"
         >
+          <hr />
           State: ${this.state}<br />
           Sample rate: ${this.sampleRate}<br />
           Current time: ${this.currentTime.toFixed(3)}<br />
           Base latency: ${this.baseLatency.toFixed(3)}<br />
           Midi available: ${this.midiAvailable}<br />
         </div>
-        <hr />
+
         <div
-          class="${this.section('controls')}"
-          title="The names and default values of controls."
+          class="${this.sectionClasses('controls')}"
+          title="${sectionTitle('controls')}"
         >
-          ${Object.keys(KeyerJs.controls).map(
+          <hr />
+          ${Object.keys(controls).map(
             control =>
-              html`<div>
-                ${control} - ${KeyerJs.getControl(control).value}
-              </div>`,
+              html`<div>${control} - ${getControl(control).value}</div>`,
           )}
         </div>
         <hr />
         <div
-          class="${this.section('locals')}"
-          title="The names and locally stored values of controls."
+          class="${this.sectionClasses('locals')}"
+          title="${sectionTitle('locals')}"
         >
-          ${Object.keys(KeyerJs.controls).map(
+          ${Object.keys(controls).map(
             control => html`<div>${control} - ${localStorage[control]}</div>`,
           )}
         </div>
-        <hr />
-        <div
-          class="${this.section('about')}"
-          title="What keyer.js does and how it works."
-        >
-          <p>
-            <b>Keyer.js</b> implements a morse code keyer in a web page. The
-            text window translates typed text into morse code which plays on the
-            browser's audio output. Keyboard keys and MIDI notes can be
-            interpreted as switch closures for directly keying morse. Directly
-            keyed input is played on the browser's audio output and decoded into
-            the text window.
-          </p>
-          <p>
-            The <b>Settings</b> panel controls the generated morse code and
-            other aspects of the prog.
-          </p>
-          <p>
-            The <b>Status</b> panel shows the status of the web audio, the time
-            since the system started, the sample rate, the estimated latency,
-            and whether MIDI is available.
-          </p>
-          <p>
-            The <b>Scope</b> panel allows the wave forms of the keyer to be
-            displayed.
-          </p>
-          <p>This <b>About</b> panel gives a brief introduction to the app.</p>
-          <p>The <b>License</b> panel describes the licenscing of the app.</p>
-        </div>
-        <hr />
-        <div
-          class="${this.section('license')}"
-          title="You have the right to use and modify this software."
-        >
-          <p>keyer.js - a progressive web app for morse code</p>
-          <p>
-            Copyright (c) 2020 Roger E Critchlow Jr, Charlestown, MA, USA<br />
-            Copyright (c) 2024 Roger E Critchlow Jr, Las Cruces, NM, USA
-          </p>
-          <p>
-            This program is free software: you can redistribute it and/or modify
-            it under the terms of the GNU General Public License as published by
-            the Free Software Foundation, either version 3 of the License, or
-            (at your option) any later version.
-          </p>
-          <p>
-            This program is distributed in the hope that it will be useful, but
-            WITHOUT ANY WARRANTY; without even the implied warranty of
-            MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-            General Public License for more details.
-          </p>
-          <p>
-            You should have received a copy of the GNU General Public License
-            along with this program. If not, see
-            <a href="https://www.gnu.org/licenses/">gnu.org/licenses</a>.
-          </p>
-        </div>
-        <hr />
-        <div
-          class="${this.section('colophon')}"
-          title="How Keyer.js was built."
-        >
-          <p>keyer.js was written with emacs on a laptop running Ubuntu.</p>
-          <p>
-            The algorithms in keyer.js were developed for
-            <a href="https://github.com/recri/keyer">keyer</a>, a collection of
-            software defined radio software built using Jack, Tcl, and C.
-          </p>
-          <p>
-            The polymer project, the PWA starter kit, open-wc, lit-element,
-            lit-html, web audio, web MIDI.
-          </p>
-          <p>
-            The source for
-            <a href="https://github.com/recri/keyer.js">keyer.js</a>
-          </p>
-        </div>
-        <hr />
       </main>
+
       <div class="app-footer">
+        <hr />
         🚽 Made with thanks to
         <a
           target="_blank"

@@ -110,6 +110,10 @@ export class KeyerPlayer extends KeyerEvent {
 
   get speed() { return this._speed; }
 
+  set farnsworth(v) { this.updateTiming('_farnsworth', v); }
+
+  get farnsworth() { return this._farnsworth; }
+
   set weight(v) { this.updateTiming('_weight', v); }
 
   get weight() { return this._weight; }
@@ -129,7 +133,9 @@ export class KeyerPlayer extends KeyerEvent {
   updateTiming(control, value) {
     // console.log(`updateTiming this[${control}] = ${value}`);
     this[control] = value;
-    const dit = 60.0 / (this._speed * 50); // seconds/dit
+    // farnsworth
+    const [speed, space] = [Math.max(this._speed, this._farnsworth), Math.min(this._speed, this._farnsworth)];
+    const dit = 60.0 / (speed * 50); // seconds/dit
     const microsPerDit = dit * 1e6;
     const r = (this._ratio-50)/100.0;
     const w = (this._weight-50)/100.0;
@@ -141,6 +147,16 @@ export class KeyerPlayer extends KeyerEvent {
     this.perIes = dit*(1  -w-c);
     this.perIls = dit*(3  -w-c); 
     this.perIws = dit*(7  -w-c);
+    if (space > 0 && space < speed) {
+      // implement farnsworth timing
+      // if we have two speeds specified for speed and farnsworth
+      // we call the faster speed and the slower space
+      // according to https://morsecode.world/international/timing.html 2024-10-02 14:26 Mountain Time US
+      // and translating their notation
+      const fdit = (300 * speed - 186 * space) / (95 * speed * space)
+      this.perIls = fdit*(3  -w-c); 
+      this.perIws = fdit*(7  -w-c);
+    }
     this.emit('change:timing');
   }
 

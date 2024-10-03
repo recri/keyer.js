@@ -139,7 +139,6 @@ export class KeyerInput extends KeyerPlayer {
       case 'right': this.keyRight = onOff; break;
       default: console.log(`keyEvent unknown type ${type}`); break;
       }
-      this.keyEvent(type, onOff);
     }
   }
 
