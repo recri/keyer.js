@@ -1,0 +1,4 @@
+#!/bin/sh
+#./enable-compression
+echo 'AddOutputFilterByType DEFLATE text/text text/html text/plain text/xml text/css application/x-javascript application/javascript' >> dist/.htaccess
+rsync -av --delete ./dist/ elf021@elf021.pairserver.com:public_html/keyer.elf.org/

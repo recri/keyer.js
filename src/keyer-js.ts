@@ -1266,6 +1266,7 @@ export class KeyerJs extends LitElement {
     });
 
     // load the worklet processors
+    // replicate these paths into dist/src/ to make the rollup work.
     await context.audioWorklet.addModule('src/KeyerASKProcessor.js');
     await context.audioWorklet.addModule('src/KeyerPaddleNoneProcessor.js');
     await context.audioWorklet.addModule('src/KeyerPaddleNd7paProcessor.js');
